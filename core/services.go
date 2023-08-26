@@ -16,7 +16,7 @@ type getUserItemDetailRes struct {
 }
 
 type itemService struct {
-	getUserItemDetail func(GetUserItemDetailReq) getUserItemDetailRes
+	GetUserItemDetail func(GetUserItemDetailReq) getUserItemDetailRes
 }
 
 func CreateItemService(
@@ -34,6 +34,6 @@ func CreateItemService(
 	}
 
 	return itemService{
-		getUserItemDetail: getUserItemDetail,
+		GetUserItemDetail: getUserItemDetail,
 	}
 }
