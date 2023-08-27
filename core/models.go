@@ -2,19 +2,30 @@ package core
 
 import "time"
 
-type AccessToken string
-
-type UserId string
-
+// common
 type CreatedAt time.Time
 type UpdatedAt time.Time
+
+// auth
+type AccessToken string
+
+// user
+type UserId string
+
+// display
+type DisplayName string
+type Description string
+
+// item master
 type ItemId string
 type Price int
+type MaxStock int
 
-type ItemMaster struct {
-	ID          ItemId
-	Price       Price
-	DisplayName string
-	CreatedAt   CreatedAt
-	UpdatedAt   UpdatedAt
-}
+// item user
+type Stock int
+
+// skill
+type SkillId string
+
+// explore
+type ExploreId string

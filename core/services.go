@@ -10,7 +10,10 @@ type getUserItemDetailRes struct {
 	UserId      UserId
 	ItemId      ItemId
 	Price       Price
-	DisplayName string
+	DisplayName DisplayName
+	Description Description
+	MaxStock    MaxStock
+	Stock       Stock
 	CreatedAt   CreatedAt
 	UpdatedAt   UpdatedAt
 }
@@ -20,16 +23,24 @@ type itemService struct {
 }
 
 func CreateItemService(
-	itemRepo ItemRepo,
+	itemMasterRepo ItemMasterRepo,
+	itemStorageRepo ItemStorageRepo,
 ) itemService {
 	getUserItemDetail := func(req GetUserItemDetailReq) getUserItemDetailRes {
-		res, err := itemRepo.Get(req.UserId, req.ItemId, req.AccessToken)
+		masterRes, err := itemMasterRepo.Get(req.ItemId)
+		if err != nil {
+			return getUserItemDetailRes{}
+		}
+		storageRes, err := itemStorageRepo.Get(req.UserId, req.ItemId, req.AccessToken)
 		if err != nil {
 			return getUserItemDetailRes{}
 		}
 		return getUserItemDetailRes{
-			ItemId: res.ItemID,
-			Price:  res.Price,
+			UserId:      storageRes.UserId,
+			ItemId:      masterRes.ItemId,
+			Price:       masterRes.Price,
+			DisplayName: masterRes.DisplayName,
+			Description: masterRes.Description,
 		}
 	}
 
