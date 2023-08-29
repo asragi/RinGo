@@ -34,14 +34,14 @@ type ItemStorageRepo interface {
 }
 
 // Explore
-type GetExploreMasterRes struct {
+type GetAllExploreMasterRes struct {
 	ExploreId   ExploreId
 	DisplayName DisplayName
 	Description Description
 }
 
 type ExploreMasterRepo interface {
-	BatchGet([]ExploreId)
+	GetAllExploreMaster(ItemId) ([]GetAllExploreMasterRes, error)
 }
 
 type ExploreUserData struct {
@@ -51,12 +51,11 @@ type ExploreUserData struct {
 
 type GetActionsRes struct {
 	UserId   UserId
-	ItemId   ItemId
 	Explores []ExploreUserData
 }
 
 type UserExploreRepo interface {
-	GetActions(UserId, ItemId, AccessToken) (GetActionsRes, error)
+	GetActions(UserId, []ExploreId, AccessToken) (GetActionsRes, error)
 }
 
 type Condition struct {

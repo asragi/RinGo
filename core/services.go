@@ -31,17 +31,10 @@ type itemService struct {
 func CreateItemService(
 	itemMasterRepo ItemMasterRepo,
 	itemStorageRepo ItemStorageRepo,
+	exploreMasterRepo ExploreMasterRepo,
 	userExploreRepo UserExploreRepo,
 	conditionRepo ConditionRepo,
 ) itemService {
-	toIdArray := func(arr []ExploreUserData) []ExploreId {
-		result := make([]ExploreId, len(arr))
-		for i, v := range arr {
-			result[i] = v.ExploreId
-		}
-		return result
-	}
-
 	toAllItemArr := func(arr []ExploreConditions) []ItemId {
 		result := []ItemId{}
 		checkUnique := make(map[ItemId]bool)
@@ -101,12 +94,24 @@ func CreateItemService(
 	}
 
 	getAllAction := func(req GetUserItemDetailReq) []UserExplore {
-		actionsRes, err := userExploreRepo.GetActions(req.UserId, req.ItemId, req.AccessToken)
+		explores, err := exploreMasterRepo.GetAllExploreMaster(req.ItemId)
 		if err != nil {
 			return nil
 		}
-		exploreIdArr := toIdArray(actionsRes.Explores)
-		conditionsRes, err := conditionRepo.GetAllConditions(exploreIdArr)
+		exploreIds := make([]ExploreId, len(explores))
+		for i, v := range explores {
+			exploreIds[i] = v.ExploreId
+		}
+
+		actionsRes, err := userExploreRepo.GetActions(req.UserId, exploreIds, req.AccessToken)
+		if err != nil {
+			return nil
+		}
+		exploreIsKnownMap := make(map[ExploreId]IsKnown)
+		for _, v := range actionsRes.Explores {
+			exploreIsKnownMap[v.ExploreId] = v.IsKnown
+		}
+		conditionsRes, err := conditionRepo.GetAllConditions(exploreIds)
 		if err != nil {
 			return nil
 		}
@@ -118,12 +123,14 @@ func CreateItemService(
 		}
 		itemStockList := itemDataToStockMap(batchGetRes.ItemData)
 
-		result := make([]UserExplore, len(exploreIdArr))
-		for i, v := range exploreIdArr {
+		result := make([]UserExplore, len(exploreIds))
+		for i, v := range exploreIds {
 			isPossible := checkIsExplorePossible(exploreConditionMap[v], itemStockList)
+			isKnown := exploreIsKnownMap[v]
 			result[i] = UserExplore{
 				ExploreId:  v,
 				IsPossible: isPossible,
+				IsKnown:    isKnown,
 			}
 		}
 		return result

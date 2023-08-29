@@ -31,7 +31,7 @@ var MockItems [3]MockItemMaster = [3]MockItemMaster{
 		MaxStock:    1000,
 		CreatedAt:   CreatedAt(t),
 		UpdatedAt:   UpdatedAt(t),
-		Explores:    []ExploreId{"burn-apple"},
+		Explores:    []ExploreId{mockExploreIds[0]},
 	},
 	{
 		ItemId:      "0002-burned",
@@ -149,19 +149,30 @@ func CreateMockItemStorageRepo() *MockItemStorageRepo {
 }
 
 type MockUserExploreRepo struct {
-	Data map[UserId]map[ItemId][]ExploreUserData
+	Data map[UserId]map[ExploreId]ExploreUserData
 }
 
-func (m *MockUserExploreRepo) GetActions(userId UserId, itemId ItemId, token AccessToken) (GetActionsRes, error) {
-	return GetActionsRes{Explores: m.Data[userId][itemId], ItemId: itemId}, nil
+func (m *MockUserExploreRepo) GetActions(userId UserId, exploreIds []ExploreId, token AccessToken) (GetActionsRes, error) {
+	result := make([]ExploreUserData, len(exploreIds))
+	for i, v := range exploreIds {
+		d := m.Data[userId][v]
+		result[i] = d
+	}
+	return GetActionsRes{Explores: result, UserId: userId}, nil
+}
+
+var mockUserExploreData = map[UserId]map[ExploreId]ExploreUserData{
+	MockUserId: {
+		MockItems[0].Explores[0]: ExploreUserData{
+			ExploreId: MockItems[0].Explores[0],
+			IsKnown:   true,
+		},
+	},
 }
 
 func createMockUserExploreRepo() *MockUserExploreRepo {
 	repo := MockUserExploreRepo{}
-	data := make(map[UserId]map[ItemId][]ExploreUserData)
-	data[MockUserId] = make(map[ItemId][]ExploreUserData)
-
-	repo.Data = data
+	repo.Data = mockUserExploreData
 	return &repo
 }
 
@@ -187,12 +198,41 @@ func createMockExploreConditionRepo() *MockExploreConditionRepo {
 	return &repo
 }
 
+var mockExploreIds = []ExploreId{
+	ExploreId("burn-apple"),
+}
+
+var mockExploreMaster = map[ItemId][]GetAllExploreMasterRes{
+	MockItems[0].ItemId: {
+		{
+			ExploreId:   mockExploreIds[0],
+			DisplayName: "りんごを焼く",
+			Description: "りんごを火にかけてみよう",
+		},
+	},
+}
+
+type MockExploreMasterRepo struct {
+	Data map[ItemId][]GetAllExploreMasterRes
+}
+
+func (m *MockExploreMasterRepo) GetAllExploreMaster(itemId ItemId) ([]GetAllExploreMasterRes, error) {
+	return m.Data[itemId], nil
+}
+
+func createMockExploreMasterRepo() *MockExploreMasterRepo {
+	repo := MockExploreMasterRepo{}
+	repo.Data = mockExploreMaster
+	return &repo
+}
+
 func TestCreateItemService(t *testing.T) {
 	itemMasterRepo := CreateMockItemMasterRepo()
 	itemStorageRepo := CreateMockItemStorageRepo()
 	userExploreRepo := createMockUserExploreRepo()
 	conditionRepo := createMockExploreConditionRepo()
-	itemService := CreateItemService(itemMasterRepo, itemStorageRepo, userExploreRepo, conditionRepo)
+	exploreMasterRepo := createMockExploreMasterRepo()
+	itemService := CreateItemService(itemMasterRepo, itemStorageRepo, exploreMasterRepo, userExploreRepo, conditionRepo)
 	getUserItemDetail := itemService.GetUserItemDetail
 
 	// test
@@ -220,6 +260,17 @@ func TestCreateItemService(t *testing.T) {
 		targetStock := itemStorageRepo.GetStock(MockUserId, targetId)
 		if res.Stock != targetStock {
 			t.Errorf("want %d, actual %d", targetStock, res.Stock)
+		}
+
+		// check explore
+		if len(res.UserExplores) != len(v.Explores) {
+			t.Errorf("want %d, actual %d", len(v.Explores), len(res.UserExplores))
+		}
+		for j, w := range v.Explores {
+			actual := res.UserExplores[j]
+			if w != actual.ExploreId {
+				t.Errorf("want %s, actual %s", w, actual.ExploreId)
+			}
 		}
 
 		// check improper user storage data
