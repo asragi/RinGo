@@ -31,7 +31,7 @@ var MockItems [3]MockItemMaster = [3]MockItemMaster{
 		MaxStock:    1000,
 		CreatedAt:   CreatedAt(t),
 		UpdatedAt:   UpdatedAt(t),
-		Explores:    []ExploreId{mockExploreIds[0]},
+		Explores:    []ExploreId{mockExploreIds[0], mockExploreIds[1]},
 	},
 	{
 		ItemId:      "0002-burned",
@@ -69,6 +69,20 @@ var MockConditions map[ExploreId][]Condition = map[ExploreId][]Condition{
 			ConditionType:        ConditionTypeItem,
 			ConditionTargetId:    ConditionTargetId(MockItems[2].ItemId),
 			ConditionTargetValue: ConditionTargetValue(10),
+		},
+	},
+	mockExploreIds[1]: {
+		{
+			ConditionId:          "enough-apple",
+			ConditionType:        ConditionTypeItem,
+			ConditionTargetId:    ConditionTargetId(MockItems[1].ItemId),
+			ConditionTargetValue: ConditionTargetValue(10),
+		},
+		{
+			ConditionId:          "enough-apple-burned",
+			ConditionType:        ConditionTypeItem,
+			ConditionTargetId:    ConditionTargetId(MockItems[2].ItemId),
+			ConditionTargetValue: ConditionTargetValue(100),
 		},
 	},
 }
@@ -167,6 +181,10 @@ var mockUserExploreData = map[UserId]map[ExploreId]ExploreUserData{
 			ExploreId: MockItems[0].Explores[0],
 			IsKnown:   true,
 		},
+		MockItems[0].Explores[1]: ExploreUserData{
+			ExploreId: mockExploreIds[1],
+			IsKnown:   false,
+		},
 	},
 }
 
@@ -200,6 +218,7 @@ func createMockExploreConditionRepo() *MockExploreConditionRepo {
 
 var mockExploreIds = []ExploreId{
 	ExploreId("burn-apple"),
+	ExploreId("make-sword"),
 }
 
 var mockExploreMaster = map[ItemId][]GetAllExploreMasterRes{
@@ -208,6 +227,11 @@ var mockExploreMaster = map[ItemId][]GetAllExploreMasterRes{
 			ExploreId:   mockExploreIds[0],
 			DisplayName: "りんごを焼く",
 			Description: "りんごを火にかけてみよう",
+		},
+		{
+			ExploreId:   mockExploreIds[1],
+			DisplayName: "りんごの家を作る",
+			Description: "りんごを使って家を建てます",
 		},
 	},
 }
@@ -273,6 +297,12 @@ func TestCreateItemService(t *testing.T) {
 						name:       mockExploreMaster[MockItems[0].ItemId][0].DisplayName,
 						isKnown:    true,
 						isPossible: true,
+					},
+					{
+						exploreId:  mockExploreIds[1],
+						name:       mockExploreMaster[MockItems[0].ItemId][1].DisplayName,
+						isKnown:    false,
+						isPossible: false,
 					},
 				},
 			},
