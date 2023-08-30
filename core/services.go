@@ -102,6 +102,10 @@ func CreateItemService(
 		for i, v := range explores {
 			exploreIds[i] = v.ExploreId
 		}
+		exploreMap := make(map[ExploreId]GetAllExploreMasterRes)
+		for _, v := range explores {
+			exploreMap[v.ExploreId] = v
+		}
 
 		actionsRes, err := userExploreRepo.GetActions(req.UserId, exploreIds, req.AccessToken)
 		if err != nil {
@@ -128,9 +132,10 @@ func CreateItemService(
 			isPossible := checkIsExplorePossible(exploreConditionMap[v], itemStockList)
 			isKnown := exploreIsKnownMap[v]
 			result[i] = UserExplore{
-				ExploreId:  v,
-				IsPossible: isPossible,
-				IsKnown:    isKnown,
+				ExploreId:   v,
+				IsPossible:  isPossible,
+				IsKnown:     isKnown,
+				DisplayName: exploreMap[v].DisplayName,
 			}
 		}
 		return result
