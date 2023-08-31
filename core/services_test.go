@@ -70,6 +70,12 @@ var MockConditions map[ExploreId][]Condition = map[ExploreId][]Condition{
 			ConditionTargetId:    ConditionTargetId(MockItems[2].ItemId),
 			ConditionTargetValue: ConditionTargetValue(10),
 		},
+		{
+			ConditionId:          "enough-apple-lv",
+			ConditionType:        ConditionTypeSkill,
+			ConditionTargetId:    ConditionTargetId(MockSkillMaster[0].SkillId),
+			ConditionTargetValue: ConditionTargetValue(3),
+		},
 	},
 	mockExploreIds[1]: {
 		{
@@ -250,6 +256,83 @@ func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	return &repo
 }
 
+var MockSkillMaster = []SkillMaster{
+	{
+		SkillId:     "apple",
+		DisplayName: "りんご愛好家",
+	},
+	{
+		SkillId:     "fire",
+		DisplayName: "火の祝福",
+	},
+}
+
+type MockSkillMasterRepo struct {
+	Skills map[SkillId]SkillMaster
+}
+
+func (m *MockSkillMasterRepo) BatchGet(skills []SkillId) (BatchGetSkillMasterRes, error) {
+	result := make([]SkillMaster, len(skills))
+	for i, id := range skills {
+		result[i] = m.Skills[id]
+	}
+	return BatchGetSkillMasterRes{
+		Skills: result,
+	}, nil
+}
+
+func createMockSkillMasterRepo() *MockSkillMasterRepo {
+	skills := map[SkillId]SkillMaster{}
+	for _, v := range MockSkillMaster {
+		skills[v.SkillId] = v
+	}
+	repo := MockSkillMasterRepo{Skills: skills}
+
+	return &repo
+}
+
+var MockUserSkill = func() map[UserId]map[SkillId]UserSkillRes {
+	result := make(map[UserId]map[SkillId]UserSkillRes)
+	result[MockUserId] = map[SkillId]UserSkillRes{
+		MockSkillMaster[0].SkillId: {
+			UserId:  MockUserId,
+			SkillId: MockSkillMaster[0].SkillId,
+			SkillLv: 3,
+		},
+		MockSkillMaster[1].SkillId: {
+			UserId:  MockUserId,
+			SkillId: MockSkillMaster[0].SkillId,
+			SkillLv: 1,
+		},
+	}
+	return result
+}()
+
+type MockUserSkillRepo struct {
+	Data map[UserId]map[SkillId]UserSkillRes
+}
+
+func (m *MockUserSkillRepo) BatchGet(userId UserId, skillIds []SkillId, token AccessToken) (BatchGetUserSkillRes, error) {
+	list := m.Data[userId]
+	result := make([]UserSkillRes, len(skillIds))
+	for i, v := range skillIds {
+		result[i] = UserSkillRes{
+			UserId:  userId,
+			SkillId: v,
+			SkillLv: list[v].SkillLv,
+		}
+	}
+	return BatchGetUserSkillRes{
+		UserId: userId,
+		Skills: result,
+	}, nil
+}
+
+func createMockUserSkillRepo() *MockUserSkillRepo {
+	repo := MockUserSkillRepo{Data: MockUserSkill}
+	return &repo
+}
+
 type testRequest struct {
 	userId UserId
 	itemId ItemId
@@ -279,7 +362,16 @@ func TestCreateItemService(t *testing.T) {
 	userExploreRepo := createMockUserExploreRepo()
 	conditionRepo := createMockExploreConditionRepo()
 	exploreMasterRepo := createMockExploreMasterRepo()
-	itemService := CreateItemService(itemMasterRepo, itemStorageRepo, exploreMasterRepo, userExploreRepo, conditionRepo)
+	skillMasterRepo := createMockSkillMasterRepo()
+	userSkillRepo := createMockUserSkillRepo()
+	itemService := CreateItemService(
+		itemMasterRepo,
+		itemStorageRepo,
+		exploreMasterRepo,
+		userExploreRepo,
+		skillMasterRepo,
+		userSkillRepo,
+		conditionRepo)
 	getUserItemDetail := itemService.GetUserItemDetail
 
 	testCases := []testCase{

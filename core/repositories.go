@@ -33,6 +33,35 @@ type ItemStorageRepo interface {
 	BatchGet(UserId, []ItemId, AccessToken) (BatchGetStorageRes, error)
 }
 
+// Skill
+type SkillMaster struct {
+	SkillId     SkillId
+	DisplayName DisplayName
+}
+
+type BatchGetSkillMasterRes struct {
+	Skills []SkillMaster
+}
+
+type SkillMasterRepo interface {
+	BatchGet([]SkillId) (BatchGetSkillMasterRes, error)
+}
+
+type UserSkillRes struct {
+	UserId  UserId
+	SkillId SkillId
+	SkillLv SkillLv
+}
+
+type BatchGetUserSkillRes struct {
+	UserId UserId
+	Skills []UserSkillRes
+}
+
+type UserSkillRepo interface {
+	BatchGet(UserId, []SkillId, AccessToken) (BatchGetUserSkillRes, error)
+}
+
 // Explore
 type GetAllExploreMasterRes struct {
 	ExploreId   ExploreId

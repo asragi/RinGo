@@ -24,8 +24,11 @@ type MaxStock int
 // item user
 type Stock int
 
-// skill
+// skill master
 type SkillId string
+
+// skill user
+type SkillLv int
 
 // explore
 type ExploreId string

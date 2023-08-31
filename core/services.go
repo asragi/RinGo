@@ -33,31 +33,53 @@ func CreateItemService(
 	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
 	userExploreRepo UserExploreRepo,
+	skillMasterRepo SkillMasterRepo,
+	userSkillRepo UserSkillRepo,
 	conditionRepo ConditionRepo,
 ) itemService {
-	toAllItemArr := func(arr []ExploreConditions) []ItemId {
-		result := []ItemId{}
-		checkUnique := make(map[ItemId]bool)
+	toAllRequiredArr := func(arr []ExploreConditions) ([]ItemId, []SkillId) {
+		itemResult := []ItemId{}
+		checkItemUnique := make(map[ItemId]bool)
+		skillResult := []SkillId{}
+		checkSkillUnique := make(map[SkillId]bool)
 		for _, v := range arr {
 			for _, w := range v.Conditions {
-				if w.ConditionType != ConditionTypeItem {
+				if w.ConditionType == ConditionTypeItem {
+					itemId := ItemId(w.ConditionTargetId)
+					if checkItemUnique[itemId] {
+						continue
+					}
+					checkItemUnique[itemId] = true
+					itemResult = append(itemResult, itemId)
 					continue
 				}
-				itemId := ItemId(w.ConditionTargetId)
-				if checkUnique[itemId] {
+				if w.ConditionType == ConditionTypeSkill {
+					skillId := SkillId(w.ConditionTargetId)
+					if checkSkillUnique[skillId] {
+						continue
+					}
+					checkSkillUnique[skillId] = true
+					skillResult = append(skillResult, skillId)
 					continue
+
 				}
-				checkUnique[itemId] = true
-				result = append(result, itemId)
 			}
 		}
-		return result
+		return itemResult, skillResult
 	}
 
 	itemDataToStockMap := func(arr []ItemData) map[ItemId]Stock {
 		result := make(map[ItemId]Stock)
 		for _, v := range arr {
 			result[v.ItemId] = v.Stock
+		}
+		return result
+	}
+
+	skillDataToLvMap := func(arr []UserSkillRes) map[SkillId]SkillLv {
+		result := make(map[SkillId]SkillLv)
+		for _, v := range arr {
+			result[v.SkillId] = v.SkillLv
 		}
 		return result
 	}
@@ -73,6 +95,7 @@ func CreateItemService(
 	checkIsExplorePossible := func(
 		conditions []Condition,
 		itemStockList map[ItemId]Stock,
+		skillLvList map[SkillId]SkillLv,
 	) IsPossible {
 		for _, v := range conditions {
 			if v.ConditionType == ConditionTypeItem {
@@ -86,8 +109,15 @@ func CreateItemService(
 				}
 			}
 			if v.ConditionType == ConditionTypeSkill {
-				// TODO: Implement skill condition
-				return false
+				skillId := SkillId(v.ConditionTargetId)
+				if _, ok := skillLvList[skillId]; !ok {
+					return false
+				}
+				requiredLv := SkillLv(v.ConditionTargetValue)
+				if skillLvList[skillId] < requiredLv {
+					return false
+				}
+				return true
 			}
 		}
 		return true
@@ -120,16 +150,22 @@ func CreateItemService(
 			return nil
 		}
 		exploreConditionMap := toExploreConditionMap(conditionsRes.Explores)
-		allItemId := toAllItemArr(conditionsRes.Explores)
+		allItemId, allSkillId := toAllRequiredArr(conditionsRes.Explores)
 		batchGetRes, err := itemStorageRepo.BatchGet(req.UserId, allItemId, req.AccessToken)
 		if err != nil {
 			return nil
 		}
 		itemStockList := itemDataToStockMap(batchGetRes.ItemData)
 
+		batchGetSkillRes, err := userSkillRepo.BatchGet(req.UserId, allSkillId, req.AccessToken)
+		if err != nil {
+			return nil
+		}
+		skillLvList := skillDataToLvMap(batchGetSkillRes.Skills)
+
 		result := make([]UserExplore, len(exploreIds))
 		for i, v := range exploreIds {
-			isPossible := checkIsExplorePossible(exploreConditionMap[v], itemStockList)
+			isPossible := checkIsExplorePossible(exploreConditionMap[v], itemStockList, skillLvList)
 			isKnown := exploreIsKnownMap[v]
 			result[i] = UserExplore{
 				ExploreId:   v,
