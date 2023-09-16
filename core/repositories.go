@@ -69,8 +69,18 @@ type GetAllExploreMasterRes struct {
 	Description Description
 }
 
+type StageExploreMasterRes struct {
+	StageId  StageId
+	Explores []GetAllExploreMasterRes
+}
+
+type BatchGetStageExploreRes struct {
+	StageExplores []StageExploreMasterRes
+}
+
 type ExploreMasterRepo interface {
 	GetAllExploreMaster(ItemId) ([]GetAllExploreMasterRes, error)
+	GetStageAllExploreMaster([]StageId) (BatchGetStageExploreRes, error)
 }
 
 type ExploreUserData struct {
@@ -105,4 +115,31 @@ type GetAllConditionsRes struct {
 
 type ConditionRepo interface {
 	GetAllConditions([]ExploreId) (GetAllConditionsRes, error)
+}
+
+type StageMaster struct {
+	StageId     StageId
+	DisplayName DisplayName
+	Description Description
+}
+
+type GetAllStagesRes struct {
+	Stages []StageMaster
+}
+
+type StageMasterRepo interface {
+	GetAllStages() (GetAllStagesRes, error)
+}
+
+type UserStage struct {
+	StageId StageId
+	IsKnown IsKnown
+}
+
+type GetAllUserStagesRes struct {
+	UserStage []UserStage
+}
+
+type UserStageRepo interface {
+	GetAllUserStages([]StageId) (GetAllUserStagesRes, error)
 }
