@@ -1,27 +1,31 @@
-package core
+package stage
+
+import (
+	"github.com/asragi/RinGo/core"
+)
 
 type GetUserItemDetailReq struct {
-	UserId      UserId
-	ItemId      ItemId
-	AccessToken AccessToken
+	UserId      core.UserId
+	ItemId      core.ItemId
+	AccessToken core.AccessToken
 }
 
 type getUserItemDetailRes struct {
-	UserId       UserId
-	ItemId       ItemId
-	Price        Price
-	DisplayName  DisplayName
-	Description  Description
-	MaxStock     MaxStock
-	Stock        Stock
+	UserId       core.UserId
+	ItemId       core.ItemId
+	Price        core.Price
+	DisplayName  core.DisplayName
+	Description  core.Description
+	MaxStock     core.MaxStock
+	Stock        core.Stock
 	UserExplores []UserExplore
 }
 
 type UserExplore struct {
 	ExploreId   ExploreId
-	DisplayName DisplayName
-	IsKnown     IsKnown
-	IsPossible  IsPossible
+	DisplayName core.DisplayName
+	IsKnown     core.IsKnown
+	IsPossible  core.IsPossible
 }
 
 type itemService struct {
@@ -30,26 +34,26 @@ type itemService struct {
 
 func checkIsExplorePossible(
 	conditions []Condition,
-	itemStockList map[ItemId]Stock,
-	skillLvList map[SkillId]SkillLv,
-) IsPossible {
+	itemStockList map[core.ItemId]core.Stock,
+	skillLvList map[core.SkillId]core.SkillLv,
+) core.IsPossible {
 	for _, v := range conditions {
 		if v.ConditionType == ConditionTypeItem {
-			itemId := ItemId(v.ConditionTargetId)
+			itemId := core.ItemId(v.ConditionTargetId)
 			if _, ok := itemStockList[itemId]; !ok {
 				return false
 			}
-			requiredStock := Stock(v.ConditionTargetValue)
+			requiredStock := core.Stock(v.ConditionTargetValue)
 			if itemStockList[itemId] < requiredStock {
 				return false
 			}
 		}
 		if v.ConditionType == ConditionTypeSkill {
-			skillId := SkillId(v.ConditionTargetId)
+			skillId := core.SkillId(v.ConditionTargetId)
 			if _, ok := skillLvList[skillId]; !ok {
 				return false
 			}
-			requiredLv := SkillLv(v.ConditionTargetValue)
+			requiredLv := core.SkillLv(v.ConditionTargetValue)
 			if skillLvList[skillId] < requiredLv {
 				return false
 			}
@@ -67,15 +71,15 @@ func makeExploreIdMap(explores []ExploreUserData) map[ExploreId]ExploreUserData 
 	return result
 }
 
-func toAllRequiredArr(arr []ExploreConditions) ([]ItemId, []SkillId) {
-	itemResult := []ItemId{}
-	checkItemUnique := make(map[ItemId]bool)
-	skillResult := []SkillId{}
-	checkSkillUnique := make(map[SkillId]bool)
+func toAllRequiredArr(arr []ExploreConditions) ([]core.ItemId, []core.SkillId) {
+	itemResult := []core.ItemId{}
+	checkItemUnique := make(map[core.ItemId]bool)
+	skillResult := []core.SkillId{}
+	checkSkillUnique := make(map[core.SkillId]bool)
 	for _, v := range arr {
 		for _, w := range v.Conditions {
 			if w.ConditionType == ConditionTypeItem {
-				itemId := ItemId(w.ConditionTargetId)
+				itemId := core.ItemId(w.ConditionTargetId)
 				if checkItemUnique[itemId] {
 					continue
 				}
@@ -84,7 +88,7 @@ func toAllRequiredArr(arr []ExploreConditions) ([]ItemId, []SkillId) {
 				continue
 			}
 			if w.ConditionType == ConditionTypeSkill {
-				skillId := SkillId(w.ConditionTargetId)
+				skillId := core.SkillId(w.ConditionTargetId)
 				if checkSkillUnique[skillId] {
 					continue
 				}
@@ -177,9 +181,9 @@ func CreateItemService(
 
 type stageInformation struct {
 	StageId      StageId
-	DisplayName  DisplayName
-	IsKnown      IsKnown
-	Description  Description
+	DisplayName  core.DisplayName
+	IsKnown      core.IsKnown
+	Description  core.Description
 	UserExplores []UserExplore
 }
 
@@ -188,12 +192,12 @@ type getStageListRes struct {
 }
 
 type getStageListService struct {
-	GetAllStage func(UserId, AccessToken) getStageListRes
+	GetAllStage func(core.UserId, core.AccessToken) getStageListRes
 }
 
 func makeUserExploreArray(
-	userId UserId,
-	token AccessToken,
+	userId core.UserId,
+	token core.AccessToken,
 	exploreIds []ExploreId,
 	exploreMasterMap map[ExploreId]GetAllExploreMasterRes,
 	exploreMap map[ExploreId]ExploreUserData,
@@ -201,16 +205,16 @@ func makeUserExploreArray(
 	userSkillRepo UserSkillRepo,
 	itemStorageRepo ItemStorageRepo,
 ) []UserExplore {
-	itemDataToStockMap := func(arr []ItemData) map[ItemId]Stock {
-		result := make(map[ItemId]Stock)
+	itemDataToStockMap := func(arr []ItemData) map[core.ItemId]core.Stock {
+		result := make(map[core.ItemId]core.Stock)
 		for _, v := range arr {
 			result[v.ItemId] = v.Stock
 		}
 		return result
 	}
 
-	skillDataToLvMap := func(arr []UserSkillRes) map[SkillId]SkillLv {
-		result := make(map[SkillId]SkillLv)
+	skillDataToLvMap := func(arr []UserSkillRes) map[core.SkillId]core.SkillLv {
+		result := make(map[core.SkillId]core.SkillLv)
 		for _, v := range arr {
 			result[v.SkillId] = v.SkillLv
 		}
@@ -258,7 +262,7 @@ func CreateGetStageListService(
 	userSkillRepo UserSkillRepo,
 	conditionRepo ConditionRepo,
 ) getStageListService {
-	getAllStage := func(userId UserId, token AccessToken) getStageListRes {
+	getAllStage := func(userId core.UserId, token core.AccessToken) getStageListRes {
 		stagesToIdArr := func(stages []StageMaster) []StageId {
 			result := make([]StageId, len(stages))
 			for i, v := range stages {

@@ -1,42 +1,46 @@
-package core
+package stage
+
+import (
+	"github.com/asragi/RinGo/core"
+)
 
 type GetItemMasterRes struct {
-	ItemId      ItemId
-	Price       Price
-	DisplayName DisplayName
-	Description Description
-	MaxStock    MaxStock
+	ItemId      core.ItemId
+	Price       core.Price
+	DisplayName core.DisplayName
+	Description core.Description
+	MaxStock    core.MaxStock
 }
 
 type ItemMasterRepo interface {
-	Get(ItemId) (GetItemMasterRes, error)
+	Get(core.ItemId) (GetItemMasterRes, error)
 }
 
 type GetItemStorageRes struct {
-	UserId UserId
-	Stock  Stock
+	UserId core.UserId
+	Stock  core.Stock
 }
 
 type ItemData struct {
-	UserId UserId
-	ItemId ItemId
-	Stock  Stock
+	UserId core.UserId
+	ItemId core.ItemId
+	Stock  core.Stock
 }
 
 type BatchGetStorageRes struct {
-	UserId   UserId
+	UserId   core.UserId
 	ItemData []ItemData
 }
 
 type ItemStorageRepo interface {
-	Get(UserId, ItemId, AccessToken) (GetItemStorageRes, error)
-	BatchGet(UserId, []ItemId, AccessToken) (BatchGetStorageRes, error)
+	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
+	BatchGet(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
 }
 
 // Skill
 type SkillMaster struct {
-	SkillId     SkillId
-	DisplayName DisplayName
+	SkillId     core.SkillId
+	DisplayName core.DisplayName
 }
 
 type BatchGetSkillMasterRes struct {
@@ -44,29 +48,29 @@ type BatchGetSkillMasterRes struct {
 }
 
 type SkillMasterRepo interface {
-	BatchGet([]SkillId) (BatchGetSkillMasterRes, error)
+	BatchGet([]core.SkillId) (BatchGetSkillMasterRes, error)
 }
 
 type UserSkillRes struct {
-	UserId  UserId
-	SkillId SkillId
-	SkillLv SkillLv
+	UserId  core.UserId
+	SkillId core.SkillId
+	SkillLv core.SkillLv
 }
 
 type BatchGetUserSkillRes struct {
-	UserId UserId
+	UserId core.UserId
 	Skills []UserSkillRes
 }
 
 type UserSkillRepo interface {
-	BatchGet(UserId, []SkillId, AccessToken) (BatchGetUserSkillRes, error)
+	BatchGet(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 }
 
 // Explore
 type GetAllExploreMasterRes struct {
 	ExploreId   ExploreId
-	DisplayName DisplayName
-	Description Description
+	DisplayName core.DisplayName
+	Description core.Description
 }
 
 type StageExploreMasterRes struct {
@@ -79,22 +83,22 @@ type BatchGetStageExploreRes struct {
 }
 
 type ExploreMasterRepo interface {
-	GetAllExploreMaster(ItemId) ([]GetAllExploreMasterRes, error)
+	GetAllExploreMaster(core.ItemId) ([]GetAllExploreMasterRes, error)
 	GetStageAllExploreMaster([]StageId) (BatchGetStageExploreRes, error)
 }
 
 type ExploreUserData struct {
 	ExploreId ExploreId
-	IsKnown   IsKnown
+	IsKnown   core.IsKnown
 }
 
 type GetActionsRes struct {
-	UserId   UserId
+	UserId   core.UserId
 	Explores []ExploreUserData
 }
 
 type UserExploreRepo interface {
-	GetActions(UserId, []ExploreId, AccessToken) (GetActionsRes, error)
+	GetActions(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
 }
 
 type Condition struct {
@@ -119,8 +123,8 @@ type ConditionRepo interface {
 
 type StageMaster struct {
 	StageId     StageId
-	DisplayName DisplayName
-	Description Description
+	DisplayName core.DisplayName
+	Description core.Description
 }
 
 type GetAllStagesRes struct {
@@ -133,7 +137,7 @@ type StageMasterRepo interface {
 
 type UserStage struct {
 	StageId StageId
-	IsKnown IsKnown
+	IsKnown core.IsKnown
 }
 
 type GetAllUserStagesRes struct {
