@@ -171,6 +171,14 @@ var MockConditions map[ExploreId][]Condition = map[ExploreId][]Condition{
 			ConditionTargetValue: ConditionTargetValue(100),
 		},
 	},
+	mockStageExploreIds[1]: {
+		{
+			ConditionId:          "enough-apple",
+			ConditionType:        ConditionTypeItem,
+			ConditionTargetId:    ConditionTargetId(MockItemIds[0]),
+			ConditionTargetValue: 1000,
+		},
+	},
 }
 
 type MockUserExploreRepo struct {
@@ -195,6 +203,14 @@ var mockUserExploreData = map[core.UserId]map[ExploreId]ExploreUserData{
 		MockItems[0].Explores[1]: ExploreUserData{
 			ExploreId: mockExploreIds[1],
 			IsKnown:   false,
+		},
+		mockStageExploreIds[0]: {
+			ExploreId: mockStageExploreIds[0],
+			IsKnown:   true,
+		},
+		mockStageExploreIds[1]: {
+			ExploreId: mockStageExploreIds[1],
+			IsKnown:   true,
 		},
 	},
 }
@@ -249,6 +265,7 @@ var mockExploreMaster = map[core.ItemId][]GetAllExploreMasterRes{
 
 var mockStageExploreIds = []ExploreId{
 	ExploreId("pick-up-apple"),
+	ExploreId("alchemize-apple"),
 }
 
 var mockStageIds = []StageId{
@@ -262,6 +279,11 @@ var mockStageExploreMaster = map[StageId][]GetAllExploreMasterRes{
 			ExploreId:   mockStageExploreIds[0],
 			DisplayName: "りんごを拾いに行く",
 			Description: "木くずや石も拾えるかも",
+		},
+		{
+			ExploreId:   mockStageExploreIds[1],
+			DisplayName: "錬金術でりんごを金に変える",
+			Description: "黄金の精神を持ってりんごを金に変えます",
 		},
 	},
 }

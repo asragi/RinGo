@@ -168,9 +168,23 @@ func TestCreateGetStageListService(t *testing.T) {
 				Information: []stageInformation{
 					{
 						StageId: mockStageIds[0],
+						IsKnown: true,
+						UserExplores: []UserExplore{
+							{
+								ExploreId:  mockStageExploreIds[0],
+								IsKnown:    true,
+								IsPossible: true,
+							},
+							{
+								ExploreId:  mockStageExploreIds[1],
+								IsKnown:    true,
+								IsPossible: false,
+							},
+						},
 					},
 					{
 						StageId: mockStageIds[1],
+						IsKnown: true,
 					},
 				},
 			},
@@ -182,5 +196,16 @@ func TestCreateGetStageListService(t *testing.T) {
 		res := getStageListService(req.UserId, req.Token)
 		infos := res.Information
 		checkInt(t, "check response length", len(v.expect.Information), len(infos))
+		for j, w := range v.expect.Information {
+			info := infos[j]
+			check(t, string(w.StageId), string(info.StageId))
+			checkInt(t, "check response explore length", len(w.UserExplores), len(info.UserExplores))
+			for k, x := range w.UserExplores {
+				explore := info.UserExplores[k]
+				check(t, string(x.ExploreId), string(explore.ExploreId))
+				checkBool(t, "IsKnown", bool(x.IsKnown), bool(explore.IsKnown))
+				checkBool(t, "IsPossible", bool(x.IsPossible), bool(explore.IsPossible))
+			}
+		}
 	}
 }
