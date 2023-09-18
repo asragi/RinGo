@@ -6,37 +6,60 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type testRequest struct {
-	userId core.UserId
-	itemId core.ItemId
+var (
+	itemMasterRepo    = CreateMockItemMasterRepo()
+	itemStorageRepo   = CreateMockItemStorageRepo()
+	userExploreRepo   = createMockUserExploreRepo()
+	conditionRepo     = createMockExploreConditionRepo()
+	exploreMasterRepo = createMockExploreMasterRepo()
+	skillMasterRepo   = createMockSkillMasterRepo()
+	userSkillRepo     = createMockUserSkillRepo()
+	userStageRepo     = createMockUserStageRepo()
+	stageMasterRepo   = createMockStageMasterRepo()
+)
+
+func check(t *testing.T, expect string, actual string) {
+	if expect != actual {
+		t.Errorf("want %s, actual %s", expect, actual)
+	}
 }
 
-type testExplore struct {
-	exploreId  ExploreId
-	name       core.DisplayName
-	isKnown    core.IsKnown
-	isPossible core.IsPossible
+func checkBool(t *testing.T, title string, expect bool, actual bool) {
+	if expect != actual {
+		t.Errorf("%s: want %t, actual %t", title, expect, actual)
+	}
 }
 
-type testExpect struct {
-	price    core.Price
-	stock    core.Stock
-	explores []testExplore
-}
-
-type testCase struct {
-	request testRequest
-	expect  testExpect
+func checkInt(t *testing.T, title string, expect int, actual int) {
+	if expect != actual {
+		t.Errorf("%s: want %d, actual %d", title, expect, actual)
+	}
 }
 
 func TestCreateItemService(t *testing.T) {
-	itemMasterRepo := CreateMockItemMasterRepo()
-	itemStorageRepo := CreateMockItemStorageRepo()
-	userExploreRepo := createMockUserExploreRepo()
-	conditionRepo := createMockExploreConditionRepo()
-	exploreMasterRepo := createMockExploreMasterRepo()
-	skillMasterRepo := createMockSkillMasterRepo()
-	userSkillRepo := createMockUserSkillRepo()
+	type testRequest struct {
+		userId core.UserId
+		itemId core.ItemId
+	}
+
+	type testExplore struct {
+		exploreId  ExploreId
+		name       core.DisplayName
+		isKnown    core.IsKnown
+		isPossible core.IsPossible
+	}
+
+	type testExpect struct {
+		price    core.Price
+		stock    core.Stock
+		explores []testExplore
+	}
+
+	type testCase struct {
+		request testRequest
+		expect  testExpect
+	}
+
 	itemService := CreateItemService(
 		itemMasterRepo,
 		itemStorageRepo,
@@ -74,16 +97,6 @@ func TestCreateItemService(t *testing.T) {
 		},
 	}
 	// test
-	check := func(expect string, actual string) {
-		if expect != actual {
-			t.Errorf("want %s, actual %s", expect, actual)
-		}
-	}
-	checkBool := func(title string, expect bool, actual bool) {
-		if expect != actual {
-			t.Errorf("%s: want %t, actual %t", title, expect, actual)
-		}
-	}
 	for _, v := range testCases {
 		targetId := v.request.itemId
 		req := GetUserItemDetailReq{
@@ -117,9 +130,57 @@ func TestCreateItemService(t *testing.T) {
 			if w.exploreId != actual.ExploreId {
 				t.Errorf("want %s, actual %s", w.exploreId, actual.ExploreId)
 			}
-			check(string(w.name), string(actual.DisplayName))
-			checkBool("isKnown", bool(w.isKnown), bool(actual.IsKnown))
-			checkBool("isPossible", bool(w.isPossible), bool(actual.IsPossible))
+			check(t, string(w.name), string(actual.DisplayName))
+			checkBool(t, "isKnown", bool(w.isKnown), bool(actual.IsKnown))
+			checkBool(t, "isPossible", bool(w.isPossible), bool(actual.IsPossible))
 		}
+	}
+}
+
+func TestCreateGetStageListService(t *testing.T) {
+	type testRequest struct {
+		UserId core.UserId
+		Token  core.AccessToken
+	}
+	type testCase struct {
+		request testRequest
+		expect  getStageListRes
+	}
+
+	createService := CreateGetStageListService(
+		stageMasterRepo,
+		userStageRepo,
+		itemStorageRepo,
+		exploreMasterRepo,
+		userExploreRepo,
+		userSkillRepo,
+		conditionRepo,
+	)
+
+	getStageListService := createService.GetAllStage
+
+	testCases := []testCase{
+		{
+			request: testRequest{
+				UserId: MockUserId,
+			},
+			expect: getStageListRes{
+				Information: []stageInformation{
+					{
+						StageId: mockStageIds[0],
+					},
+					{
+						StageId: mockStageIds[1],
+					},
+				},
+			},
+		},
+	}
+
+	for _, v := range testCases {
+		req := v.request
+		res := getStageListService(req.UserId, req.Token)
+		infos := res.Information
+		checkInt(t, "check response length", len(v.expect.Information), len(infos))
 	}
 }

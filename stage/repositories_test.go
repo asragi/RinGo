@@ -371,3 +371,65 @@ func createMockUserSkillRepo() *MockUserSkillRepo {
 	repo := MockUserSkillRepo{Data: MockUserSkill}
 	return &repo
 }
+
+type mockUserStageRepo struct {
+	Data map[core.UserId]map[StageId]UserStage
+}
+
+func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []StageId) (GetAllUserStagesRes, error) {
+	result := []UserStage{}
+	for _, v := range ids {
+		result = append(result, m.Data[userId][v])
+	}
+	return GetAllUserStagesRes{result}, nil
+}
+
+var mockUserStageData = map[core.UserId]map[StageId]UserStage{
+	MockUserId: {
+		mockStageIds[0]: {
+			StageId: mockStageIds[0],
+			IsKnown: true,
+		},
+		mockStageIds[1]: {
+			StageId: mockStageIds[1],
+			IsKnown: false,
+		},
+	},
+}
+
+func createMockUserStageRepo() *mockUserStageRepo {
+	repo := mockUserStageRepo{}
+	repo.Data = mockUserStageData
+	return &repo
+}
+
+type mockStageMasterRepo struct {
+	Data map[StageId]StageMaster
+}
+
+func (m *mockStageMasterRepo) GetAllStages() (GetAllStagesRes, error) {
+	result := []StageMaster{}
+	for _, v := range m.Data {
+		result = append(result, v)
+	}
+	return GetAllStagesRes{Stages: result}, nil
+}
+
+var mockStageMasterData = map[StageId]StageMaster{
+	mockStageIds[0]: {
+		StageId:     mockStageIds[0],
+		DisplayName: "ポムポムのもり",
+		Description: "りんごの木がたくさんある森\nいつでもたくさんのりんごが採れる",
+	},
+	mockStageIds[1]: {
+		StageId:     mockStageIds[1],
+		DisplayName: "リゴーかざん",
+		Description: "鉱石が採れるかも",
+	},
+}
+
+func createMockStageMasterRepo() *mockStageMasterRepo {
+	repo := mockStageMasterRepo{}
+	repo.Data = mockStageMasterData
+	return &repo
+}

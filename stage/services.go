@@ -365,7 +365,7 @@ func CreateGetStageListService(
 		stages := masterRes.Stages
 		allStageIds := stagesToIdArr(stages)
 
-		userStageRes, err := userStageRepo.GetAllUserStages(allStageIds)
+		userStageRes, err := userStageRepo.GetAllUserStages(userId, allStageIds)
 		if err != nil {
 			return getStageListRes{}
 		}

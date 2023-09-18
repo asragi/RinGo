@@ -145,5 +145,5 @@ type GetAllUserStagesRes struct {
 }
 
 type UserStageRepo interface {
-	GetAllUserStages([]StageId) (GetAllUserStagesRes, error)
+	GetAllUserStages(core.UserId, []StageId) (GetAllUserStagesRes, error)
 }
