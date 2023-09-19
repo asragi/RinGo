@@ -317,13 +317,17 @@ func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	return &repo
 }
 
+var mockSkillIds = []core.SkillId{
+	"apple", "fire",
+}
+
 var MockSkillMaster = []SkillMaster{
 	{
-		SkillId:     "apple",
+		SkillId:     mockSkillIds[0],
 		DisplayName: "りんご愛好家",
 	},
 	{
-		SkillId:     "fire",
+		SkillId:     mockSkillIds[1],
 		DisplayName: "火の祝福",
 	},
 }
@@ -453,5 +457,33 @@ var mockStageMasterData = map[StageId]StageMaster{
 func createMockStageMasterRepo() *mockStageMasterRepo {
 	repo := mockStageMasterRepo{}
 	repo.Data = mockStageMasterData
+	return &repo
+}
+
+type MockSkillGrowthDataRepo struct {
+	Data map[ExploreId][]SkillGrowthData
+}
+
+func (m *MockSkillGrowthDataRepo) BatchGet(exploreId ExploreId) []SkillGrowthData {
+	return m.Data[exploreId]
+}
+
+var MockSkillGrowthData = map[ExploreId][]SkillGrowthData{
+	mockExploreIds[0]: {
+		{
+			ExploreId:    mockExploreIds[0],
+			SkillId:      mockSkillIds[0],
+			GainingPoint: 10,
+		},
+		{
+			ExploreId:    mockExploreIds[0],
+			SkillId:      mockSkillIds[1],
+			GainingPoint: 10,
+		},
+	},
+}
+
+func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
+	repo := MockSkillGrowthDataRepo{Data: MockSkillGrowthData}
 	return &repo
 }

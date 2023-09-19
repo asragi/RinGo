@@ -20,6 +20,7 @@ type Description string
 type ItemId string
 type Price int
 type MaxStock int
+type Count int
 
 // item user
 type Stock int
@@ -29,6 +30,16 @@ type SkillId string
 
 // skill user
 type SkillLv int
+type SkillExp int
+
+func (exp SkillExp) CalcLv() SkillLv {
+	skillMax := 100
+	sum := int(exp)
+	for i := 1; i < skillMax; i++ {
+		sum = sum - i
+	}
+	return SkillLv(skillMax)
+}
 
 // explore user
 type IsKnown bool

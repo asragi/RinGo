@@ -1,5 +1,16 @@
 package stage
 
+// item
+type ConsumptionProb float32
+
+// skill
+type GainingPoint int
+
+func (g GainingPoint) Multiply(num int) GainingPoint {
+	value := int(g)
+	return GainingPoint(value * num)
+}
+
 // explore
 type ExploreId string
 

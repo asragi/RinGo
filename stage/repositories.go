@@ -37,6 +37,16 @@ type ItemStorageRepo interface {
 	BatchGet(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
 }
 
+type RequiredItemData struct {
+	ExploreId       ExploreId
+	ItemId          core.ItemId
+	ConsumptionProb ConsumptionProb
+}
+
+type RequiredItemRepo interface {
+	Get(ExploreId) []RequiredItemData
+}
+
 // Skill
 type SkillMaster struct {
 	SkillId     core.SkillId
@@ -64,6 +74,17 @@ type BatchGetUserSkillRes struct {
 
 type UserSkillRepo interface {
 	BatchGet(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
+}
+
+// Skill Growth
+type SkillGrowthData struct {
+	ExploreId    ExploreId
+	SkillId      core.SkillId
+	GainingPoint GainingPoint
+}
+
+type SkillGrowthDataRepo interface {
+	BatchGet(ExploreId) []SkillGrowthData
 }
 
 // Explore

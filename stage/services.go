@@ -394,3 +394,71 @@ func CreateGetStageListService(
 		GetAllStage: getAllStage,
 	}
 }
+
+type grownSkillRow struct {
+	SkillId core.SkillId
+}
+
+type skillGrowthServiceRes struct {
+}
+
+type postActionExecServiceRes struct {
+}
+
+type createPostActionExecServiceRes struct {
+	postActionExecService func() postActionExecServiceRes
+}
+
+/*
+func CreatePostActionExecService(
+
+	skillGrowthDataRepo SkillGrowthDataRepo,
+
+	) createPostActionExecServiceRes {
+		postActionExecService := func(
+			exploreId ExploreId,
+			execCount int,
+		) postActionExecServiceRes {
+			calcEarningItemService := func() {}
+			calcConsumedItemService := func() {}
+
+		}
+
+		return createPostActionExecServiceRes{
+			postActionExecService: postActionExecService,
+		}
+	}
+*/
+type skillGrowthResult struct {
+	SkillId core.SkillId
+	GainSum GainingPoint
+}
+
+type calcSkillGrowthService struct {
+	Calc func(ExploreId, int) []skillGrowthResult
+}
+
+func createCalcSkillGrowthService(
+	skillGrowthDataRepo SkillGrowthDataRepo,
+) calcSkillGrowthService {
+	calcSkillGrowth := func(
+		exploreId ExploreId,
+		execCount int,
+	) []skillGrowthResult {
+		calcSkillGrowth := func(execCount int, gainingData []SkillGrowthData) []skillGrowthResult {
+			growth := make([]skillGrowthResult, len(gainingData))
+			for i := range gainingData {
+				data := gainingData[i]
+				growth[i] = skillGrowthResult{
+					SkillId: data.SkillId,
+					GainSum: data.GainingPoint.Multiply(execCount),
+				}
+			}
+			return growth
+		}
+		skillGrowthList := skillGrowthDataRepo.BatchGet(exploreId)
+		result := calcSkillGrowth(execCount, skillGrowthList)
+		return result
+	}
+	return calcSkillGrowthService{Calc: calcSkillGrowth}
+}
