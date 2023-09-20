@@ -36,7 +36,10 @@ func (exp SkillExp) CalcLv() SkillLv {
 	skillMax := 100
 	sum := int(exp)
 	for i := 1; i < skillMax; i++ {
-		sum = sum - i
+		sum = sum - i*10
+		if sum < 0 {
+			return SkillLv(i)
+		}
 	}
 	return SkillLv(skillMax)
 }

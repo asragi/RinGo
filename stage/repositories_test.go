@@ -360,14 +360,14 @@ var MockUserSkill = func() map[core.UserId]map[core.SkillId]UserSkillRes {
 	result := make(map[core.UserId]map[core.SkillId]UserSkillRes)
 	result[MockUserId] = map[core.SkillId]UserSkillRes{
 		MockSkillMaster[0].SkillId: {
-			UserId:  MockUserId,
-			SkillId: MockSkillMaster[0].SkillId,
-			SkillLv: 3,
+			UserId:   MockUserId,
+			SkillId:  MockSkillMaster[0].SkillId,
+			SkillExp: 35,
 		},
 		MockSkillMaster[1].SkillId: {
-			UserId:  MockUserId,
-			SkillId: MockSkillMaster[0].SkillId,
-			SkillLv: 1,
+			UserId:   MockUserId,
+			SkillId:  MockSkillMaster[0].SkillId,
+			SkillExp: 0,
 		},
 	}
 	return result
@@ -382,9 +382,9 @@ func (m *MockUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId
 	result := make([]UserSkillRes, len(skillIds))
 	for i, v := range skillIds {
 		result[i] = UserSkillRes{
-			UserId:  userId,
-			SkillId: v,
-			SkillLv: list[v].SkillLv,
+			UserId:   userId,
+			SkillId:  v,
+			SkillExp: list[v].SkillExp,
 		}
 	}
 	return BatchGetUserSkillRes{
@@ -486,4 +486,82 @@ var MockSkillGrowthData = map[ExploreId][]SkillGrowthData{
 func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
 	repo := MockSkillGrowthDataRepo{Data: MockSkillGrowthData}
 	return &repo
+}
+
+type mockEarningItemRepo struct {
+	Data map[ExploreId][]EarningItem
+}
+
+func (m *mockEarningItemRepo) BatchGet(exploreId ExploreId) []EarningItem {
+	return m.Data[exploreId]
+}
+
+var mockEarningItemData = map[ExploreId][]EarningItem{
+	mockExploreIds[0]: {
+		{
+			ItemId:   MockItemIds[0],
+			MinCount: 1,
+			MaxCount: 100,
+		},
+		{
+			ItemId:   MockItemIds[1],
+			MinCount: 0,
+			MaxCount: 1000,
+		},
+	},
+	mockExploreIds[1]: {
+		{
+			ItemId:   MockItemIds[0],
+			MinCount: 1,
+			MaxCount: 10,
+		},
+		{
+			ItemId:   MockItemIds[2],
+			MinCount: 10,
+			MaxCount: 100,
+		},
+	},
+}
+
+func createMockEarningItemRepo() *mockEarningItemRepo {
+	return &mockEarningItemRepo{Data: mockEarningItemData}
+}
+
+type mockConsumingItemRepo struct {
+	Data map[ExploreId][]ConsumingItem
+}
+
+func (m *mockConsumingItemRepo) BatchGet(exploreId ExploreId) []ConsumingItem {
+	return m.Data[exploreId]
+}
+
+var mockConsumingItemData = map[ExploreId][]ConsumingItem{
+	mockExploreIds[0]: {
+		{
+			ItemId:          MockItemIds[0],
+			ConsumptionProb: 1,
+			MaxCount:        100,
+		},
+		{
+			ItemId:          MockItemIds[1],
+			MaxCount:        1000,
+			ConsumptionProb: 0.5,
+		},
+	},
+	mockExploreIds[1]: {
+		{
+			ItemId:          MockItemIds[0],
+			ConsumptionProb: 1,
+			MaxCount:        10,
+		},
+		{
+			ItemId:          MockItemIds[2],
+			ConsumptionProb: 0,
+			MaxCount:        100,
+		},
+	},
+}
+
+func createMockConsumingItemRepo() *mockConsumingItemRepo {
+	return &mockConsumingItemRepo{Data: mockConsumingItemData}
 }

@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"math"
+
 	"github.com/asragi/RinGo/core"
 )
 
@@ -216,7 +218,7 @@ func makeUserExploreArray(
 	skillDataToLvMap := func(arr []UserSkillRes) map[core.SkillId]core.SkillLv {
 		result := make(map[core.SkillId]core.SkillLv)
 		for _, v := range arr {
-			result[v.SkillId] = v.SkillLv
+			result[v.SkillId] = v.SkillExp.CalcLv()
 		}
 		return result
 	}
@@ -409,26 +411,121 @@ type createPostActionExecServiceRes struct {
 	postActionExecService func() postActionExecServiceRes
 }
 
-/*
-func CreatePostActionExecService(
+type earnedItem struct {
+	ItemId core.ItemId
+	Count  core.Count
+}
 
-	skillGrowthDataRepo SkillGrowthDataRepo,
+type createCalcEarnedItemServiceRes struct {
+	Calc func(ExploreId, int) []earnedItem
+}
 
-	) createPostActionExecServiceRes {
-		postActionExecService := func(
-			exploreId ExploreId,
+func createCalcEarnedItemService(
+	earningItemRepo EarningItemRepo,
+	random core.IRandom,
+) createCalcEarnedItemServiceRes {
+	calcEarnedItemService := func(
+		exploreId ExploreId,
+		execCount int,
+	) []earnedItem {
+		calcItemCount := func(
+			minCount core.Count,
+			maxCount core.Count,
+			random core.IRandom,
+		) core.Count {
+			randValue := random.Emit()
+			randWidth := maxCount - minCount
+			randCount := core.Count(math.Round(float64(randWidth) * float64(randValue)))
+			return minCount + randCount
+		}
+
+		execMultipleCalcItemCount := func(
+			minCount core.Count,
+			maxCount core.Count,
+			random core.IRandom,
 			execCount int,
-		) postActionExecServiceRes {
-			calcEarningItemService := func() {}
-			calcConsumedItemService := func() {}
-
+		) core.Count {
+			sum := core.Count(0)
+			for i := 0; i < execCount; i++ {
+				sum = sum + calcItemCount(minCount, maxCount, random)
+			}
+			return sum
 		}
 
-		return createPostActionExecServiceRes{
-			postActionExecService: postActionExecService,
+		earningItemData := earningItemRepo.BatchGet(exploreId)
+		result := []earnedItem{}
+		for _, v := range earningItemData {
+			earnedItem := earnedItem{
+				ItemId: v.ItemId,
+				Count:  execMultipleCalcItemCount(v.MinCount, v.MaxCount, random, execCount),
+			}
+			result = append(result, earnedItem)
 		}
+		return result
 	}
-*/
+
+	return createCalcEarnedItemServiceRes{
+		Calc: calcEarnedItemService,
+	}
+}
+
+type consumedItem struct {
+	ItemId core.ItemId
+	Count  core.Count
+}
+
+type createCalcConsumedItemServiceRes struct {
+	Calc func(ExploreId, int) []consumedItem
+}
+
+func createCalcConsumedItemService(
+	consumingItemRepo ConsumingItemRepo,
+	random core.IRandom,
+) createCalcConsumedItemServiceRes {
+	calcConsumedItemService := func(
+		exploreId ExploreId,
+		execCount int,
+	) []consumedItem {
+		simMultipleItemCount := func(
+			maxCount core.Count,
+			random core.IRandom,
+			consumptionProb ConsumptionProb,
+			execCount int,
+		) core.Count {
+			result := 0
+			// TODO: using approximation to avoid using "for" statement
+			for i := 0; i < execCount*int(maxCount); i++ {
+				rand := random.Emit()
+				if rand < float32(consumptionProb) {
+					result += 1
+				}
+			}
+			/*
+				challengeNum := maxCount * core.Count(execCount)
+				mu := float32(challengeNum) * float32(consumptionProb)
+				sigma := float32(challengeNum) * float32(consumptionProb) * (1 - float32(consumptionProb))
+				result := core.Count(math.Round(float64(core.GenerateFromNormalDist(random, mu, sigma))))
+			*/
+			return core.Count(result)
+		}
+
+		consumingItemData := consumingItemRepo.BatchGet(exploreId)
+		result := []consumedItem{}
+		for _, v := range consumingItemData {
+			consumedItem := consumedItem{
+				ItemId: v.ItemId,
+				Count:  simMultipleItemCount(v.MaxCount, random, v.ConsumptionProb, execCount),
+			}
+			result = append(result, consumedItem)
+		}
+		return result
+	}
+
+	return createCalcConsumedItemServiceRes{
+		Calc: calcConsumedItemService,
+	}
+}
+
 type skillGrowthResult struct {
 	SkillId core.SkillId
 	GainSum GainingPoint
@@ -462,3 +559,105 @@ func createCalcSkillGrowthService(
 	}
 	return calcSkillGrowthService{Calc: calcSkillGrowth}
 }
+
+type growthApplyResult struct {
+	SkillId   core.SkillId
+	GainSum   GainingPoint
+	BeforeLv  core.SkillLv
+	BeforeExp core.SkillExp
+	AfterLv   core.SkillLv
+	AfterExp  core.SkillExp
+	WasLvUp   bool
+}
+
+type growthApplyRes struct {
+	Create func(core.UserId, core.AccessToken, []skillGrowthResult) []growthApplyResult
+}
+
+func calcSkillGrowthApplyResultService(
+	userSkillRepo UserSkillRepo,
+) growthApplyRes {
+	create := func(
+		userId core.UserId,
+		token core.AccessToken,
+		skillGrowth []skillGrowthResult,
+	) []growthApplyResult {
+		toSkillId := func(skillGrowthResults []skillGrowthResult) []core.SkillId {
+			result := make([]core.SkillId, len(skillGrowthResults))
+			for i, v := range skillGrowthResults {
+				result[i] = v.SkillId
+			}
+			return result
+		}
+
+		makeSkillGrowthMap := func(skillGrowthResults []skillGrowthResult) map[core.SkillId]skillGrowthResult {
+			result := make(map[core.SkillId]skillGrowthResult)
+			for _, v := range skillGrowthResults {
+				result[v.SkillId] = v
+			}
+			return result
+		}
+
+		applySkillGrowth := func(userSkill UserSkillRes, skillGrowth skillGrowthResult) growthApplyResult {
+			return growthApplyResult{}
+		}
+
+		skillGrowthMap := makeSkillGrowthMap(skillGrowth)
+		skillsRes, err := userSkillRepo.BatchGet(userId, toSkillId(skillGrowth), token)
+		if err != nil {
+			return []growthApplyResult{}
+		}
+
+		result := make([]growthApplyResult, len(skillsRes.Skills))
+		for i, v := range skillsRes.Skills {
+			userSkill := v
+			result[i] = applySkillGrowth(userSkill, skillGrowthMap[userSkill.SkillId])
+		}
+		return result
+	}
+
+	return growthApplyRes{
+		Create: create,
+	}
+}
+
+type PostActionRes struct {
+}
+
+type createPostActionResultRes struct {
+	Post func([]skillGrowthResult, []earnedItem, []consumedItem) PostActionRes
+}
+
+func CreatePostActionExecService(
+	userSkillRepo UserSkillRepo,
+	itemStorageRepo ItemStorageRepo,
+) createPostActionResultRes {
+	postResult := func(
+		skillGrowth []skillGrowthResult,
+		earnedItems []earnedItem,
+		consumedItems []consumedItem,
+	) PostActionRes {
+		return PostActionRes{}
+	}
+
+	return createPostActionResultRes{Post: postResult}
+}
+
+/*
+func CreatePostActionExecService(
+	skillGrowthDataRepo SkillGrowthDataRepo,
+) createPostActionExecServiceRes {
+	postActionExecService := func(
+		exploreId ExploreId,
+		execCount int,
+	) postActionExecServiceRes {
+		calcEarningItemService := func() {}
+		calcConsumedItemService := func() {}
+
+	}
+
+	return createPostActionExecServiceRes{
+		postActionExecService: postActionExecService,
+	}
+}
+*/

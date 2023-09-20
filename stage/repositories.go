@@ -62,9 +62,9 @@ type SkillMasterRepo interface {
 }
 
 type UserSkillRes struct {
-	UserId  core.UserId
-	SkillId core.SkillId
-	SkillLv core.SkillLv
+	UserId   core.UserId
+	SkillId  core.SkillId
+	SkillExp core.SkillExp
 }
 
 type BatchGetUserSkillRes struct {
@@ -167,4 +167,24 @@ type GetAllUserStagesRes struct {
 
 type UserStageRepo interface {
 	GetAllUserStages(core.UserId, []StageId) (GetAllUserStagesRes, error)
+}
+
+type EarningItem struct {
+	ItemId   core.ItemId
+	MinCount core.Count
+	MaxCount core.Count
+}
+
+type EarningItemRepo interface {
+	BatchGet(ExploreId) []EarningItem
+}
+
+type ConsumingItem struct {
+	ItemId          core.ItemId
+	MaxCount        core.Count
+	ConsumptionProb ConsumptionProb
+}
+
+type ConsumingItemRepo interface {
+	BatchGet(ExploreId) []ConsumingItem
 }
