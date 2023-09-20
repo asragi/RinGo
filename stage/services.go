@@ -599,7 +599,24 @@ func calcSkillGrowthApplyResultService(
 		}
 
 		applySkillGrowth := func(userSkill UserSkillRes, skillGrowth skillGrowthResult) growthApplyResult {
-			return growthApplyResult{}
+			if userSkill.SkillId != skillGrowth.SkillId {
+				// TODO: proper error handling
+				panic("invalid apply skill growth!")
+			}
+			beforeExp := userSkill.SkillExp
+			afterExp := skillGrowth.GainSum.ApplyTo(beforeExp)
+			beforeLv := beforeExp.CalcLv()
+			afterLv := afterExp.CalcLv()
+			wasLvUp := beforeLv != afterLv
+			return growthApplyResult{
+				SkillId:   userSkill.SkillId,
+				GainSum:   skillGrowth.GainSum,
+				BeforeLv:  beforeLv,
+				BeforeExp: beforeExp,
+				AfterLv:   afterLv,
+				AfterExp:  afterExp,
+				WasLvUp:   wasLvUp,
+			}
 		}
 
 		skillGrowthMap := makeSkillGrowthMap(skillGrowth)
