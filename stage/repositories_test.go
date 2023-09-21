@@ -6,6 +6,23 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+var (
+	itemMasterRepo        = CreateMockItemMasterRepo()
+	itemStorageRepo       = CreateMockItemStorageRepo()
+	itemStorageUpdateRepo = createMockItemStorageUpdateRepo()
+	userExploreRepo       = createMockUserExploreRepo()
+	conditionRepo         = createMockExploreConditionRepo()
+	exploreMasterRepo     = createMockExploreMasterRepo()
+	skillMasterRepo       = createMockSkillMasterRepo()
+	userSkillRepo         = createMockUserSkillRepo()
+	skillGrowthUpdateRepo = createMockSkillUpdateRepo()
+	userStageRepo         = createMockUserStageRepo()
+	stageMasterRepo       = createMockStageMasterRepo()
+	skillGrowthDataRepo   = createMockSkillGrowthDataRepo()
+	earningItemRepo       = createMockEarningItemRepo()
+	consumingItemRepo     = createMockConsumingItemRepo()
+)
+
 type MockItemMaster struct {
 	ItemId      core.ItemId
 	Price       core.Price
