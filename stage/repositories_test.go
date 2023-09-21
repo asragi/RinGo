@@ -489,6 +489,18 @@ var MockSkillGrowthData = map[ExploreId][]SkillGrowthData{
 			GainingPoint: 10,
 		},
 	},
+	mockStageExploreIds[0]: {
+		{
+			ExploreId:    mockExploreIds[0],
+			SkillId:      mockSkillIds[0],
+			GainingPoint: 10,
+		},
+		{
+			ExploreId:    mockExploreIds[0],
+			SkillId:      mockSkillIds[1],
+			GainingPoint: 10,
+		},
+	},
 }
 
 func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
@@ -527,6 +539,13 @@ var mockEarningItemData = map[ExploreId][]EarningItem{
 			ItemId:   MockItemIds[2],
 			MinCount: 10,
 			MaxCount: 100,
+		},
+	},
+	mockStageExploreIds[0]: {
+		{
+			ItemId:   MockItemIds[0],
+			MinCount: 10,
+			MaxCount: 60,
 		},
 	},
 }
@@ -568,8 +587,51 @@ var mockConsumingItemData = map[ExploreId][]ConsumingItem{
 			MaxCount:        100,
 		},
 	},
+	mockStageExploreIds[0]: {
+		{
+			ItemId:          MockItemIds[2],
+			ConsumptionProb: 1,
+			MaxCount:        1,
+		},
+	},
 }
 
 func createMockConsumingItemRepo() *mockConsumingItemRepo {
 	return &mockConsumingItemRepo{Data: mockConsumingItemData}
+}
+
+type mockItemStorageUpdateRepo struct {
+	Data map[core.UserId][]ItemStock
+}
+
+func (m *mockItemStorageUpdateRepo) Update(userId core.UserId, items []ItemStock, _ core.AccessToken) error {
+	m.Data = make(map[core.UserId][]ItemStock)
+	m.Data[userId] = items
+	return nil
+}
+
+func (m *mockItemStorageUpdateRepo) Get(userId core.UserId) []ItemStock {
+	return m.Data[userId]
+}
+
+func createMockItemStorageUpdateRepo() *mockItemStorageUpdateRepo {
+	return &mockItemStorageUpdateRepo{}
+}
+
+type mockSkillUpdateRepo struct {
+	Data map[core.UserId][]SkillGrowthPostRow
+}
+
+func (m *mockSkillUpdateRepo) Update(req SkillGrowthPost) error {
+	m.Data = make(map[core.UserId][]SkillGrowthPostRow)
+	m.Data[req.UserId] = req.SkillGrowth
+	return nil
+}
+
+func (m *mockSkillUpdateRepo) Get(userId core.UserId) []SkillGrowthPostRow {
+	return m.Data[userId]
+}
+
+func createMockSkillUpdateRepo() *mockSkillUpdateRepo {
+	return &mockSkillUpdateRepo{}
 }

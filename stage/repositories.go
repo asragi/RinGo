@@ -47,16 +47,6 @@ type ItemStorageUpdateRepo interface {
 	Update(core.UserId, []ItemStock, core.AccessToken) error
 }
 
-type RequiredItemData struct {
-	ExploreId       ExploreId
-	ItemId          core.ItemId
-	ConsumptionProb ConsumptionProb
-}
-
-type RequiredItemRepo interface {
-	Get(ExploreId) []RequiredItemData
-}
-
 // Skill
 type SkillMaster struct {
 	SkillId     core.SkillId
@@ -110,7 +100,7 @@ type SkillGrowthPost struct {
 
 // Skill Growth User
 type SkillGrowthPostRepo interface {
-	Update(SkillGrowthPost)
+	Update(SkillGrowthPost) error
 }
 
 // Explore
