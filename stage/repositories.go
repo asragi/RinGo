@@ -14,6 +14,7 @@ type GetItemMasterRes struct {
 
 type ItemMasterRepo interface {
 	Get(core.ItemId) (GetItemMasterRes, error)
+	BatchGet([]core.ItemId) ([]GetItemMasterRes, error)
 }
 
 type GetItemStorageRes struct {
@@ -35,6 +36,15 @@ type BatchGetStorageRes struct {
 type ItemStorageRepo interface {
 	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
 	BatchGet(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
+}
+
+type ItemStock struct {
+	ItemId     core.ItemId
+	AfterStock core.Stock
+}
+
+type ItemStorageUpdateRepo interface {
+	Update(core.UserId, []ItemStock, core.AccessToken) error
 }
 
 type RequiredItemData struct {
@@ -85,6 +95,22 @@ type SkillGrowthData struct {
 
 type SkillGrowthDataRepo interface {
 	BatchGet(ExploreId) []SkillGrowthData
+}
+
+type SkillGrowthPostRow struct {
+	SkillId  core.SkillId
+	SkillExp core.SkillExp
+}
+
+type SkillGrowthPost struct {
+	UserId      core.UserId
+	AccessToken core.AccessToken
+	SkillGrowth []SkillGrowthPostRow
+}
+
+// Skill Growth User
+type SkillGrowthPostRepo interface {
+	Update(SkillGrowthPost)
 }
 
 // Explore

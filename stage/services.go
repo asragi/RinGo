@@ -20,10 +20,10 @@ type getUserItemDetailRes struct {
 	Description  core.Description
 	MaxStock     core.MaxStock
 	Stock        core.Stock
-	UserExplores []UserExplore
+	UserExplores []userExplore
 }
 
-type UserExplore struct {
+type userExplore struct {
 	ExploreId   ExploreId
 	DisplayName core.DisplayName
 	IsKnown     core.IsKnown
@@ -122,7 +122,7 @@ func CreateItemService(
 	conditionRepo ConditionRepo,
 ) itemService {
 
-	getAllAction := func(req GetUserItemDetailReq) []UserExplore {
+	getAllAction := func(req GetUserItemDetailReq) []userExplore {
 		explores, err := exploreMasterRepo.GetAllExploreMaster(req.ItemId)
 		if err != nil {
 			return nil
@@ -186,7 +186,7 @@ type stageInformation struct {
 	DisplayName  core.DisplayName
 	IsKnown      core.IsKnown
 	Description  core.Description
-	UserExplores []UserExplore
+	UserExplores []userExplore
 }
 
 type getStageListRes struct {
@@ -206,7 +206,7 @@ func makeUserExploreArray(
 	conditionRepo ConditionRepo,
 	userSkillRepo UserSkillRepo,
 	itemStorageRepo ItemStorageRepo,
-) []UserExplore {
+) []userExplore {
 	itemDataToStockMap := func(arr []ItemData) map[core.ItemId]core.Stock {
 		result := make(map[core.ItemId]core.Stock)
 		for _, v := range arr {
@@ -241,11 +241,11 @@ func makeUserExploreArray(
 	}
 	skillLvList := skillDataToLvMap(batchGetSkillRes.Skills)
 
-	result := make([]UserExplore, len(exploreIds))
+	result := make([]userExplore, len(exploreIds))
 	for i, v := range exploreIds {
 		isPossible := checkIsExplorePossible(exploreConditionMap[v], itemStockList, skillLvList)
 		isKnown := exploreMap[v].IsKnown
-		result[i] = UserExplore{
+		result[i] = userExplore{
 			ExploreId:   v,
 			IsPossible:  isPossible,
 			IsKnown:     isKnown,
@@ -281,7 +281,7 @@ func CreateGetStageListService(
 			return result
 		}
 
-		getAllAction := func(stageIds []StageId) map[StageId][]UserExplore {
+		getAllAction := func(stageIds []StageId) map[StageId][]userExplore {
 			exploreToIdArr := func(masters []StageExploreMasterRes) []ExploreId {
 				result := []ExploreId{}
 				for _, v := range masters {
@@ -340,17 +340,17 @@ func CreateGetStageListService(
 
 			stageIdExploreMap := exploreToStageIdMap(allExploreActionRes.StageExplores)
 
-			userExploreFetchedMap := make(map[ExploreId]UserExplore)
+			userExploreFetchedMap := make(map[ExploreId]userExplore)
 
 			for _, v := range exploreArray {
 				userExploreFetchedMap[v.ExploreId] = v
 			}
 
-			result := make(map[StageId][]UserExplore)
+			result := make(map[StageId][]userExplore)
 
 			for _, v := range allExploreActionRes.StageExplores {
 				if _, ok := result[v.StageId]; !ok {
-					result[v.StageId] = []UserExplore{}
+					result[v.StageId] = []userExplore{}
 				}
 				for _, w := range stageIdExploreMap[v.StageId] {
 					result[v.StageId] = append(result[v.StageId], userExploreFetchedMap[w])
@@ -395,20 +395,6 @@ func CreateGetStageListService(
 	return getStageListService{
 		GetAllStage: getAllStage,
 	}
-}
-
-type grownSkillRow struct {
-	SkillId core.SkillId
-}
-
-type skillGrowthServiceRes struct {
-}
-
-type postActionExecServiceRes struct {
-}
-
-type createPostActionExecServiceRes struct {
-	postActionExecService func() postActionExecServiceRes
 }
 
 type earnedItem struct {
@@ -638,43 +624,186 @@ func calcSkillGrowthApplyResultService(
 	}
 }
 
+type totalItem struct {
+	ItemId core.ItemId
+	Stock  core.Stock
+}
+
+type createTotalItemServiceRes struct {
+	Calc func(core.UserId, core.AccessToken, []earnedItem, []consumedItem) []totalItem
+}
+
+func createTotalItemService(
+	itemStorageRepo ItemStorageRepo,
+	itemMasterRepo ItemMasterRepo,
+) createTotalItemServiceRes {
+	calc := func(
+		userId core.UserId,
+		token core.AccessToken,
+		earnedItems []earnedItem,
+		consumedItems []consumedItem,
+	) []totalItem {
+		allItemId := func(earnedItems []earnedItem, consumedItems []consumedItem) []core.ItemId {
+			result := []core.ItemId{}
+			existMap := make(map[core.ItemId]bool)
+			for _, v := range earnedItems {
+				if _, ok := existMap[v.ItemId]; ok {
+					continue
+				}
+				existMap[v.ItemId] = true
+				result = append(result, v.ItemId)
+			}
+			for _, v := range consumedItems {
+				if _, ok := existMap[v.ItemId]; ok {
+					continue
+				}
+				existMap[v.ItemId] = true
+				result = append(result, v.ItemId)
+			}
+			return result
+		}(earnedItems, consumedItems)
+
+		earnedItemMap := func(earnedItems []earnedItem) map[core.ItemId]earnedItem {
+			result := make(map[core.ItemId]earnedItem)
+			for _, v := range earnedItems {
+				result[v.ItemId] = v
+			}
+			return result
+		}(earnedItems)
+
+		consumedItemMap := func(consumedItems []consumedItem) map[core.ItemId]consumedItem {
+			result := make(map[core.ItemId]consumedItem)
+			for _, v := range consumedItems {
+				result[v.ItemId] = v
+			}
+			return result
+		}(consumedItems)
+
+		allItemRes, err := itemStorageRepo.BatchGet(userId, allItemId, token)
+		if err != nil {
+			return []totalItem{}
+		}
+
+		storageMap := func(stocks []ItemData) map[core.ItemId]core.Stock {
+			result := make(map[core.ItemId]core.Stock)
+			for _, v := range stocks {
+				result[v.ItemId] = v.Stock
+			}
+			return result
+		}(allItemRes.ItemData)
+
+		allMasterRes, err := itemMasterRepo.BatchGet(allItemId)
+		if err != nil {
+			return []totalItem{}
+		}
+		maxStockMap := func(masters []GetItemMasterRes) map[core.ItemId]core.MaxStock {
+			result := make(map[core.ItemId]core.MaxStock)
+			for _, v := range masters {
+				result[v.ItemId] = v.MaxStock
+			}
+			return result
+		}(allMasterRes)
+
+		return func(
+			allItem []core.ItemId,
+			storageMap map[core.ItemId]core.Stock,
+			maxStockMap map[core.ItemId]core.MaxStock,
+			earnedItemMap map[core.ItemId]earnedItem,
+			consumedItemMap map[core.ItemId]consumedItem,
+		) []totalItem {
+			result := make([]totalItem, len(allItem))
+			for i, v := range allItem {
+				stock := storageMap[v]
+				diff := core.Count(0)
+				if _, ok := earnedItemMap[v]; ok {
+					diff += earnedItemMap[v].Count
+				}
+				if _, ok := consumedItemMap[v]; ok {
+					diff -= consumedItemMap[v].Count
+				}
+				afterStock := stock.Apply(diff, maxStockMap[v])
+				result[i] = totalItem{
+					ItemId: v,
+					Stock:  afterStock,
+				}
+			}
+			return result
+		}(allItemId, storageMap, maxStockMap, earnedItemMap, consumedItemMap)
+	}
+
+	return createTotalItemServiceRes{Calc: calc}
+}
+
 type PostActionRes struct {
 }
 
 type createPostActionResultRes struct {
-	Post func([]skillGrowthResult, []earnedItem, []consumedItem) PostActionRes
+	Post func(core.UserId, core.AccessToken, ExploreId, int) PostActionRes
 }
 
 func CreatePostActionExecService(
+	itemMasterRepo ItemMasterRepo,
 	userSkillRepo UserSkillRepo,
 	itemStorageRepo ItemStorageRepo,
+	itemStorageUpdateRepo ItemStorageUpdateRepo,
+	earningItemRepo EarningItemRepo,
+	consumingItemRepo ConsumingItemRepo,
+	skillGrowthRepo SkillGrowthDataRepo,
+	skillGrowthPostRepo SkillGrowthPostRepo,
+	random core.IRandom,
 ) createPostActionResultRes {
+	calcSkillGrowthService := createCalcSkillGrowthService(skillGrowthRepo)
+	calcSkillGrowthApplyService := calcSkillGrowthApplyResultService(userSkillRepo)
+	calcEarnedItemService := createCalcEarnedItemService(earningItemRepo, random)
+	calcConsumedItemService := createCalcConsumedItemService(consumingItemRepo, random)
+	totalItemService := createTotalItemService(itemStorageRepo, itemMasterRepo)
+
 	postResult := func(
-		skillGrowth []skillGrowthResult,
-		earnedItems []earnedItem,
-		consumedItems []consumedItem,
+		userId core.UserId,
+		token core.AccessToken,
+		exploreId ExploreId,
+		execCount int,
 	) PostActionRes {
+		skillGrowth := calcSkillGrowthService.Calc(exploreId, execCount)
+		growthApplyResults := calcSkillGrowthApplyService.Create(userId, token, skillGrowth)
+		skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
+			result := make([]SkillGrowthPostRow, len(skillGrowth))
+			for i, v := range skillGrowth {
+				result[i] = SkillGrowthPostRow{
+					SkillId:  v.SkillId,
+					SkillExp: v.AfterExp,
+				}
+			}
+			return result
+		}(growthApplyResults)
+		earnedItems := calcEarnedItemService.Calc(exploreId, execCount)
+		consumedItems := calcConsumedItemService.Calc(exploreId, execCount)
+		totalItemRes := totalItemService.Calc(userId, token, earnedItems, consumedItems)
+		itemStockReq := func(totalItems []totalItem) []ItemStock {
+			result := make([]ItemStock, len(totalItems))
+			for i, v := range totalItems {
+				result[i] = ItemStock{
+					ItemId:     v.ItemId,
+					AfterStock: v.Stock,
+				}
+			}
+			return result
+		}(totalItemRes)
+
+		// POST
+		skillGrowthPostRepo.Update(SkillGrowthPost{
+			UserId:      userId,
+			AccessToken: token,
+			SkillGrowth: skillGrowthReq,
+		})
+		itemStorageUpdateRepo.Update(
+			userId,
+			itemStockReq,
+			token,
+		)
+
 		return PostActionRes{}
 	}
 
 	return createPostActionResultRes{Post: postResult}
 }
-
-/*
-func CreatePostActionExecService(
-	skillGrowthDataRepo SkillGrowthDataRepo,
-) createPostActionExecServiceRes {
-	postActionExecService := func(
-		exploreId ExploreId,
-		execCount int,
-	) postActionExecServiceRes {
-		calcEarningItemService := func() {}
-		calcConsumedItemService := func() {}
-
-	}
-
-	return createPostActionExecServiceRes{
-		postActionExecService: postActionExecService,
-	}
-}
-*/

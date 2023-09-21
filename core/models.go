@@ -1,6 +1,9 @@
 package core
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 // common
 type CreatedAt time.Time
@@ -24,6 +27,10 @@ type Count int
 
 // item user
 type Stock int
+
+func (s Stock) Apply(count Count, max MaxStock) Stock {
+	return Stock(math.Max(0, math.Min(float64(s)+float64(count), float64(max))))
+}
 
 // skill master
 type SkillId string

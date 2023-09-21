@@ -71,6 +71,14 @@ func (m *MockItemMasterRepo) Get(itemId core.ItemId) (GetItemMasterRes, error) {
 	}, nil
 }
 
+func (m *MockItemMasterRepo) BatchGet(ids []core.ItemId) ([]GetItemMasterRes, error) {
+	result := make([]GetItemMasterRes, len(ids))
+	for i, v := range ids {
+		result[i], _ = m.Get(v)
+	}
+	return result, nil
+}
+
 func CreateMockItemMasterRepo() *MockItemMasterRepo {
 	itemMasterRepo := MockItemMasterRepo{}
 	items := make(map[core.ItemId]MockItemMaster)
