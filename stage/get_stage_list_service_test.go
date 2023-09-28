@@ -23,7 +23,8 @@ func TestCreateGetStageListService(t *testing.T) {
 		exploreMasterRepo,
 		userExploreRepo,
 		userSkillRepo,
-		conditionRepo,
+		consumingItemRepo,
+		requiredSkillRepo,
 	)
 
 	getStageListService := createService.GetAllStage
@@ -62,7 +63,7 @@ func TestCreateGetStageListService(t *testing.T) {
 
 	for _, v := range testCases {
 		req := v.request
-		res := getStageListService(req.UserId, req.Token)
+		res, _ := getStageListService(req.UserId, req.Token)
 		infos := res.Information
 		checkInt(t, "check response length", len(v.expect.Information), len(infos))
 		for j, w := range v.expect.Information {

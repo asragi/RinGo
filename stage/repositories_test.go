@@ -11,7 +11,6 @@ var (
 	itemStorageRepo       = CreateMockItemStorageRepo()
 	itemStorageUpdateRepo = createMockItemStorageUpdateRepo()
 	userExploreRepo       = createMockUserExploreRepo()
-	conditionRepo         = createMockExploreConditionRepo()
 	exploreMasterRepo     = createMockExploreMasterRepo()
 	skillMasterRepo       = createMockSkillMasterRepo()
 	userSkillRepo         = createMockUserSkillRepo()
@@ -21,6 +20,7 @@ var (
 	skillGrowthDataRepo   = createMockSkillGrowthDataRepo()
 	earningItemRepo       = createMockEarningItemRepo()
 	consumingItemRepo     = createMockConsumingItemRepo()
+	requiredSkillRepo     = createMockRequiredSkillRepo()
 )
 
 type MockItemMaster struct {
@@ -167,45 +167,6 @@ var MockExplores map[core.UserId]ExploreUserData = map[core.UserId]ExploreUserDa
 	},
 }
 
-var MockConditions map[ExploreId][]Condition = map[ExploreId][]Condition{
-	mockExploreIds[0]: {
-		{
-			ConditionId:          "enough-stick",
-			ConditionType:        ConditionTypeItem,
-			ConditionTargetId:    ConditionTargetId(MockItems[2].ItemId),
-			ConditionTargetValue: ConditionTargetValue(10),
-		},
-		{
-			ConditionId:          "enough-apple-lv",
-			ConditionType:        ConditionTypeSkill,
-			ConditionTargetId:    ConditionTargetId(MockSkillMaster[0].SkillId),
-			ConditionTargetValue: ConditionTargetValue(3),
-		},
-	},
-	mockExploreIds[1]: {
-		{
-			ConditionId:          "enough-apple",
-			ConditionType:        ConditionTypeItem,
-			ConditionTargetId:    ConditionTargetId(MockItems[1].ItemId),
-			ConditionTargetValue: ConditionTargetValue(10),
-		},
-		{
-			ConditionId:          "enough-apple-burned",
-			ConditionType:        ConditionTypeItem,
-			ConditionTargetId:    ConditionTargetId(MockItems[2].ItemId),
-			ConditionTargetValue: ConditionTargetValue(100),
-		},
-	},
-	mockStageExploreIds[1]: {
-		{
-			ConditionId:          "enough-apple",
-			ConditionType:        ConditionTypeItem,
-			ConditionTargetId:    ConditionTargetId(MockItemIds[0]),
-			ConditionTargetValue: 1000,
-		},
-	},
-}
-
 type MockUserExploreRepo struct {
 	Data map[core.UserId]map[ExploreId]ExploreUserData
 }
@@ -246,34 +207,12 @@ func createMockUserExploreRepo() *MockUserExploreRepo {
 	return &repo
 }
 
-type MockExploreConditionRepo struct {
-	Data map[ExploreId][]Condition
-}
-
-func (m *MockExploreConditionRepo) GetAllConditions(id []ExploreId) (GetAllConditionsRes, error) {
-	result := make([]ExploreConditions, len(id))
-	for i, v := range id {
-		s := ExploreConditions{
-			ExploreId:  v,
-			Conditions: m.Data[v],
-		}
-		result[i] = s
-	}
-	return GetAllConditionsRes{Explores: result}, nil
-}
-
-func createMockExploreConditionRepo() *MockExploreConditionRepo {
-	repo := MockExploreConditionRepo{}
-	repo.Data = MockConditions
-	return &repo
-}
-
 var mockExploreIds = []ExploreId{
 	ExploreId("burn-apple"),
 	ExploreId("make-sword"),
 }
 
-var mockExploreMaster = map[core.ItemId][]GetAllExploreMasterRes{
+var mockExploreMaster = map[core.ItemId][]GetExploreMasterRes{
 	MockItems[0].ItemId: {
 		{
 			ExploreId:   mockExploreIds[0],
@@ -298,7 +237,7 @@ var mockStageIds = []StageId{
 	StageId("volcano"),
 }
 
-var mockStageExploreMaster = map[StageId][]GetAllExploreMasterRes{
+var mockStageExploreMaster = map[StageId][]GetExploreMasterRes{
 	mockStageIds[0]: {
 		{
 			ExploreId:   mockStageExploreIds[0],
@@ -314,11 +253,12 @@ var mockStageExploreMaster = map[StageId][]GetAllExploreMasterRes{
 }
 
 type MockExploreMasterRepo struct {
-	Data      map[core.ItemId][]GetAllExploreMasterRes
-	StageData map[StageId][]GetAllExploreMasterRes
+	Data       map[core.ItemId][]GetExploreMasterRes
+	StageData  map[StageId][]GetExploreMasterRes
+	ExploreMap map[ExploreId]GetExploreMasterRes
 }
 
-func (m *MockExploreMasterRepo) GetAllExploreMaster(itemId core.ItemId) ([]GetAllExploreMasterRes, error) {
+func (m *MockExploreMasterRepo) GetAllExploreMaster(itemId core.ItemId) ([]GetExploreMasterRes, error) {
 	return m.Data[itemId], nil
 }
 
@@ -335,10 +275,25 @@ func (m *MockExploreMasterRepo) GetStageAllExploreMaster(stageIdArr []StageId) (
 	return BatchGetStageExploreRes{result}, nil
 }
 
+func (m *MockExploreMasterRepo) Get(e ExploreId) (GetExploreMasterRes, error) {
+	return m.ExploreMap[e], nil
+}
+
 func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	repo := MockExploreMasterRepo{}
+	repo.ExploreMap = make(map[ExploreId]GetExploreMasterRes)
 	repo.Data = mockExploreMaster
 	repo.StageData = mockStageExploreMaster
+	for _, v := range repo.Data {
+		for _, w := range v {
+			repo.ExploreMap[w.ExploreId] = w
+		}
+	}
+	for _, v := range repo.StageData {
+		for _, w := range v {
+			repo.ExploreMap[w.ExploreId] = w
+		}
+	}
 	return &repo
 }
 
@@ -458,6 +413,10 @@ type mockStageMasterRepo struct {
 	Data map[StageId]StageMaster
 }
 
+func (m *mockStageMasterRepo) Get(stageId StageId) (StageMaster, error) {
+	return m.Data[stageId], nil
+}
+
 func (m *mockStageMasterRepo) GetAllStages() (GetAllStagesRes, error) {
 	result := []StageMaster{}
 	for _, v := range m.Data {
@@ -575,8 +534,19 @@ type mockConsumingItemRepo struct {
 	Data map[ExploreId][]ConsumingItem
 }
 
-func (m *mockConsumingItemRepo) BatchGet(exploreId ExploreId) []ConsumingItem {
-	return m.Data[exploreId]
+func (m *mockConsumingItemRepo) BatchGet(exploreId ExploreId) ([]ConsumingItem, error) {
+	return m.Data[exploreId], nil
+}
+
+func (m *mockConsumingItemRepo) AllGet(exploreId []ExploreId) ([]BatchGetConsumingItemRes, error) {
+	result := make([]BatchGetConsumingItemRes, len(exploreId))
+	for i, v := range exploreId {
+		result[i] = BatchGetConsumingItemRes{
+			ExploreId:      v,
+			ConsumingItems: m.Data[v],
+		}
+	}
+	return result, nil
 }
 
 var mockConsumingItemData = map[ExploreId][]ConsumingItem{
@@ -584,11 +554,11 @@ var mockConsumingItemData = map[ExploreId][]ConsumingItem{
 		{
 			ItemId:          MockItemIds[0],
 			ConsumptionProb: 1,
-			MaxCount:        100,
+			MaxCount:        10,
 		},
 		{
 			ItemId:          MockItemIds[1],
-			MaxCount:        1000,
+			MaxCount:        15,
 			ConsumptionProb: 0.5,
 		},
 	},
@@ -611,10 +581,44 @@ var mockConsumingItemData = map[ExploreId][]ConsumingItem{
 			MaxCount:        1,
 		},
 	},
+	mockStageExploreIds[1]: {
+		{
+			ItemId:          MockItemIds[0],
+			ConsumptionProb: 1,
+			MaxCount:        1000,
+		},
+	},
 }
 
 func createMockConsumingItemRepo() *mockConsumingItemRepo {
 	return &mockConsumingItemRepo{Data: mockConsumingItemData}
+}
+
+type mockRequiredSkillRepo struct {
+	Data map[ExploreId][]RequiredSkill
+}
+
+func (m *mockRequiredSkillRepo) Get(exploreId ExploreId) ([]RequiredSkill, error) {
+	if _, ok := m.Data[exploreId]; !ok {
+		return []RequiredSkill{}, nil
+	}
+	return m.Data[exploreId], nil
+}
+
+func (m *mockRequiredSkillRepo) BatchGet(ids []ExploreId) ([]RequiredSkillRow, error) {
+	result := make([]RequiredSkillRow, len(ids))
+	for i, v := range ids {
+		row := RequiredSkillRow{
+			ExploreId:      v,
+			RequiredSkills: m.Data[v],
+		}
+		result[i] = row
+	}
+	return result, nil
+}
+
+func createMockRequiredSkillRepo() *mockRequiredSkillRepo {
+	return &mockRequiredSkillRepo{}
 }
 
 type mockItemStorageUpdateRepo struct {

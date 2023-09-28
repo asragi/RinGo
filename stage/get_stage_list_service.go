@@ -1,6 +1,10 @@
 package stage
 
-import "github.com/asragi/RinGo/core"
+import (
+	"fmt"
+
+	"github.com/asragi/RinGo/core"
+)
 
 type stageInformation struct {
 	StageId      StageId
@@ -15,7 +19,7 @@ type getStageListRes struct {
 }
 
 type getStageListService struct {
-	GetAllStage func(core.UserId, core.AccessToken) getStageListRes
+	GetAllStage func(core.UserId, core.AccessToken) (getStageListRes, error)
 }
 
 func CreateGetStageListService(
@@ -25,9 +29,13 @@ func CreateGetStageListService(
 	exploreMasterRepo ExploreMasterRepo,
 	userExploreRepo UserExploreRepo,
 	userSkillRepo UserSkillRepo,
-	conditionRepo ConditionRepo,
+	consumingItemRepo ConsumingItemRepo,
+	requiredSkillRepo RequiredSkillRepo,
 ) getStageListService {
-	getAllStage := func(userId core.UserId, token core.AccessToken) getStageListRes {
+	getAllStage := func(userId core.UserId, token core.AccessToken) (getStageListRes, error) {
+		handleError := func(err error) (getStageListRes, error) {
+			return getStageListRes{}, fmt.Errorf("error on getAllStage: %w", err)
+		}
 		stagesToIdArr := func(stages []StageMaster) []StageId {
 			result := make([]StageId, len(stages))
 			for i, v := range stages {
@@ -55,8 +63,8 @@ func CreateGetStageListService(
 				return result
 			}
 
-			exploreToMap := func(masters []StageExploreMasterRes) map[ExploreId]GetAllExploreMasterRes {
-				result := make(map[ExploreId]GetAllExploreMasterRes)
+			exploreToMap := func(masters []StageExploreMasterRes) map[ExploreId]GetExploreMasterRes {
+				result := make(map[ExploreId]GetExploreMasterRes)
 				for _, v := range masters {
 					for _, w := range v.Explores {
 						result[w.ExploreId] = w
@@ -90,13 +98,14 @@ func CreateGetStageListService(
 			}
 			userExploreMap := makeExploreIdMap(userExploreRes.Explores)
 
-			exploreArray := makeUserExploreArray(
+			exploreArray, err := makeUserExploreArray(
 				userId,
 				token,
 				exploreIds,
 				exploreMap,
 				userExploreMap,
-				conditionRepo,
+				requiredSkillRepo,
+				consumingItemRepo,
 				userSkillRepo,
 				itemStorageRepo,
 			)
@@ -125,14 +134,14 @@ func CreateGetStageListService(
 
 		masterRes, err := stageMasterRepo.GetAllStages()
 		if err != nil {
-			return getStageListRes{}
+			return handleError(err)
 		}
 		stages := masterRes.Stages
 		allStageIds := stagesToIdArr(stages)
 
 		userStageRes, err := userStageRepo.GetAllUserStages(userId, allStageIds)
 		if err != nil {
-			return getStageListRes{}
+			return handleError(err)
 		}
 		userStageMap := userStageToMap(userStageRes.UserStage)
 
@@ -152,7 +161,7 @@ func CreateGetStageListService(
 
 		return getStageListRes{
 			Information: result,
-		}
+		}, nil
 	}
 
 	return getStageListService{

@@ -14,6 +14,8 @@ type AccessToken string
 
 // user
 type UserId string
+type Fund int
+type Stamina int
 
 // display
 type DisplayName string

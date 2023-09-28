@@ -20,17 +20,5 @@ func (g GainingPoint) ApplyTo(exp core.SkillExp) core.SkillExp {
 // explore
 type ExploreId string
 
-// condition
-type ConditionId string
-type ConditionType string
-
-const (
-	ConditionTypeItem  = ConditionType("item")
-	ConditionTypeSkill = ConditionType("skill")
-)
-
-type ConditionTargetId string
-type ConditionTargetValue int
-
 // stage
 type StageId string

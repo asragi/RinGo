@@ -1,6 +1,10 @@
 package stage
 
-import "github.com/asragi/RinGo/core"
+import (
+	"fmt"
+
+	"github.com/asragi/RinGo/core"
+)
 
 type consumedItem struct {
 	ItemId core.ItemId
@@ -8,7 +12,7 @@ type consumedItem struct {
 }
 
 type createCalcConsumedItemServiceRes struct {
-	Calc func(ExploreId, int) []consumedItem
+	Calc func(ExploreId, int) ([]consumedItem, error)
 }
 
 func createCalcConsumedItemService(
@@ -18,7 +22,7 @@ func createCalcConsumedItemService(
 	calcConsumedItemService := func(
 		exploreId ExploreId,
 		execCount int,
-	) []consumedItem {
+	) ([]consumedItem, error) {
 		simMultipleItemCount := func(
 			maxCount core.Count,
 			random core.IRandom,
@@ -42,7 +46,10 @@ func createCalcConsumedItemService(
 			return core.Count(result)
 		}
 
-		consumingItemData := consumingItemRepo.BatchGet(exploreId)
+		consumingItemData, err := consumingItemRepo.BatchGet(exploreId)
+		if err != nil {
+			return []consumedItem{}, fmt.Errorf("consuming repo error: %w", err)
+		}
 		result := []consumedItem{}
 		for _, v := range consumingItemData {
 			consumedItem := consumedItem{
@@ -51,7 +58,7 @@ func createCalcConsumedItemService(
 			}
 			result = append(result, consumedItem)
 		}
-		return result
+		return result, nil
 	}
 
 	return createCalcConsumedItemServiceRes{

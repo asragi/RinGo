@@ -23,9 +23,10 @@ type GetItemStorageRes struct {
 }
 
 type ItemData struct {
-	UserId core.UserId
-	ItemId core.ItemId
-	Stock  core.Stock
+	UserId  core.UserId
+	ItemId  core.ItemId
+	Stock   core.Stock
+	IsKnown core.IsKnown
 }
 
 type BatchGetStorageRes struct {
@@ -104,15 +105,17 @@ type SkillGrowthPostRepo interface {
 }
 
 // Explore
-type GetAllExploreMasterRes struct {
-	ExploreId   ExploreId
-	DisplayName core.DisplayName
-	Description core.Description
+type GetExploreMasterRes struct {
+	ExploreId        ExploreId
+	DisplayName      core.DisplayName
+	Description      core.Description
+	ConsumingStamina core.Stamina
+	RequiredPayment  core.Price
 }
 
 type StageExploreMasterRes struct {
 	StageId  StageId
-	Explores []GetAllExploreMasterRes
+	Explores []GetExploreMasterRes
 }
 
 type BatchGetStageExploreRes struct {
@@ -120,7 +123,8 @@ type BatchGetStageExploreRes struct {
 }
 
 type ExploreMasterRepo interface {
-	GetAllExploreMaster(core.ItemId) ([]GetAllExploreMasterRes, error)
+	Get(ExploreId) (GetExploreMasterRes, error)
+	GetAllExploreMaster(core.ItemId) ([]GetExploreMasterRes, error)
 	GetStageAllExploreMaster([]StageId) (BatchGetStageExploreRes, error)
 }
 
@@ -138,24 +142,19 @@ type UserExploreRepo interface {
 	GetActions(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
 }
 
-type Condition struct {
-	ConditionId          ConditionId
-	ConditionType        ConditionType
-	ConditionTargetId    ConditionTargetId
-	ConditionTargetValue ConditionTargetValue
+type RequiredSkill struct {
+	SkillId    core.SkillId
+	RequiredLv core.SkillLv
 }
 
-type ExploreConditions struct {
-	ExploreId  ExploreId
-	Conditions []Condition
+type RequiredSkillRow struct {
+	ExploreId      ExploreId
+	RequiredSkills []RequiredSkill
 }
 
-type GetAllConditionsRes struct {
-	Explores []ExploreConditions
-}
-
-type ConditionRepo interface {
-	GetAllConditions([]ExploreId) (GetAllConditionsRes, error)
+type RequiredSkillRepo interface {
+	Get(ExploreId) ([]RequiredSkill, error)
+	BatchGet([]ExploreId) ([]RequiredSkillRow, error)
 }
 
 type StageMaster struct {
@@ -170,6 +169,7 @@ type GetAllStagesRes struct {
 
 type StageMasterRepo interface {
 	GetAllStages() (GetAllStagesRes, error)
+	Get(StageId) (StageMaster, error)
 }
 
 type UserStage struct {
@@ -201,6 +201,12 @@ type ConsumingItem struct {
 	ConsumptionProb ConsumptionProb
 }
 
+type BatchGetConsumingItemRes struct {
+	ExploreId      ExploreId
+	ConsumingItems []ConsumingItem
+}
+
 type ConsumingItemRepo interface {
-	BatchGet(ExploreId) []ConsumingItem
+	BatchGet(ExploreId) ([]ConsumingItem, error)
+	AllGet([]ExploreId) ([]BatchGetConsumingItemRes, error)
 }

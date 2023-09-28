@@ -6,7 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-func TestCreateItemService(t *testing.T) {
+func TestCreateGetItemDetailService(t *testing.T) {
 	type testRequest struct {
 		userId core.UserId
 		itemId core.ItemId
@@ -37,7 +37,9 @@ func TestCreateItemService(t *testing.T) {
 		userExploreRepo,
 		skillMasterRepo,
 		userSkillRepo,
-		conditionRepo)
+		consumingItemRepo,
+		requiredSkillRepo,
+	)
 	getUserItemDetail := itemService.GetUserItemDetail
 
 	testCases := []testCase{
@@ -73,7 +75,7 @@ func TestCreateItemService(t *testing.T) {
 			UserId: v.request.userId,
 			ItemId: targetId,
 		}
-		res := getUserItemDetail(req)
+		res, _ := getUserItemDetail(req)
 		// check proper id
 		if res.ItemId != targetId {
 			t.Errorf("want %s, actual %s", targetId, res.ItemId)

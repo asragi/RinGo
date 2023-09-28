@@ -1,12 +1,16 @@
 package stage
 
-import "github.com/asragi/RinGo/core"
+import (
+	"fmt"
+
+	"github.com/asragi/RinGo/core"
+)
 
 type PostActionRes struct {
 }
 
 type createPostActionResultRes struct {
-	Post func(core.UserId, core.AccessToken, ExploreId, int) PostActionRes
+	Post func(core.UserId, core.AccessToken, ExploreId, int) (PostActionRes, error)
 }
 
 func CreatePostActionExecService(
@@ -31,7 +35,7 @@ func CreatePostActionExecService(
 		token core.AccessToken,
 		exploreId ExploreId,
 		execCount int,
-	) PostActionRes {
+	) (PostActionRes, error) {
 		skillGrowth := calcSkillGrowthService.Calc(exploreId, execCount)
 		growthApplyResults := calcSkillGrowthApplyService.Create(userId, token, skillGrowth)
 		skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
@@ -45,7 +49,10 @@ func CreatePostActionExecService(
 			return result
 		}(growthApplyResults)
 		earnedItems := calcEarnedItemService.Calc(exploreId, execCount)
-		consumedItems := calcConsumedItemService.Calc(exploreId, execCount)
+		consumedItems, err := calcConsumedItemService.Calc(exploreId, execCount)
+		if err != nil {
+			return PostActionRes{}, fmt.Errorf("postResultError: %w", err)
+		}
 		totalItemRes := totalItemService.Calc(userId, token, earnedItems, consumedItems)
 		itemStockReq := func(totalItems []totalItem) []ItemStock {
 			result := make([]ItemStock, len(totalItems))
@@ -70,7 +77,7 @@ func CreatePostActionExecService(
 			token,
 		)
 
-		return PostActionRes{}
+		return PostActionRes{}, nil
 	}
 
 	return createPostActionResultRes{Post: postResult}
