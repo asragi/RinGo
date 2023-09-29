@@ -48,7 +48,13 @@ func createCommonGetActionDetail(
 	skillMasterRepo SkillMasterRepo,
 	userSkillRepo UserSkillRepo,
 	requiredSkillRepo RequiredSkillRepo,
+	reductionSkillRepo ReductionStaminaSkillRepo,
 ) createCommonGetActionDetailRes {
+	staminaReductionService := createCalcConsumingStaminaService(
+		userSkillRepo,
+		exploreMasterRepo,
+		reductionSkillRepo,
+	)
 	getActionDetail := func(
 		userId core.UserId,
 		exploreId ExploreId,
@@ -96,10 +102,13 @@ func createCommonGetActionDetail(
 			}
 			return result
 		}(consumingItems)
-		requiredStamina := func(baseStamina core.Stamina) core.Stamina {
-			// TODO: implement stamina reduction system
-			return baseStamina
+		requiredStamina, err := func(baseStamina core.Stamina) (core.Stamina, error) {
+			reducedStamina, err := staminaReductionService.Calc(userId, token, exploreId)
+			return reducedStamina, err
 		}(exploreMasterRes.ConsumingStamina)
+		if err != nil {
+			return handleError(err)
+		}
 		earningItems := func(exploreId ExploreId) []earningItemRes {
 			items := earningItemRepo.BatchGet(exploreId)
 			result := make([]earningItemRes, len(items))
@@ -194,6 +203,7 @@ func CreateGetStageActionDetailService(
 	userSkillRepo UserSkillRepo,
 	requiredSkillRepo RequiredSkillRepo,
 	stageMasterRepo StageMasterRepo,
+	reductionSkillRepo ReductionStaminaSkillRepo,
 ) createGetStageActionDetailRes {
 	getActionDetail := func(
 		userId core.UserId,
@@ -212,6 +222,7 @@ func CreateGetStageActionDetailService(
 			skillMasterRepo,
 			userSkillRepo,
 			requiredSkillRepo,
+			reductionSkillRepo,
 		)
 		getCommonActionRes, err := getCommonActionService.getAction(userId, exploreId, token)
 		if err != nil {

@@ -12,6 +12,7 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 		skillMasterRepo,
 		userSkillRepo,
 		requiredSkillRepo,
+		reductionSkillRepo,
 	)
 	type testCase struct {
 		request ExploreId
