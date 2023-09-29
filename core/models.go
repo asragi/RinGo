@@ -15,7 +15,13 @@ type AccessToken string
 // user
 type UserId string
 type Fund int
+
+// 1 point equals to 30 sec.
 type Stamina int
+
+func (s Stamina) Reduction(rate float64) Stamina {
+	return Stamina(float64(s) * rate)
+}
 
 // display
 type DisplayName string
@@ -39,6 +45,17 @@ type SkillId string
 
 // skill user
 type SkillLv int
+
+var MaxSkillLv = SkillLv(100)
+
+func (lv SkillLv) ApplySkillRate(rate float64) float64 {
+	if lv <= 1 {
+		return rate
+	}
+	skillRate := float64(MaxSkillLv-lv) / float64(MaxSkillLv)
+	return rate * skillRate
+}
+
 type SkillExp int
 
 func (exp SkillExp) CalcLv() SkillLv {

@@ -21,6 +21,7 @@ var (
 	earningItemRepo       = createMockEarningItemRepo()
 	consumingItemRepo     = createMockConsumingItemRepo()
 	requiredSkillRepo     = createMockRequiredSkillRepo()
+	reductionSkillRepo    = createMockReductionStaminaSkillRepo()
 )
 
 type MockItemMaster struct {
@@ -240,14 +241,20 @@ var mockStageIds = []StageId{
 var mockStageExploreMaster = map[StageId][]GetExploreMasterRes{
 	mockStageIds[0]: {
 		{
-			ExploreId:   mockStageExploreIds[0],
-			DisplayName: "りんごを拾いに行く",
-			Description: "木くずや石も拾えるかも",
+			ExploreId:            mockStageExploreIds[0],
+			DisplayName:          "りんごを拾いに行く",
+			Description:          "木くずや石も拾えるかも",
+			ConsumingStamina:     120,
+			RequiredPayment:      0,
+			StaminaReducibleRate: 0.5,
 		},
 		{
-			ExploreId:   mockStageExploreIds[1],
-			DisplayName: "錬金術でりんごを金に変える",
-			Description: "黄金の精神を持ってりんごを金に変えます",
+			ExploreId:            mockStageExploreIds[1],
+			DisplayName:          "錬金術でりんごを金に変える",
+			Description:          "黄金の精神を持ってりんごを金に変えます",
+			ConsumingStamina:     720,
+			RequiredPayment:      1000000,
+			StaminaReducibleRate: 0.5,
 		},
 	},
 }
@@ -655,4 +662,20 @@ func (m *mockSkillUpdateRepo) Get(userId core.UserId) []SkillGrowthPostRow {
 
 func createMockSkillUpdateRepo() *mockSkillUpdateRepo {
 	return &mockSkillUpdateRepo{}
+}
+
+type mockReductionStaminaSkillRepo struct {
+	Data map[ExploreId][]core.SkillId
+}
+
+func (m *mockReductionStaminaSkillRepo) Get(exploreId ExploreId) ([]core.SkillId, error) {
+	return m.Data[exploreId], nil
+}
+
+var mockStaminaReductionSkill = map[ExploreId][]core.SkillId{
+	mockStageExploreIds[1]: {mockSkillIds[0]},
+}
+
+func createMockReductionStaminaSkillRepo() *mockReductionStaminaSkillRepo {
+	return &mockReductionStaminaSkillRepo{Data: mockStaminaReductionSkill}
 }

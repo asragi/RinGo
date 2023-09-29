@@ -1,6 +1,10 @@
 package stage
 
-import "github.com/asragi/RinGo/core"
+import (
+	"math"
+
+	"github.com/asragi/RinGo/core"
+)
 
 // item
 type ConsumptionProb float32
@@ -19,6 +23,14 @@ func (g GainingPoint) ApplyTo(exp core.SkillExp) core.SkillExp {
 
 // explore
 type ExploreId string
+type StaminaReducibleRate float64
+
+func ApplyReduction(s core.Stamina, reductionRate float64, reducibleRate StaminaReducibleRate) core.Stamina {
+	constStamina := float64(s) * (1.0 - float64(reducibleRate))
+	varyStamina := float64(s) * reductionRate * float64(reducibleRate)
+	staminaRounded := int(math.Max(1, math.Round(constStamina+varyStamina)))
+	return core.Stamina(staminaRounded)
+}
 
 // stage
 type StageId string

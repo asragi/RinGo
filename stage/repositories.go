@@ -4,6 +4,17 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type GetResourceRes struct {
+	UserId  core.UserId
+	Stamina core.Stamina
+	Func    core.Fund
+}
+
+type UserResourceRepo interface {
+	GetResource(core.UserId, core.AccessToken) (GetResourceRes, error)
+	UpdateStamina(core.UserId, core.AccessToken, core.Stamina) error
+}
+
 type GetItemMasterRes struct {
 	ItemId      core.ItemId
 	Price       core.Price
@@ -106,11 +117,12 @@ type SkillGrowthPostRepo interface {
 
 // Explore
 type GetExploreMasterRes struct {
-	ExploreId        ExploreId
-	DisplayName      core.DisplayName
-	Description      core.Description
-	ConsumingStamina core.Stamina
-	RequiredPayment  core.Price
+	ExploreId            ExploreId
+	DisplayName          core.DisplayName
+	Description          core.Description
+	ConsumingStamina     core.Stamina
+	RequiredPayment      core.Price
+	StaminaReducibleRate StaminaReducibleRate
 }
 
 type StageExploreMasterRes struct {
@@ -209,4 +221,8 @@ type BatchGetConsumingItemRes struct {
 type ConsumingItemRepo interface {
 	BatchGet(ExploreId) ([]ConsumingItem, error)
 	AllGet([]ExploreId) ([]BatchGetConsumingItemRes, error)
+}
+
+type ReductionStaminaSkillRepo interface {
+	Get(ExploreId) ([]core.SkillId, error)
 }
