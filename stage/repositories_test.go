@@ -286,6 +286,10 @@ func (m *MockExploreMasterRepo) Get(e ExploreId) (GetExploreMasterRes, error) {
 	return m.ExploreMap[e], nil
 }
 
+func (m *MockExploreMasterRepo) Add(e ExploreId, master GetExploreMasterRes) {
+	m.ExploreMap[e] = master
+}
+
 func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	repo := MockExploreMasterRepo{}
 	repo.ExploreMap = make(map[ExploreId]GetExploreMasterRes)
@@ -378,6 +382,12 @@ func (m *MockUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId
 		UserId: userId,
 		Skills: result,
 	}, nil
+}
+
+func (m *MockUserSkillRepo) Add(userId core.UserId, skills []UserSkillRes) {
+	for _, v := range skills {
+		m.Data[userId][v.SkillId] = v
+	}
 }
 
 func createMockUserSkillRepo() *MockUserSkillRepo {
@@ -556,6 +566,10 @@ func (m *mockConsumingItemRepo) AllGet(exploreId []ExploreId) ([]BatchGetConsumi
 	return result, nil
 }
 
+func (m *mockConsumingItemRepo) Add(exploreId ExploreId, consuming []ConsumingItem) {
+	m.Data[exploreId] = consuming
+}
+
 var mockConsumingItemData = map[ExploreId][]ConsumingItem{
 	mockExploreIds[0]: {
 		{
@@ -678,4 +692,8 @@ var mockStaminaReductionSkill = map[ExploreId][]core.SkillId{
 
 func createMockReductionStaminaSkillRepo() *mockReductionStaminaSkillRepo {
 	return &mockReductionStaminaSkillRepo{Data: mockStaminaReductionSkill}
+}
+
+func (m *mockReductionStaminaSkillRepo) Add(e ExploreId, skills []core.SkillId) {
+	m.Data[e] = skills
 }

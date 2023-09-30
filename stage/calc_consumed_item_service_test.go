@@ -18,20 +18,36 @@ func TestCreateCalcConsumingItemService(t *testing.T) {
 		expect  []consumedItem
 	}
 
+	exploreId := ExploreId("mock")
+	mockData := []ConsumingItem{
+		{
+			ItemId:          "itemA",
+			ConsumptionProb: 1,
+			MaxCount:        10,
+		},
+		{
+			ItemId:          "itemB",
+			ConsumptionProb: 0.5,
+			MaxCount:        15,
+		},
+	}
+
+	consumingItemRepo.Add(exploreId, mockData)
+
 	testCases := []testCase{
 		{
 			request: testRequest{
-				exploreId:   mockExploreIds[0],
+				exploreId:   exploreId,
 				execCount:   3,
 				randomValue: 0.4,
 			},
 			expect: []consumedItem{
 				{
-					ItemId: MockItemIds[0],
+					ItemId: mockData[0].ItemId,
 					Count:  30,
 				},
 				{
-					ItemId: MockItemIds[1],
+					ItemId: mockData[1].ItemId,
 					Count:  45,
 				},
 			},

@@ -37,12 +37,6 @@ func createCalcConsumedItemService(
 					result += 1
 				}
 			}
-			/*
-				challengeNum := maxCount * core.Count(execCount)
-				mu := float32(challengeNum) * float32(consumptionProb)
-				sigma := float32(challengeNum) * float32(consumptionProb) * (1 - float32(consumptionProb))
-				result := core.Count(math.Round(float64(core.GenerateFromNormalDist(random, mu, sigma))))
-			*/
 			return core.Count(result)
 		}
 
