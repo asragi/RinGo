@@ -1,8 +1,6 @@
 package stage
 
 import (
-	"time"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -43,45 +41,6 @@ func (m *MockItemMasterRepo) Add(i core.ItemId, master MockItemMaster) {
 	m.Items[i] = master
 }
 
-var MockItemIds []core.ItemId = []core.ItemId{
-	"0000-ringo", "0001-burned", "0002-strick",
-}
-
-var t = time.Unix(1648771200, 0)
-
-var MockItems []MockItemMaster = []MockItemMaster{
-	{
-		ItemId:      MockItemIds[0],
-		Price:       200,
-		DisplayName: "リンゴ",
-		Description: "ごくふつうのリンゴ",
-		MaxStock:    1000,
-		CreatedAt:   core.CreatedAt(t),
-		UpdatedAt:   core.UpdatedAt(t),
-		Explores:    []ExploreId{mockExploreIds[0], mockExploreIds[1]},
-	},
-	{
-		ItemId:      MockItemIds[1],
-		Price:       500,
-		DisplayName: "焼きリンゴ",
-		Description: "リンゴを加熱したもの",
-		MaxStock:    100,
-		CreatedAt:   core.CreatedAt(t),
-		UpdatedAt:   core.UpdatedAt(t),
-		Explores:    []ExploreId{},
-	},
-	{
-		ItemId:      MockItemIds[2],
-		Price:       50,
-		DisplayName: "木の枝",
-		Description: "よく乾いた手頃なサイズの木の枝",
-		MaxStock:    500,
-		CreatedAt:   core.CreatedAt(t),
-		UpdatedAt:   core.UpdatedAt(t),
-		Explores:    []ExploreId{},
-	},
-}
-
 func (m *MockItemMasterRepo) Get(itemId core.ItemId) (GetItemMasterRes, error) {
 	item := m.Items[itemId]
 	return GetItemMasterRes{
@@ -104,17 +63,15 @@ func (m *MockItemMasterRepo) BatchGet(ids []core.ItemId) ([]GetItemMasterRes, er
 func CreateMockItemMasterRepo() *MockItemMasterRepo {
 	itemMasterRepo := MockItemMasterRepo{}
 	items := make(map[core.ItemId]MockItemMaster)
-	for _, v := range MockItems {
-		items[v.ItemId] = v
-	}
 	itemMasterRepo.Items = items
 	return &itemMasterRepo
 }
 
 type MockItemStorageMaster struct {
-	UserId core.UserId
-	ItemId core.ItemId
-	Stock  core.Stock
+	UserId  core.UserId
+	ItemId  core.ItemId
+	Stock   core.Stock
+	IsKnown core.IsKnown
 }
 
 type MockItemStorageRepo struct {
@@ -129,9 +86,10 @@ func (m *MockItemStorageRepo) BatchGet(userId core.UserId, itemId []core.ItemId,
 	result := make([]ItemData, len(itemId))
 	for i, v := range itemId {
 		itemData := ItemData{
-			UserId: userId,
-			ItemId: v,
-			Stock:  m.Data[userId][v].Stock,
+			UserId:  userId,
+			ItemId:  v,
+			Stock:   m.Data[userId][v].Stock,
+			IsKnown: m.Data[userId][v].IsKnown,
 		}
 		result[i] = itemData
 	}
@@ -162,25 +120,8 @@ var MockUserId = core.UserId("User")
 func CreateMockItemStorageRepo() *MockItemStorageRepo {
 	itemStorageRepo := MockItemStorageRepo{}
 	data := make(map[core.UserId]map[core.ItemId]MockItemStorageMaster)
-	for i, v := range MockItems {
-		if _, ok := data[MockUserId]; !ok {
-			data[MockUserId] = make(map[core.ItemId]MockItemStorageMaster)
-		}
-		data[MockUserId][v.ItemId] = MockItemStorageMaster{
-			UserId: MockUserId,
-			ItemId: v.ItemId,
-			Stock:  core.Stock((i + 1) * 20),
-		}
-	}
 	itemStorageRepo.Data = data
 	return &itemStorageRepo
-}
-
-var MockExplores map[core.UserId]ExploreUserData = map[core.UserId]ExploreUserData{
-	MockUserId: {
-		ExploreId: mockExploreIds[0],
-		IsKnown:   true,
-	},
 }
 
 type MockUserExploreRepo struct {
@@ -203,82 +144,9 @@ func (m *MockUserExploreRepo) Add(userId core.UserId, exploreId ExploreId, explo
 	m.Data[userId][exploreId] = exploreData
 }
 
-var mockUserExploreData = map[core.UserId]map[ExploreId]ExploreUserData{
-	MockUserId: {
-		MockItems[0].Explores[0]: ExploreUserData{
-			ExploreId: MockItems[0].Explores[0],
-			IsKnown:   true,
-		},
-		MockItems[0].Explores[1]: ExploreUserData{
-			ExploreId: mockExploreIds[1],
-			IsKnown:   false,
-		},
-		mockStageExploreIds[0]: {
-			ExploreId: mockStageExploreIds[0],
-			IsKnown:   true,
-		},
-		mockStageExploreIds[1]: {
-			ExploreId: mockStageExploreIds[1],
-			IsKnown:   true,
-		},
-	},
-}
-
 func createMockUserExploreRepo() *MockUserExploreRepo {
-	repo := MockUserExploreRepo{}
-	repo.Data = mockUserExploreData
+	repo := MockUserExploreRepo{Data: map[core.UserId]map[ExploreId]ExploreUserData{}}
 	return &repo
-}
-
-var mockExploreIds = []ExploreId{
-	ExploreId("burn-apple"),
-	ExploreId("make-sword"),
-}
-
-var mockExploreMaster = map[core.ItemId][]GetExploreMasterRes{
-	MockItems[0].ItemId: {
-		{
-			ExploreId:   mockExploreIds[0],
-			DisplayName: "りんごを焼く",
-			Description: "りんごを火にかけてみよう",
-		},
-		{
-			ExploreId:   mockExploreIds[1],
-			DisplayName: "りんごの家を作る",
-			Description: "りんごを使って家を建てます",
-		},
-	},
-}
-
-var mockStageExploreIds = []ExploreId{
-	ExploreId("pick-up-apple"),
-	ExploreId("alchemize-apple"),
-}
-
-var mockStageIds = []StageId{
-	StageId("forest"),
-	StageId("volcano"),
-}
-
-var mockStageExploreMaster = map[StageId][]GetExploreMasterRes{
-	mockStageIds[0]: {
-		{
-			ExploreId:            mockStageExploreIds[0],
-			DisplayName:          "りんごを拾いに行く",
-			Description:          "木くずや石も拾えるかも",
-			ConsumingStamina:     120,
-			RequiredPayment:      0,
-			StaminaReducibleRate: 0.5,
-		},
-		{
-			ExploreId:            mockStageExploreIds[1],
-			DisplayName:          "錬金術でりんごを金に変える",
-			Description:          "黄金の精神を持ってりんごを金に変えます",
-			ConsumingStamina:     720,
-			RequiredPayment:      1000000,
-			StaminaReducibleRate: 0.5,
-		},
-	},
 }
 
 type MockExploreMasterRepo struct {
@@ -317,22 +185,17 @@ func (m *MockExploreMasterRepo) AddItem(itemId core.ItemId, e ExploreId, master 
 	m.Add(e, master)
 }
 
+func (m *MockExploreMasterRepo) AddStage(stageId StageId, e ExploreId, master GetExploreMasterRes) {
+	m.StageData[stageId] = append(m.StageData[stageId], master)
+	m.Add(e, master)
+}
+
 func createMockExploreMasterRepo() *MockExploreMasterRepo {
-	repo := MockExploreMasterRepo{}
-	repo.ExploreMap = make(map[ExploreId]GetExploreMasterRes)
-	repo.Data = mockExploreMaster
-	repo.StageData = mockStageExploreMaster
-	for _, v := range repo.Data {
-		for _, w := range v {
-			repo.ExploreMap[w.ExploreId] = w
-		}
+	return &MockExploreMasterRepo{
+		Data:       map[core.ItemId][]GetExploreMasterRes{},
+		StageData:  map[StageId][]GetExploreMasterRes{},
+		ExploreMap: map[ExploreId]GetExploreMasterRes{},
 	}
-	for _, v := range repo.StageData {
-		for _, w := range v {
-			repo.ExploreMap[w.ExploreId] = w
-		}
-	}
-	return &repo
 }
 
 var mockSkillIds = []core.SkillId{
@@ -430,6 +293,13 @@ type mockUserStageRepo struct {
 	Data map[core.UserId]map[StageId]UserStage
 }
 
+func (m *mockUserStageRepo) Add(userId core.UserId, stageId StageId, userData UserStage) {
+	if _, ok := m.Data[userId]; !ok {
+		m.Data[userId] = map[StageId]UserStage{}
+	}
+	m.Data[userId][stageId] = userData
+}
+
 func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []StageId) (GetAllUserStagesRes, error) {
 	result := []UserStage{}
 	for _, v := range ids {
@@ -438,27 +308,17 @@ func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []StageId) 
 	return GetAllUserStagesRes{result}, nil
 }
 
-var mockUserStageData = map[core.UserId]map[StageId]UserStage{
-	MockUserId: {
-		mockStageIds[0]: {
-			StageId: mockStageIds[0],
-			IsKnown: true,
-		},
-		mockStageIds[1]: {
-			StageId: mockStageIds[1],
-			IsKnown: false,
-		},
-	},
-}
-
 func createMockUserStageRepo() *mockUserStageRepo {
-	repo := mockUserStageRepo{}
-	repo.Data = mockUserStageData
+	repo := mockUserStageRepo{Data: make(map[core.UserId]map[StageId]UserStage)}
 	return &repo
 }
 
 type mockStageMasterRepo struct {
 	Data map[StageId]StageMaster
+}
+
+func (m *mockStageMasterRepo) Add(id StageId, master StageMaster) {
+	m.Data[id] = master
 }
 
 func (m *mockStageMasterRepo) Get(stageId StageId) (StageMaster, error) {
@@ -473,22 +333,8 @@ func (m *mockStageMasterRepo) GetAllStages() (GetAllStagesRes, error) {
 	return GetAllStagesRes{Stages: result}, nil
 }
 
-var mockStageMasterData = map[StageId]StageMaster{
-	mockStageIds[0]: {
-		StageId:     mockStageIds[0],
-		DisplayName: "ポムポムのもり",
-		Description: "りんごの木がたくさんある森\nいつでもたくさんのりんごが採れる",
-	},
-	mockStageIds[1]: {
-		StageId:     mockStageIds[1],
-		DisplayName: "リゴーかざん",
-		Description: "鉱石が採れるかも",
-	},
-}
-
 func createMockStageMasterRepo() *mockStageMasterRepo {
-	repo := mockStageMasterRepo{}
-	repo.Data = mockStageMasterData
+	repo := mockStageMasterRepo{Data: map[StageId]StageMaster{}}
 	return &repo
 }
 
@@ -504,35 +350,8 @@ func (m *MockSkillGrowthDataRepo) Add(e ExploreId, skills []SkillGrowthData) {
 	m.Data[e] = skills
 }
 
-var MockSkillGrowthData = map[ExploreId][]SkillGrowthData{
-	mockExploreIds[0]: {
-		{
-			ExploreId:    mockExploreIds[0],
-			SkillId:      mockSkillIds[0],
-			GainingPoint: 10,
-		},
-		{
-			ExploreId:    mockExploreIds[0],
-			SkillId:      mockSkillIds[1],
-			GainingPoint: 10,
-		},
-	},
-	mockStageExploreIds[0]: {
-		{
-			ExploreId:    mockExploreIds[0],
-			SkillId:      mockSkillIds[0],
-			GainingPoint: 10,
-		},
-		{
-			ExploreId:    mockExploreIds[0],
-			SkillId:      mockSkillIds[1],
-			GainingPoint: 10,
-		},
-	},
-}
-
 func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
-	repo := MockSkillGrowthDataRepo{Data: MockSkillGrowthData}
+	repo := MockSkillGrowthDataRepo{Data: map[ExploreId][]SkillGrowthData{}}
 	return &repo
 }
 
@@ -544,46 +363,12 @@ func (m *mockEarningItemRepo) BatchGet(exploreId ExploreId) []EarningItem {
 	return m.Data[exploreId]
 }
 
-var mockEarningItemData = map[ExploreId][]EarningItem{
-	mockExploreIds[0]: {
-		{
-			ItemId:   MockItemIds[0],
-			MinCount: 1,
-			MaxCount: 100,
-		},
-		{
-			ItemId:   MockItemIds[1],
-			MinCount: 0,
-			MaxCount: 1000,
-		},
-	},
-	mockExploreIds[1]: {
-		{
-			ItemId:   MockItemIds[0],
-			MinCount: 1,
-			MaxCount: 10,
-		},
-		{
-			ItemId:   MockItemIds[2],
-			MinCount: 10,
-			MaxCount: 100,
-		},
-	},
-	mockStageExploreIds[0]: {
-		{
-			ItemId:   MockItemIds[0],
-			MinCount: 10,
-			MaxCount: 60,
-		},
-	},
-}
-
 func (m *mockEarningItemRepo) Add(e ExploreId, items []EarningItem) {
 	m.Data[e] = items
 }
 
 func createMockEarningItemRepo() *mockEarningItemRepo {
-	return &mockEarningItemRepo{Data: mockEarningItemData}
+	return &mockEarningItemRepo{Data: map[ExploreId][]EarningItem{}}
 }
 
 type mockConsumingItemRepo struct {
@@ -609,49 +394,8 @@ func (m *mockConsumingItemRepo) Add(exploreId ExploreId, consuming []ConsumingIt
 	m.Data[exploreId] = consuming
 }
 
-var mockConsumingItemData = map[ExploreId][]ConsumingItem{
-	mockExploreIds[0]: {
-		{
-			ItemId:          MockItemIds[0],
-			ConsumptionProb: 1,
-			MaxCount:        10,
-		},
-		{
-			ItemId:          MockItemIds[1],
-			MaxCount:        15,
-			ConsumptionProb: 0.5,
-		},
-	},
-	mockExploreIds[1]: {
-		{
-			ItemId:          MockItemIds[0],
-			ConsumptionProb: 1,
-			MaxCount:        10,
-		},
-		{
-			ItemId:          MockItemIds[2],
-			ConsumptionProb: 0,
-			MaxCount:        100,
-		},
-	},
-	mockStageExploreIds[0]: {
-		{
-			ItemId:          MockItemIds[2],
-			ConsumptionProb: 1,
-			MaxCount:        1,
-		},
-	},
-	mockStageExploreIds[1]: {
-		{
-			ItemId:          MockItemIds[0],
-			ConsumptionProb: 1,
-			MaxCount:        1000,
-		},
-	},
-}
-
 func createMockConsumingItemRepo() *mockConsumingItemRepo {
-	return &mockConsumingItemRepo{Data: mockConsumingItemData}
+	return &mockConsumingItemRepo{Data: map[ExploreId][]ConsumingItem{}}
 }
 
 type mockRequiredSkillRepo struct {
@@ -729,12 +473,8 @@ func (m *mockReductionStaminaSkillRepo) Get(exploreId ExploreId) ([]core.SkillId
 	return m.Data[exploreId], nil
 }
 
-var mockStaminaReductionSkill = map[ExploreId][]core.SkillId{
-	mockStageExploreIds[1]: {mockSkillIds[0]},
-}
-
 func createMockReductionStaminaSkillRepo() *mockReductionStaminaSkillRepo {
-	return &mockReductionStaminaSkillRepo{Data: mockStaminaReductionSkill}
+	return &mockReductionStaminaSkillRepo{Data: map[ExploreId][]core.SkillId{}}
 }
 
 func (m *mockReductionStaminaSkillRepo) Add(e ExploreId, skills []core.SkillId) {

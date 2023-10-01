@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/asragi/RinGo/test"
@@ -59,10 +58,14 @@ func TestCreateCalcConsumingItemService(t *testing.T) {
 		service := createCalcConsumedItemService(consumingItemRepo, &random)
 		req := v.request
 		res, _ := service.Calc(req.exploreId, req.execCount)
-		checkInt(t, "earning item length", len(v.expect), len(res))
+		if len(v.expect) != len(res) {
+			t.Fatalf("case: %d, expect: %d, got: %d", i, len(v.expect), len(res))
+		}
 		for j, v := range v.expect {
 			result := res[j]
-			checkInt(t, fmt.Sprintf("check count: case %d, index: %d", i, j), int(v.Count), int(result.Count))
+			if v.Count != result.Count {
+				t.Errorf("check count: case %d-%d, expect: %d, got: %d", i, j, v.Count, result.Count)
+			}
 		}
 	}
 }
