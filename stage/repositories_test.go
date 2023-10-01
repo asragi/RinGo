@@ -39,6 +39,10 @@ type MockItemMasterRepo struct {
 	Items map[core.ItemId]MockItemMaster
 }
 
+func (m *MockItemMasterRepo) Add(i core.ItemId, master MockItemMaster) {
+	m.Items[i] = master
+}
+
 var MockItemIds []core.ItemId = []core.ItemId{
 	"0000-ringo", "0001-burned", "0002-strick",
 }
@@ -140,6 +144,17 @@ func (m *MockItemStorageRepo) BatchGet(userId core.UserId, itemId []core.ItemId,
 
 func (m *MockItemStorageRepo) GetStock(userId core.UserId, itemId core.ItemId) core.Stock {
 	return m.Data[userId][itemId].Stock
+}
+
+func (m *MockItemStorageRepo) Add(userId core.UserId, items []MockItemStorageMaster) {
+	itemMap := func() map[core.ItemId]MockItemStorageMaster {
+		result := make(map[core.ItemId]MockItemStorageMaster)
+		for _, v := range items {
+			result[v.ItemId] = v
+		}
+		return result
+	}()
+	m.Data[userId] = itemMap
 }
 
 var MockUserId = core.UserId("User")
@@ -469,6 +484,10 @@ func (m *MockSkillGrowthDataRepo) BatchGet(exploreId ExploreId) []SkillGrowthDat
 	return m.Data[exploreId]
 }
 
+func (m *MockSkillGrowthDataRepo) Add(e ExploreId, skills []SkillGrowthData) {
+	m.Data[e] = skills
+}
+
 var MockSkillGrowthData = map[ExploreId][]SkillGrowthData{
 	mockExploreIds[0]: {
 		{
@@ -541,6 +560,10 @@ var mockEarningItemData = map[ExploreId][]EarningItem{
 			MaxCount: 60,
 		},
 	},
+}
+
+func (m *mockEarningItemRepo) Add(e ExploreId, items []EarningItem) {
+	m.Data[e] = items
 }
 
 func createMockEarningItemRepo() *mockEarningItemRepo {

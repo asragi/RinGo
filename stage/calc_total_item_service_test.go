@@ -8,6 +8,45 @@ import (
 
 func TestCreateTotalItemService(t *testing.T) {
 	userId := MockUserId
+	itemId := []core.ItemId{
+		"A", "B", "C",
+	}
+	items := []MockItemStorageMaster{
+		{
+			UserId: userId,
+			ItemId: itemId[0],
+			Stock:  10,
+		},
+		{
+			UserId: userId,
+			ItemId: itemId[1],
+			Stock:  10,
+		},
+		{
+			UserId: userId,
+			ItemId: itemId[2],
+			Stock:  10,
+		},
+	}
+	itemStorageRepo.Add(userId, items)
+	itemMaster := []MockItemMaster{
+		{
+			ItemId:   itemId[0],
+			MaxStock: 20,
+		},
+		{
+			ItemId:   itemId[1],
+			MaxStock: 10,
+		},
+		{
+			ItemId:   itemId[2],
+			MaxStock: 100,
+		},
+	}
+	for _, v := range itemMaster {
+		itemMasterRepo.Add(v.ItemId, v)
+	}
+
 	service := createTotalItemService(itemStorageRepo, itemMasterRepo)
 
 	type request struct {
@@ -29,21 +68,21 @@ func TestCreateTotalItemService(t *testing.T) {
 			request: request{
 				earnedItems: []earnedItem{
 					{
-						ItemId: MockItemIds[0],
+						ItemId: itemId[0],
 						Count:  core.Count(30),
 					},
 					{
-						ItemId: MockItemIds[1],
-						Count:  core.Count(25),
+						ItemId: itemId[1],
+						Count:  core.Count(30),
 					},
 					{
-						ItemId: MockItemIds[2],
-						Count:  core.Count(1000),
+						ItemId: itemId[2],
+						Count:  core.Count(30),
 					},
 				},
 				consumedItem: []consumedItem{
 					{
-						ItemId: MockItemIds[0],
+						ItemId: itemId[0],
 						Count:  core.Count(10),
 					},
 				},
@@ -51,29 +90,35 @@ func TestCreateTotalItemService(t *testing.T) {
 			expect: expect{
 				totalItem: []totalItem{
 					{
-						ItemId: MockItemIds[0],
+						ItemId: itemId[0],
+						Stock:  core.Stock(20),
+					},
+					{
+						ItemId: itemId[1],
+						Stock:  core.Stock(10),
+					},
+					{
+						ItemId: itemId[2],
 						Stock:  core.Stock(40),
-					},
-					{
-						ItemId: MockItemIds[1],
-						Stock:  core.Stock(65),
-					},
-					{
-						ItemId: MockItemIds[2],
-						Stock:  core.Stock(500),
 					},
 				},
 			},
 		},
 	}
 
-	for _, v := range testCases {
+	for i, v := range testCases {
 		res := service.Calc(userId, "token", v.request.earnedItems, v.request.consumedItem)
-		checkInt(t, "check totalItem res length", len(v.expect.totalItem), len(res))
+		if len(v.expect.totalItem) != len(res) {
+			t.Errorf("case: %d, expect: %d, got: %d", i, len(v.expect.totalItem), len(res))
+		}
 		for j, w := range res {
 			e := v.expect.totalItem[j]
-			check(t, string(e.ItemId), string(w.ItemId))
-			checkInt(t, "check stock", int(e.Stock), int(w.Stock))
+			if e.ItemId != w.ItemId {
+				t.Errorf("expect: %s, got: %s", e.ItemId, w.ItemId)
+			}
+			if e.Stock != w.Stock {
+				t.Errorf("expect: %d, got: %d", e.Stock, w.Stock)
+			}
 		}
 	}
 }
