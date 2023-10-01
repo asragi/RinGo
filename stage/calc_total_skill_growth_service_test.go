@@ -1,6 +1,10 @@
 package stage
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/asragi/RinGo/core"
+)
 
 func TestCalcSkillGrowthApplyResult(t *testing.T) {
 	userId := MockUserId
@@ -10,18 +14,29 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 		expect  []growthApplyResult
 	}
 
+	skillId := core.SkillId("A")
+
+	userSkill := []UserSkillRes{
+		{
+			SkillId:  skillId,
+			SkillExp: 100,
+		},
+	}
+
+	userSkillRepo.Add(userId, userSkill)
+
 	testCases := []testCase{
 		{
 			request: []skillGrowthResult{
 				{
-					SkillId: mockSkillIds[1],
+					SkillId: skillId,
 					GainSum: 30,
 				},
 			},
 			expect: []growthApplyResult{
 				{
-					SkillId: mockSkillIds[1],
-					AfterLv: 3,
+					SkillId:  skillId,
+					AfterExp: 130,
 				},
 			},
 		},
@@ -31,10 +46,14 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 
 	for _, v := range testCases {
 		res := service.Create(userId, "token", v.request)
-		checkInt(t, "check res length", len(v.expect), len(res))
+		if len(v.expect) != len(res) {
+			t.Errorf("expect: %d, got: %d", len(v.expect), len(res))
+		}
 		for i, w := range res {
 			expect := v.expect[i]
-			checkInt(t, "check AfterLv", int(expect.AfterLv), int(w.AfterLv))
+			if expect.AfterExp != w.AfterExp {
+				t.Errorf("expect: %d, got: %d", expect.AfterExp, w.AfterExp)
+			}
 		}
 	}
 }

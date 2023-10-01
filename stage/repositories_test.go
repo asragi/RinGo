@@ -196,6 +196,13 @@ func (m *MockUserExploreRepo) GetActions(userId core.UserId, exploreIds []Explor
 	return GetActionsRes{Explores: result, UserId: userId}, nil
 }
 
+func (m *MockUserExploreRepo) Add(userId core.UserId, exploreId ExploreId, exploreData ExploreUserData) {
+	if _, ok := m.Data[userId]; !ok {
+		m.Data[userId] = make(map[ExploreId]ExploreUserData)
+	}
+	m.Data[userId][exploreId] = exploreData
+}
+
 var mockUserExploreData = map[core.UserId]map[ExploreId]ExploreUserData{
 	MockUserId: {
 		MockItems[0].Explores[0]: ExploreUserData{
@@ -305,6 +312,11 @@ func (m *MockExploreMasterRepo) Add(e ExploreId, master GetExploreMasterRes) {
 	m.ExploreMap[e] = master
 }
 
+func (m *MockExploreMasterRepo) AddItem(itemId core.ItemId, e ExploreId, master GetExploreMasterRes) {
+	m.Data[itemId] = append(m.Data[itemId], master)
+	m.Add(e, master)
+}
+
 func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	repo := MockExploreMasterRepo{}
 	repo.ExploreMap = make(map[ExploreId]GetExploreMasterRes)
@@ -350,6 +362,10 @@ func (m *MockSkillMasterRepo) BatchGet(skills []core.SkillId) (BatchGetSkillMast
 	return BatchGetSkillMasterRes{
 		Skills: result,
 	}, nil
+}
+
+func (m *MockSkillMasterRepo) Add(id core.SkillId, master SkillMaster) {
+	m.Skills[id] = master
 }
 
 func createMockSkillMasterRepo() *MockSkillMasterRepo {
@@ -661,8 +677,12 @@ func (m *mockRequiredSkillRepo) BatchGet(ids []ExploreId) ([]RequiredSkillRow, e
 	return result, nil
 }
 
+func (m *mockRequiredSkillRepo) Add(e ExploreId, skills []RequiredSkill) {
+	m.Data[e] = skills
+}
+
 func createMockRequiredSkillRepo() *mockRequiredSkillRepo {
-	return &mockRequiredSkillRepo{}
+	return &mockRequiredSkillRepo{Data: map[ExploreId][]RequiredSkill{}}
 }
 
 type mockItemStorageUpdateRepo struct {
