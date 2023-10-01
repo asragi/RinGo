@@ -28,36 +28,136 @@ func TestCreatePostActionExec(t *testing.T) {
 		skillExpect []skillExpect
 		stockExpect []stockExpect
 	}
+	exploreIds := []ExploreId{"explore"}
+	itemIds := []core.ItemId{"itemA", "itemB", "itemC"}
+	itemMaster := []MockItemMaster{
+		{
+			ItemId:   itemIds[0],
+			MaxStock: 20,
+		},
+		{
+			ItemId:   itemIds[1],
+			MaxStock: 10,
+		},
+		{
+			ItemId:   itemIds[2],
+			MaxStock: 100,
+		},
+	}
+	for _, v := range itemMaster {
+		itemMasterRepo.Add(v.ItemId, v)
+	}
+	itemStorage := []MockItemStorageMaster{
+		{
+			UserId: userId,
+			ItemId: itemIds[0],
+			Stock:  20,
+		},
+		{
+			UserId: userId,
+			ItemId: itemIds[1],
+			Stock:  10,
+		},
+		{
+			UserId: userId,
+			ItemId: itemIds[2],
+			Stock:  20,
+		},
+	}
+	itemStorageRepo.Add(userId, itemStorage)
+	items := []EarningItem{
+		{
+			ItemId:   itemIds[0],
+			MinCount: 1,
+			MaxCount: 10,
+		},
+		{
+			ItemId:   itemIds[1],
+			MinCount: 10,
+			MaxCount: 10,
+		},
+	}
+	earningItemRepo.Add(exploreIds[0], items)
+
+	skillIds := []core.SkillId{"skillA", "skillB"}
+	baseSkillExp := core.SkillExp(100)
+	userSkills := []UserSkillRes{
+		{
+			UserId:   userId,
+			SkillId:  skillIds[0],
+			SkillExp: baseSkillExp,
+		},
+		{
+			UserId:   userId,
+			SkillId:  skillIds[1],
+			SkillExp: baseSkillExp,
+		},
+	}
+	userSkillRepo.Add(userId, userSkills)
+
+	consumingItems := map[ExploreId][]ConsumingItem{
+		exploreIds[0]: {
+			{
+				ItemId:          itemIds[0],
+				MaxCount:        10,
+				ConsumptionProb: 1,
+			},
+			{
+				ItemId:          itemIds[2],
+				MaxCount:        2,
+				ConsumptionProb: 1,
+			},
+		},
+	}
+	for k, v := range consumingItems {
+		consumingItemRepo.Add(k, v)
+	}
+
+	repoData := []SkillGrowthData{
+		{
+			SkillId:      skillIds[0],
+			ExploreId:    exploreIds[0],
+			GainingPoint: 10,
+		},
+		{
+			SkillId:      skillIds[1],
+			ExploreId:    exploreIds[0],
+			GainingPoint: 10,
+		},
+	}
+	skillGrowthDataRepo.Add(exploreIds[0], repoData)
 
 	testCases := []testCase{
 		{
-			/*
-				request: testRequest{
-					exploreId:   mockStageExploreIds[0],
-					execCount:   2,
-					randomValue: 0.3,
+			request: testRequest{
+				exploreId:   exploreIds[0],
+				execCount:   2,
+				randomValue: 0.3,
+			},
+			skillExpect: []skillExpect{
+				{
+					SkillId:  skillIds[0],
+					AfterExp: 120,
 				},
-				skillExpect: []skillExpect{
-					{
-						SkillId:  mockSkillIds[0],
-						AfterExp: 55,
-					},
-					{
-						SkillId:  mockSkillIds[1],
-						AfterExp: 20,
-					},
+				{
+					SkillId:  skillIds[1],
+					AfterExp: 120,
 				},
-				stockExpect: []stockExpect{
-					{
-						ItemId: MockItemIds[0],
-						Stock:  70,
-					},
-					{
-						ItemId: MockItemIds[2],
-						Stock:  58,
-					},
+			},
+			stockExpect: []stockExpect{
+				{
+					ItemId: itemIds[0],
+					Stock:  8,
 				},
-			*/
+				{
+					ItemId: itemIds[1],
+					Stock:  10,
+				},
+				{
+					ItemId: itemIds[2],
+					Stock:  16,
+				},
+			},
 		},
 	}
 

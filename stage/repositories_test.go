@@ -198,21 +198,6 @@ func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	}
 }
 
-var mockSkillIds = []core.SkillId{
-	"apple", "fire",
-}
-
-var MockSkillMaster = []SkillMaster{
-	{
-		SkillId:     mockSkillIds[0],
-		DisplayName: "りんご愛好家",
-	},
-	{
-		SkillId:     mockSkillIds[1],
-		DisplayName: "火の祝福",
-	},
-}
-
 type MockSkillMasterRepo struct {
 	Skills map[core.SkillId]SkillMaster
 }
@@ -232,31 +217,8 @@ func (m *MockSkillMasterRepo) Add(id core.SkillId, master SkillMaster) {
 }
 
 func createMockSkillMasterRepo() *MockSkillMasterRepo {
-	skills := map[core.SkillId]SkillMaster{}
-	for _, v := range MockSkillMaster {
-		skills[v.SkillId] = v
-	}
-	repo := MockSkillMasterRepo{Skills: skills}
-
-	return &repo
+	return &MockSkillMasterRepo{Skills: map[core.SkillId]SkillMaster{}}
 }
-
-var MockUserSkill = func() map[core.UserId]map[core.SkillId]UserSkillRes {
-	result := make(map[core.UserId]map[core.SkillId]UserSkillRes)
-	result[MockUserId] = map[core.SkillId]UserSkillRes{
-		MockSkillMaster[0].SkillId: {
-			UserId:   MockUserId,
-			SkillId:  MockSkillMaster[0].SkillId,
-			SkillExp: 35,
-		},
-		MockSkillMaster[1].SkillId: {
-			UserId:   MockUserId,
-			SkillId:  MockSkillMaster[0].SkillId,
-			SkillExp: 0,
-		},
-	}
-	return result
-}()
 
 type MockUserSkillRepo struct {
 	Data map[core.UserId]map[core.SkillId]UserSkillRes
@@ -279,14 +241,16 @@ func (m *MockUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId
 }
 
 func (m *MockUserSkillRepo) Add(userId core.UserId, skills []UserSkillRes) {
+	if _, ok := m.Data[userId]; !ok {
+		m.Data[userId] = map[core.SkillId]UserSkillRes{}
+	}
 	for _, v := range skills {
 		m.Data[userId][v.SkillId] = v
 	}
 }
 
 func createMockUserSkillRepo() *MockUserSkillRepo {
-	repo := MockUserSkillRepo{Data: MockUserSkill}
-	return &repo
+	return &MockUserSkillRepo{Data: map[core.UserId]map[core.SkillId]UserSkillRes{}}
 }
 
 type mockUserStageRepo struct {
