@@ -7,8 +7,10 @@ type skillGrowthResult struct {
 	GainSum GainingPoint
 }
 
+type calcSkillGrowthFunc func(ExploreId, int) []skillGrowthResult
+
 type calcSkillGrowthService struct {
-	Calc func(ExploreId, int) []skillGrowthResult
+	Calc calcSkillGrowthFunc
 }
 
 func createCalcSkillGrowthService(

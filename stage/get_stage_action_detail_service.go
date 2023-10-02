@@ -36,11 +36,14 @@ type earningItemRes struct {
 	IsKnown core.IsKnown
 }
 
+type commonGetActionFunc func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
+
 type createCommonGetActionDetailRes struct {
-	getAction func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
+	getAction commonGetActionFunc
 }
 
 func createCommonGetActionDetail(
+	calcConsumingStamina calcConsumingStaminaFunc,
 	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
 	earningItemRepo EarningItemRepo,
@@ -48,13 +51,7 @@ func createCommonGetActionDetail(
 	skillMasterRepo SkillMasterRepo,
 	userSkillRepo UserSkillRepo,
 	requiredSkillRepo RequiredSkillRepo,
-	reductionSkillRepo ReductionStaminaSkillRepo,
 ) createCommonGetActionDetailRes {
-	staminaReductionService := createCalcConsumingStaminaService(
-		userSkillRepo,
-		exploreMasterRepo,
-		reductionSkillRepo,
-	)
 	getActionDetail := func(
 		userId core.UserId,
 		exploreId ExploreId,
@@ -103,7 +100,7 @@ func createCommonGetActionDetail(
 			return result
 		}(consumingItems)
 		requiredStamina, err := func(baseStamina core.Stamina) (core.Stamina, error) {
-			reducedStamina, err := staminaReductionService.Calc(userId, token, exploreId)
+			reducedStamina, err := calcConsumingStamina(userId, token, exploreId)
 			return reducedStamina, err
 		}(exploreMasterRes.ConsumingStamina)
 		if err != nil {
@@ -190,20 +187,14 @@ func createCommonGetActionDetail(
 	return createCommonGetActionDetailRes{getActionDetail}
 }
 
+type GetStageActionDetailFunc func(core.UserId, StageId, ExploreId, core.AccessToken) (gateway.GetStageActionDetailResponse, error)
 type createGetStageActionDetailRes struct {
-	GetAction func(core.UserId, StageId, ExploreId, core.AccessToken) (gateway.GetStageActionDetailResponse, error)
+	GetAction GetStageActionDetailFunc
 }
 
 func CreateGetStageActionDetailService(
-	itemStorageRepo ItemStorageRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	earningItemRepo EarningItemRepo,
-	consumingItemRepo ConsumingItemRepo,
-	skillMasterRepo SkillMasterRepo,
-	userSkillRepo UserSkillRepo,
-	requiredSkillRepo RequiredSkillRepo,
+	getCommonAction commonGetActionFunc,
 	stageMasterRepo StageMasterRepo,
-	reductionSkillRepo ReductionStaminaSkillRepo,
 ) createGetStageActionDetailRes {
 	getActionDetail := func(
 		userId core.UserId,
@@ -214,17 +205,7 @@ func CreateGetStageActionDetailService(
 		handleError := func(err error) (gateway.GetStageActionDetailResponse, error) {
 			return gateway.GetStageActionDetailResponse{}, fmt.Errorf("error on getting stage action detail: %w", err)
 		}
-		getCommonActionService := createCommonGetActionDetail(
-			itemStorageRepo,
-			exploreMasterRepo,
-			earningItemRepo,
-			consumingItemRepo,
-			skillMasterRepo,
-			userSkillRepo,
-			requiredSkillRepo,
-			reductionSkillRepo,
-		)
-		getCommonActionRes, err := getCommonActionService.getAction(userId, exploreId, token)
+		getCommonActionRes, err := getCommonAction(userId, exploreId, token)
 		if err != nil {
 			return handleError(err)
 		}

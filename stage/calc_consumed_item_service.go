@@ -11,8 +11,10 @@ type consumedItem struct {
 	Count  core.Count
 }
 
+type calcConsumedItemFunc func(ExploreId, int) ([]consumedItem, error)
+
 type createCalcConsumedItemServiceRes struct {
-	Calc func(ExploreId, int) ([]consumedItem, error)
+	Calc calcConsumedItemFunc
 }
 
 func createCalcConsumedItemService(

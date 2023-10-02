@@ -188,19 +188,9 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 	}(items, itemStorageMap)
 	earningItemRepo.Add(exploreIds[0], items)
 
-	service := createCommonGetActionDetail(
-		itemStorageRepo,
-		exploreMasterRepo,
-		earningItemRepo,
-		consumingItemRepo,
-		skillMasterRepo,
-		userSkillRepo,
-		requiredSkillRepo,
-		reductionSkillRepo,
-	)
-
 	type testCase struct {
 		request ExploreId
+		stamina core.Stamina
 		expect  commonGetActionRes
 	}
 	testCases := []testCase{
@@ -209,7 +199,6 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			expect: commonGetActionRes{
 				ActionDisplayName: exploreMasters[0].DisplayName,
 				RequiredPayment:   exploreMasters[0].RequiredPayment,
-				RequiredStamina:   exploreMasters[0].ConsumingStamina,
 				EarningItems:      earningItemRes,
 			},
 		},
@@ -218,6 +207,21 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 	for i, v := range testCases {
 		req := v.request
 		expect := v.expect
+
+		calcConsumingStamina := func(_ core.UserId, _ core.AccessToken, _ ExploreId) (core.Stamina, error) {
+			return v.stamina, nil
+		}
+		service := createCommonGetActionDetail(
+			calcConsumingStamina,
+			itemStorageRepo,
+			exploreMasterRepo,
+			earningItemRepo,
+			consumingItemRepo,
+			skillMasterRepo,
+			userSkillRepo,
+			requiredSkillRepo,
+		)
+
 		res, _ := service.getAction(userId, req, "token")
 		if expect.ActionDisplayName != res.ActionDisplayName {
 			t.Errorf("case %d, expect %s, got %s", i, expect.ActionDisplayName, res.ActionDisplayName)
@@ -225,8 +229,8 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 		if expect.RequiredPayment != res.RequiredPayment {
 			t.Errorf("case %d, expect %d, got %d", i, expect.RequiredPayment, res.RequiredPayment)
 		}
-		if expect.RequiredStamina != res.RequiredStamina {
-			t.Errorf("case %d, expect %d, got %d", i, expect.RequiredStamina, res.RequiredStamina)
+		if v.stamina != res.RequiredStamina {
+			t.Errorf("case %d, expect %d, got %d", i, v.stamina, res.RequiredStamina)
 		}
 		for j, w := range expect.RequiredItems {
 			item := res.EarningItems[j]

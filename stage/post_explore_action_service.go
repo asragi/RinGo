@@ -14,21 +14,14 @@ type createPostActionResultRes struct {
 }
 
 func CreatePostActionExecService(
-	itemMasterRepo ItemMasterRepo,
-	userSkillRepo UserSkillRepo,
-	itemStorageRepo ItemStorageRepo,
+	calcSkillGrowth calcSkillGrowthFunc,
+	calcSkillGrowthApply growthApplyFunc,
+	calcEarnedItem calcEarnedItemFunc,
+	calcConsumedItem calcConsumedItemFunc,
+	calcTotalItem calcTotalItemFunc,
 	itemStorageUpdateRepo ItemStorageUpdateRepo,
-	earningItemRepo EarningItemRepo,
-	consumingItemRepo ConsumingItemRepo,
-	skillGrowthRepo SkillGrowthDataRepo,
 	skillGrowthPostRepo SkillGrowthPostRepo,
-	random core.IRandom,
 ) createPostActionResultRes {
-	calcSkillGrowthService := createCalcSkillGrowthService(skillGrowthRepo)
-	calcSkillGrowthApplyService := calcSkillGrowthApplyResultService(userSkillRepo)
-	calcEarnedItemService := createCalcEarnedItemService(earningItemRepo, random)
-	calcConsumedItemService := createCalcConsumedItemService(consumingItemRepo, random)
-	totalItemService := createTotalItemService(itemStorageRepo, itemMasterRepo)
 
 	postResult := func(
 		userId core.UserId,
@@ -36,8 +29,8 @@ func CreatePostActionExecService(
 		exploreId ExploreId,
 		execCount int,
 	) (PostActionRes, error) {
-		skillGrowth := calcSkillGrowthService.Calc(exploreId, execCount)
-		growthApplyResults := calcSkillGrowthApplyService.Create(userId, token, skillGrowth)
+		skillGrowth := calcSkillGrowth(exploreId, execCount)
+		growthApplyResults := calcSkillGrowthApply(userId, token, skillGrowth)
 		skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
 			result := make([]SkillGrowthPostRow, len(skillGrowth))
 			for i, v := range skillGrowth {
@@ -48,12 +41,12 @@ func CreatePostActionExecService(
 			}
 			return result
 		}(growthApplyResults)
-		earnedItems := calcEarnedItemService.Calc(exploreId, execCount)
-		consumedItems, err := calcConsumedItemService.Calc(exploreId, execCount)
+		earnedItems := calcEarnedItem(exploreId, execCount)
+		consumedItems, err := calcConsumedItem(exploreId, execCount)
 		if err != nil {
 			return PostActionRes{}, fmt.Errorf("postResultError: %w", err)
 		}
-		totalItemRes := totalItemService.Calc(userId, token, earnedItems, consumedItems)
+		totalItemRes := calcTotalItem(userId, token, earnedItems, consumedItems)
 		itemStockReq := func(totalItems []totalItem) []ItemStock {
 			result := make([]ItemStock, len(totalItems))
 			for i, v := range totalItems {

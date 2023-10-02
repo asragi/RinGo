@@ -6,8 +6,10 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type calcEarnedItemFunc func(ExploreId, int) []earnedItem
+
 type createCalcEarnedItemServiceRes struct {
-	Calc func(ExploreId, int) []earnedItem
+	Calc calcEarnedItemFunc
 }
 
 type earnedItem struct {

@@ -28,14 +28,10 @@ type itemService struct {
 }
 
 func CreateGetItemDetailService(
+	makeUserExploreArray makeUserExploreArrayFunc,
 	itemMasterRepo ItemMasterRepo,
 	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
-	userExploreRepo UserExploreRepo,
-	skillMasterRepo SkillMasterRepo,
-	userSkillRepo UserSkillRepo,
-	consumingItemRepo ConsumingItemRepo,
-	requiredSkillRepo RequiredSkillRepo,
 ) itemService {
 	getAllAction := func(req GetUserItemDetailReq) ([]userExplore, error) {
 		handleError := func(err error) ([]userExplore, error) {
@@ -54,22 +50,11 @@ func CreateGetItemDetailService(
 			exploreMap[v.ExploreId] = v
 		}
 
-		actionsRes, err := userExploreRepo.GetActions(req.UserId, exploreIds, req.AccessToken)
-		if err != nil {
-			return handleError(err)
-		}
-		exploreIsKnownMap := makeExploreIdMap(actionsRes.Explores)
-
 		result, err := makeUserExploreArray(
 			req.UserId,
 			req.AccessToken,
 			exploreIds,
 			exploreMap,
-			exploreIsKnownMap,
-			requiredSkillRepo,
-			consumingItemRepo,
-			userSkillRepo,
-			itemStorageRepo,
 		)
 
 		if err != nil {

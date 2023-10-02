@@ -6,8 +6,10 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type calcConsumingStaminaFunc func(core.UserId, core.AccessToken, ExploreId) (core.Stamina, error)
+
 type createCalcConsumingStaminaServiceRes struct {
-	Calc func(core.UserId, core.AccessToken, ExploreId) (core.Stamina, error)
+	Calc calcConsumingStaminaFunc
 }
 
 func createCalcConsumingStaminaService(

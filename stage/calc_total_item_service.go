@@ -7,8 +7,10 @@ type totalItem struct {
 	Stock  core.Stock
 }
 
+type calcTotalItemFunc func(core.UserId, core.AccessToken, []earnedItem, []consumedItem) []totalItem
+
 type createTotalItemServiceRes struct {
-	Calc func(core.UserId, core.AccessToken, []earnedItem, []consumedItem) []totalItem
+	Calc calcTotalItemFunc
 }
 
 func createTotalItemService(

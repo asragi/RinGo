@@ -12,8 +12,10 @@ type growthApplyResult struct {
 	WasLvUp   bool
 }
 
+type growthApplyFunc func(core.UserId, core.AccessToken, []skillGrowthResult) []growthApplyResult
+
 type growthApplyRes struct {
-	Create func(core.UserId, core.AccessToken, []skillGrowthResult) []growthApplyResult
+	Create growthApplyFunc
 }
 
 func calcSkillGrowthApplyResultService(

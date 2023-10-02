@@ -12,8 +12,9 @@ func TestCreateGetStageListService(t *testing.T) {
 		Token  core.AccessToken
 	}
 	type testCase struct {
-		request testRequest
-		expect  getStageListRes
+		request          testRequest
+		mockUserExplores []userExplore
+		expect           getStageListRes
 	}
 	userId := MockUserId
 	stageIds := []StageId{"stageA", "stageB"}
@@ -45,26 +46,6 @@ func TestCreateGetStageListService(t *testing.T) {
 	for _, v := range userStageData {
 		userStageRepo.Add(userId, v.StageId, v)
 	}
-
-	itemIds := []core.ItemId{"itemA", "itemB", "itemC"}
-	itemStorage := []MockItemStorageMaster{
-		{
-			UserId: userId,
-			ItemId: itemIds[0],
-			Stock:  20,
-		},
-		{
-			UserId: userId,
-			ItemId: itemIds[1],
-			Stock:  20,
-		},
-		{
-			UserId: userId,
-			ItemId: itemIds[2],
-			Stock:  20,
-		},
-	}
-	itemStorageRepo.Add(userId, itemStorage)
 
 	exploreIds := []ExploreId{
 		"possible",
@@ -109,166 +90,31 @@ func TestCreateGetStageListService(t *testing.T) {
 	for _, v := range exploreMasters {
 		exploreMasterRepo.AddStage(stageIds[0], v.ExploreId, v)
 	}
-	userExploreData := []ExploreUserData{
-		{
-			ExploreId: exploreIds[0],
-			IsKnown:   true,
-		},
-		{
-			ExploreId: exploreIds[1],
-			IsKnown:   false,
-		},
-		{
-			ExploreId: exploreIds[2],
-			IsKnown:   true,
-		},
-		{
-			ExploreId: exploreIds[3],
-			IsKnown:   true,
-		},
-		{
-			ExploreId: exploreIds[4],
-			IsKnown:   true,
-		},
-	}
-	for _, v := range userExploreData {
-		userExploreRepo.Add(userId, v.ExploreId, v)
-	}
 
-	skillIds := []core.SkillId{"skillA", "skillB"}
-	skillMasters := []SkillMaster{
-		{
-			SkillId:     skillIds[0],
-			DisplayName: "SkillA",
-		},
-		{
-			SkillId:     skillIds[1],
-			DisplayName: "SkillB",
-		},
-	}
-	for _, v := range skillMasters {
-		skillMasterRepo.Add(v.SkillId, v)
-	}
-	baseSkillExp := core.SkillExp(100)
-	userSkills := []UserSkillRes{
-		{
-			UserId:   userId,
-			SkillId:  skillIds[0],
-			SkillExp: baseSkillExp,
-		},
-		{
-			UserId:   userId,
-			SkillId:  skillIds[1],
-			SkillExp: baseSkillExp,
-		},
-	}
-	userSkillRepo.Add(userId, userSkills)
-
-	consumingItems := map[ExploreId][]ConsumingItem{
-		exploreIds[0]: {
-			{
-				ItemId:          itemIds[0],
-				MaxCount:        10,
-				ConsumptionProb: 1,
-			},
-			{
-				ItemId:          itemIds[1],
-				MaxCount:        20,
-				ConsumptionProb: 1,
-			},
-		},
-		exploreIds[2]: {
-			{
-				ItemId:          itemIds[0],
-				MaxCount:        30,
-				ConsumptionProb: 1,
-			},
-			{
-				ItemId:          itemIds[1],
-				MaxCount:        10,
-				ConsumptionProb: 1,
-			},
-		},
-	}
-	for k, v := range consumingItems {
-		consumingItemRepo.Add(k, v)
-	}
-	requiredSkills := map[ExploreId][]RequiredSkill{
-		exploreIds[0]: {
-			{
-				SkillId:    skillIds[0],
-				RequiredLv: baseSkillExp.CalcLv(),
-			},
-			{
-				SkillId:    skillIds[1],
-				RequiredLv: baseSkillExp.CalcLv(),
-			},
-		},
-		exploreIds[1]: {
-			{
-				SkillId:    skillIds[0],
-				RequiredLv: baseSkillExp.CalcLv() + 1,
-			},
-			{
-				SkillId:    skillIds[1],
-				RequiredLv: baseSkillExp.CalcLv(),
-			},
-		},
-	}
-	for k, v := range requiredSkills {
-		requiredSkillRepo.Add(k, v)
-	}
-
-	createService := CreateGetStageListService(
-		stageMasterRepo,
-		userStageRepo,
-		itemStorageRepo,
-		exploreMasterRepo,
-		userExploreRepo,
-		userSkillRepo,
-		consumingItemRepo,
-		requiredSkillRepo,
-	)
-
-	getStageListService := createService.GetAllStage
-
+	mockUserExplores := func() []userExplore {
+		result := make([]userExplore, len(exploreMasters))
+		for i, v := range exploreMasters {
+			result[i] = userExplore{
+				ExploreId:   v.ExploreId,
+				DisplayName: v.DisplayName,
+				IsKnown:     i%2 == 0,
+				IsPossible:  i%2 == 1,
+			}
+		}
+		return result
+	}()
 	testCases := []testCase{
 		{
 			request: testRequest{
 				UserId: userId,
 			},
+			mockUserExplores: mockUserExplores,
 			expect: getStageListRes{
 				Information: []stageInformation{
 					{
-						StageId: stageIds[0],
-						IsKnown: true,
-						UserExplores: []userExplore{
-							{
-								ExploreId:  exploreIds[0],
-								IsKnown:    true,
-								IsPossible: true,
-							},
-							{
-								ExploreId:  exploreIds[1],
-								IsKnown:    false,
-								IsPossible: false,
-							},
-							{
-								ExploreId:  exploreIds[2],
-								IsKnown:    true,
-								IsPossible: false,
-							},
-							{
-								ExploreId:  exploreIds[3],
-								IsKnown:    true,
-								IsPossible: false,
-							},
-							{
-								ExploreId:  exploreIds[4],
-								IsKnown:    true,
-								IsPossible: false,
-							},
-						},
+						StageId:      stageIds[0],
+						IsKnown:      true,
+						UserExplores: mockUserExplores,
 					},
 					{
 						StageId: stageIds[1],
@@ -281,6 +127,17 @@ func TestCreateGetStageListService(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
+		userExplores := v.mockUserExplores
+		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]GetExploreMasterRes) ([]userExplore, error) {
+			return userExplores, nil
+		}
+		createService := CreateGetStageListService(
+			makeUserExploreArr,
+			stageMasterRepo,
+			userStageRepo,
+			exploreMasterRepo,
+		)
+		getStageListService := createService.GetAllStage
 		res, _ := getStageListService(req.UserId, req.Token)
 		infos := res.Information
 		if len(v.expect.Information) != len(infos) {

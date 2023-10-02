@@ -23,14 +23,10 @@ type getStageListService struct {
 }
 
 func CreateGetStageListService(
+	makeUserExploreArray makeUserExploreArrayFunc,
 	stageMasterRepo StageMasterRepo,
 	userStageRepo UserStageRepo,
-	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
-	userExploreRepo UserExploreRepo,
-	userSkillRepo UserSkillRepo,
-	consumingItemRepo ConsumingItemRepo,
-	requiredSkillRepo RequiredSkillRepo,
 ) getStageListService {
 	getAllStage := func(userId core.UserId, token core.AccessToken) (getStageListRes, error) {
 		handleError := func(err error) (getStageListRes, error) {
@@ -92,22 +88,11 @@ func CreateGetStageListService(
 			}
 			exploreIds := exploreToIdArr(allExploreActionRes.StageExplores)
 			exploreMap := exploreToMap(allExploreActionRes.StageExplores)
-			userExploreRes, err := userExploreRepo.GetActions(userId, exploreIds, token)
-			if err != nil {
-				return nil
-			}
-			userExploreMap := makeExploreIdMap(userExploreRes.Explores)
-
 			exploreArray, err := makeUserExploreArray(
 				userId,
 				token,
 				exploreIds,
 				exploreMap,
-				userExploreMap,
-				requiredSkillRepo,
-				consumingItemRepo,
-				userSkillRepo,
-				itemStorageRepo,
 			)
 
 			stageIdExploreMap := exploreToStageIdMap(allExploreActionRes.StageExplores)
