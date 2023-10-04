@@ -211,7 +211,7 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 		calcConsumingStamina := func(_ core.UserId, _ core.AccessToken, _ ExploreId) (core.Stamina, error) {
 			return v.stamina, nil
 		}
-		service := createCommonGetActionDetail(
+		service := CreateCommonGetActionDetail(
 			calcConsumingStamina,
 			itemStorageRepo,
 			exploreMasterRepo,

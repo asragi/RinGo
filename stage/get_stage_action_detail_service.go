@@ -42,7 +42,7 @@ type createCommonGetActionDetailRes struct {
 	getAction commonGetActionFunc
 }
 
-func createCommonGetActionDetail(
+func CreateCommonGetActionDetail(
 	calcConsumingStamina calcConsumingStaminaFunc,
 	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
