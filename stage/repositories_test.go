@@ -5,21 +5,23 @@ import (
 )
 
 var (
-	itemMasterRepo        = CreateMockItemMasterRepo()
-	itemStorageRepo       = CreateMockItemStorageRepo()
-	itemStorageUpdateRepo = createMockItemStorageUpdateRepo()
-	userExploreRepo       = createMockUserExploreRepo()
-	exploreMasterRepo     = createMockExploreMasterRepo()
-	skillMasterRepo       = createMockSkillMasterRepo()
-	userSkillRepo         = createMockUserSkillRepo()
-	skillGrowthUpdateRepo = createMockSkillUpdateRepo()
-	userStageRepo         = createMockUserStageRepo()
-	stageMasterRepo       = createMockStageMasterRepo()
-	skillGrowthDataRepo   = createMockSkillGrowthDataRepo()
-	earningItemRepo       = createMockEarningItemRepo()
-	consumingItemRepo     = createMockConsumingItemRepo()
-	requiredSkillRepo     = createMockRequiredSkillRepo()
-	reductionSkillRepo    = createMockReductionStaminaSkillRepo()
+	itemMasterRepo           = CreateMockItemMasterRepo()
+	itemStorageRepo          = CreateMockItemStorageRepo()
+	itemStorageUpdateRepo    = createMockItemStorageUpdateRepo()
+	userExploreRepo          = createMockUserExploreRepo()
+	exploreMasterRepo        = createMockExploreMasterRepo()
+	stageExploreRelationRepo = createMockStageExploreRelationRepo()
+	itemExploreRelationRepo  = createMockItemExploreRelationRepo()
+	skillMasterRepo          = createMockSkillMasterRepo()
+	userSkillRepo            = createMockUserSkillRepo()
+	skillGrowthUpdateRepo    = createMockSkillUpdateRepo()
+	userStageRepo            = createMockUserStageRepo()
+	stageMasterRepo          = createMockStageMasterRepo()
+	skillGrowthDataRepo      = createMockSkillGrowthDataRepo()
+	earningItemRepo          = createMockEarningItemRepo()
+	consumingItemRepo        = createMockConsumingItemRepo()
+	requiredSkillRepo        = createMockRequiredSkillRepo()
+	reductionSkillRepo       = createMockReductionStaminaSkillRepo()
 )
 
 type MockItemMaster struct {
@@ -150,51 +152,67 @@ func createMockUserExploreRepo() *MockUserExploreRepo {
 }
 
 type MockExploreMasterRepo struct {
-	Data       map[core.ItemId][]GetExploreMasterRes
-	StageData  map[StageId][]GetExploreMasterRes
-	ExploreMap map[ExploreId]GetExploreMasterRes
+	Data map[ExploreId]GetExploreMasterRes
 }
 
-func (m *MockExploreMasterRepo) GetAllExploreMaster(itemId core.ItemId) ([]GetExploreMasterRes, error) {
-	return m.Data[itemId], nil
-}
-
-func (m *MockExploreMasterRepo) GetStageAllExploreMaster(stageIdArr []StageId) (BatchGetStageExploreRes, error) {
-	result := []StageExploreMasterRes{}
-	for _, v := range stageIdArr {
-		exploreMasters := m.StageData[v]
-		info := StageExploreMasterRes{
-			StageId:  v,
-			Explores: exploreMasters,
-		}
-		result = append(result, info)
+func (m *MockExploreMasterRepo) BatchGet(e []ExploreId) ([]GetExploreMasterRes, error) {
+	result := make([]GetExploreMasterRes, len(e))
+	for i, v := range e {
+		result[i] = m.Data[v]
 	}
-	return BatchGetStageExploreRes{result}, nil
+	return result, nil
 }
 
 func (m *MockExploreMasterRepo) Get(e ExploreId) (GetExploreMasterRes, error) {
-	return m.ExploreMap[e], nil
+	return m.Data[e], nil
 }
 
 func (m *MockExploreMasterRepo) Add(e ExploreId, master GetExploreMasterRes) {
-	m.ExploreMap[e] = master
+	m.Data[e] = master
 }
 
-func (m *MockExploreMasterRepo) AddItem(itemId core.ItemId, e ExploreId, master GetExploreMasterRes) {
-	m.Data[itemId] = append(m.Data[itemId], master)
-	m.Add(e, master)
+type MockStageExploreRelationRepo struct {
+	Data map[StageId][]ExploreId
 }
 
-func (m *MockExploreMasterRepo) AddStage(stageId StageId, e ExploreId, master GetExploreMasterRes) {
-	m.StageData[stageId] = append(m.StageData[stageId], master)
-	m.Add(e, master)
+func (m *MockStageExploreRelationRepo) AddStage(stageId StageId, e []ExploreId) {
+	m.Data[stageId] = e
+}
+
+func (m *MockStageExploreRelationRepo) BatchGet(stageIds []StageId) ([]StageExploreIdPair, error) {
+	result := make([]StageExploreIdPair, len(stageIds))
+	for i, v := range stageIds {
+		result[i] = StageExploreIdPair{
+			StageId:    v,
+			ExploreIds: m.Data[v],
+		}
+	}
+	return result, nil
+}
+
+func createMockStageExploreRelationRepo() *MockStageExploreRelationRepo {
+	return &MockStageExploreRelationRepo{Data: map[StageId][]ExploreId{}}
+}
+
+type MockItemExploreRelationRepo struct {
+	Data map[core.ItemId][]ExploreId
+}
+
+func (m *MockItemExploreRelationRepo) Get(id core.ItemId) ([]ExploreId, error) {
+	return m.Data[id], nil
+}
+
+func (m *MockItemExploreRelationRepo) AddItem(itemId core.ItemId, e []ExploreId) {
+	m.Data[itemId] = e
+}
+
+func createMockItemExploreRelationRepo() *MockItemExploreRelationRepo {
+	return &MockItemExploreRelationRepo{Data: map[core.ItemId][]ExploreId{}}
 }
 
 func createMockExploreMasterRepo() *MockExploreMasterRepo {
 	return &MockExploreMasterRepo{
-		Data:       map[core.ItemId][]GetExploreMasterRes{},
-		StageData:  map[StageId][]GetExploreMasterRes{},
-		ExploreMap: map[ExploreId]GetExploreMasterRes{},
+		Data: map[ExploreId]GetExploreMasterRes{},
 	}
 }
 

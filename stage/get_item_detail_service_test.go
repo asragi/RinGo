@@ -79,8 +79,9 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		},
 	}
 	for _, v := range exploreMasters {
-		exploreMasterRepo.AddItem(itemIds[0], v.ExploreId, v)
+		exploreMasterRepo.Add(v.ExploreId, v)
 	}
+	itemExploreRelationRepo.AddItem(itemIds[0], exploreIds)
 
 	testCases := []testCase{
 		{
@@ -119,6 +120,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 			itemMasterRepo,
 			itemStorageRepo,
 			exploreMasterRepo,
+			itemExploreRelationRepo,
 		)
 		getUserItemDetail := itemService.GetUserItemDetail
 

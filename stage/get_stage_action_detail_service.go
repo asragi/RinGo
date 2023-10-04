@@ -39,7 +39,7 @@ type earningItemRes struct {
 type commonGetActionFunc func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
 
 type createCommonGetActionDetailRes struct {
-	getAction commonGetActionFunc
+	GetAction commonGetActionFunc
 }
 
 func CreateCommonGetActionDetail(

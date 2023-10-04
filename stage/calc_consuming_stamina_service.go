@@ -12,7 +12,7 @@ type createCalcConsumingStaminaServiceRes struct {
 	Calc calcConsumingStaminaFunc
 }
 
-func createCalcConsumingStaminaService(
+func CreateCalcConsumingStaminaService(
 	userSkillRepo UserSkillRepo,
 	exploreMasterRepo ExploreMasterRepo,
 	reductionSkillRepo ReductionStaminaSkillRepo,

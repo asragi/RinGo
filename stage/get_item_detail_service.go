@@ -32,12 +32,17 @@ func CreateGetItemDetailService(
 	itemMasterRepo ItemMasterRepo,
 	itemStorageRepo ItemStorageRepo,
 	exploreMasterRepo ExploreMasterRepo,
+	itemExploreRelationRepo ItemExploreRelationRepo,
 ) itemService {
 	getAllAction := func(req GetUserItemDetailReq) ([]userExplore, error) {
 		handleError := func(err error) ([]userExplore, error) {
 			return []userExplore{}, fmt.Errorf("error on getAllAction: %w", err)
 		}
-		explores, err := exploreMasterRepo.GetAllExploreMaster(req.ItemId)
+		itemExploreIds, err := itemExploreRelationRepo.Get(req.ItemId)
+		if err != nil {
+			return handleError(err)
+		}
+		explores, err := exploreMasterRepo.BatchGet(itemExploreIds)
 		if err != nil {
 			return handleError(err)
 		}

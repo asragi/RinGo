@@ -76,8 +76,9 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 		},
 	}
 	for _, v := range exploreMasters {
-		exploreMasterRepo.AddItem(itemIds[0], v.ExploreId, v)
+		exploreMasterRepo.Add(v.ExploreId, v)
 	}
+	itemExploreRelationRepo.AddItem(itemIds[0], exploreIds)
 
 	skillIds := []core.SkillId{"skillA", "skillB"}
 	skillMasters := []SkillMaster{
@@ -222,7 +223,7 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			requiredSkillRepo,
 		)
 
-		res, _ := service.getAction(userId, req, "token")
+		res, _ := service.GetAction(userId, req, "token")
 		if expect.ActionDisplayName != res.ActionDisplayName {
 			t.Errorf("case %d, expect %s, got %s", i, expect.ActionDisplayName, res.ActionDisplayName)
 		}

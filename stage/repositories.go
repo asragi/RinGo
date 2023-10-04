@@ -125,19 +125,22 @@ type GetExploreMasterRes struct {
 	StaminaReducibleRate StaminaReducibleRate
 }
 
-type StageExploreMasterRes struct {
-	StageId  StageId
-	Explores []GetExploreMasterRes
+type StageExploreIdPair struct {
+	StageId    StageId
+	ExploreIds []ExploreId
 }
 
-type BatchGetStageExploreRes struct {
-	StageExplores []StageExploreMasterRes
+type ItemExploreRelationRepo interface {
+	Get(core.ItemId) ([]ExploreId, error)
+}
+
+type StageExploreRelationRepo interface {
+	BatchGet([]StageId) ([]StageExploreIdPair, error)
 }
 
 type ExploreMasterRepo interface {
 	Get(ExploreId) (GetExploreMasterRes, error)
-	GetAllExploreMaster(core.ItemId) ([]GetExploreMasterRes, error)
-	GetStageAllExploreMaster([]StageId) (BatchGetStageExploreRes, error)
+	BatchGet([]ExploreId) ([]GetExploreMasterRes, error)
 }
 
 type ExploreUserData struct {

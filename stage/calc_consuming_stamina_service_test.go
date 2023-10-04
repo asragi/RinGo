@@ -59,7 +59,7 @@ func TestCreateCalcConsumingStaminaService(t *testing.T) {
 	reductionSkillRepo.Add(exploreIds[1], []core.SkillId{skillIds[0]})
 	reductionSkillRepo.Add(exploreIds[2], []core.SkillId{skillIds[1], skillIds[2]})
 
-	service := createCalcConsumingStaminaService(
+	service := CreateCalcConsumingStaminaService(
 		userSkillRepo,
 		exploreMasterRepo,
 		reductionSkillRepo,

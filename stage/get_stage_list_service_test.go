@@ -88,8 +88,9 @@ func TestCreateGetStageListService(t *testing.T) {
 		},
 	}
 	for _, v := range exploreMasters {
-		exploreMasterRepo.AddStage(stageIds[0], v.ExploreId, v)
+		exploreMasterRepo.Add(v.ExploreId, v)
 	}
+	stageExploreRelationRepo.AddStage(stageIds[0], exploreIds)
 
 	mockUserExplores := func() []userExplore {
 		result := make([]userExplore, len(exploreMasters))
@@ -136,6 +137,7 @@ func TestCreateGetStageListService(t *testing.T) {
 			stageMasterRepo,
 			userStageRepo,
 			exploreMasterRepo,
+			stageExploreRelationRepo,
 		)
 		getStageListService := createService.GetAllStage
 		res, _ := getStageListService(req.UserId, req.Token)

@@ -1,6 +1,8 @@
 package infrastructure
 
 import (
+	"fmt"
+
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 )
@@ -48,8 +50,8 @@ type InMemoryItemStorageRepo struct {
 	Data ItemStorageData
 }
 
-type ItemStorageDataLoader interface {
-	Load() ItemStorageData
+type IItemStorageDataLoader interface {
+	Load() (ItemStorageData, error)
 }
 
 func (m *InMemoryItemStorageRepo) Get(userId core.UserId, itemId core.ItemId, token core.AccessToken) (stage.GetItemStorageRes, error) {
@@ -78,9 +80,13 @@ func (m *InMemoryItemStorageRepo) GetStock(userId core.UserId, itemId core.ItemI
 	return m.Data[userId][itemId].Stock
 }
 
-func CreateInMemoryItemStorageRepo(loader ItemStorageDataLoader) *InMemoryItemStorageRepo {
-	itemStorageRepo := InMemoryItemStorageRepo{Data: loader.Load()}
-	return &itemStorageRepo
+func CreateInMemoryItemStorageRepo(loader IItemStorageDataLoader) (*InMemoryItemStorageRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on load item storage: %w", err)
+	}
+	itemStorageRepo := InMemoryItemStorageRepo{Data: data}
+	return &itemStorageRepo, nil
 }
 
 type InMemoryUserExploreRepo struct {
@@ -101,57 +107,44 @@ func createMockUserExploreRepo() *InMemoryUserExploreRepo {
 	return &repo
 }
 
+type ExploreMasterData map[stage.ExploreId]stage.GetExploreMasterRes
+
 type InMemoryExploreMasterRepo struct {
-	Data       map[core.ItemId][]stage.GetExploreMasterRes
-	StageData  map[stage.StageId][]stage.GetExploreMasterRes
-	ExploreMap map[stage.ExploreId]stage.GetExploreMasterRes
+	Data ExploreMasterData
 }
 
-type ExploreMasterLoader interface {
-	Load() (map[core.ItemId][]stage.GetExploreMasterRes, map[stage.StageId][]stage.GetExploreMasterRes)
+type IExploreMasterLoader interface {
+	Load() (ExploreMasterData, error)
 }
 
-func (m *InMemoryExploreMasterRepo) GetAllExploreMaster(itemId core.ItemId) ([]stage.GetExploreMasterRes, error) {
-	return m.Data[itemId], nil
+type InMemoryItemExploreRepo struct {
+	Data map[core.ItemId][]stage.ExploreId
 }
 
-func (m *InMemoryExploreMasterRepo) GetStageAllExploreMaster(stageIdArr []stage.StageId) (stage.BatchGetStageExploreRes, error) {
-	result := []stage.StageExploreMasterRes{}
-	for _, v := range stageIdArr {
-		exploreMasters := m.StageData[v]
-		info := stage.StageExploreMasterRes{
-			StageId:  v,
-			Explores: exploreMasters,
-		}
-		result = append(result, info)
-	}
-	return stage.BatchGetStageExploreRes{StageExplores: result}, nil
+type InMemoryStageExploreRepo struct {
+	StageData map[stage.StageId][]stage.ExploreId
 }
 
 func (m *InMemoryExploreMasterRepo) Get(e stage.ExploreId) (stage.GetExploreMasterRes, error) {
-	return m.ExploreMap[e], nil
+	return m.Data[e], nil
 }
 
-func (m *InMemoryExploreMasterRepo) Add(e stage.ExploreId, master stage.GetExploreMasterRes) {
-	m.ExploreMap[e] = master
-}
-
-func (m *InMemoryExploreMasterRepo) AddItem(itemId core.ItemId, e stage.ExploreId, master stage.GetExploreMasterRes) {
-	m.Data[itemId] = append(m.Data[itemId], master)
-	m.Add(e, master)
-}
-
-func (m *InMemoryExploreMasterRepo) AddStage(stageId stage.StageId, e stage.ExploreId, master stage.GetExploreMasterRes) {
-	m.StageData[stageId] = append(m.StageData[stageId], master)
-	m.Add(e, master)
-}
-
-func createInMemoryExploreMasterRepo() *InMemoryExploreMasterRepo {
-	return &InMemoryExploreMasterRepo{
-		Data:       map[core.ItemId][]stage.GetExploreMasterRes{},
-		StageData:  map[stage.StageId][]stage.GetExploreMasterRes{},
-		ExploreMap: map[stage.ExploreId]stage.GetExploreMasterRes{},
+func (m *InMemoryExploreMasterRepo) BatchGet(e []stage.ExploreId) ([]stage.GetExploreMasterRes, error) {
+	result := make([]stage.GetExploreMasterRes, len(e))
+	for i, v := range e {
+		result[i] = m.Data[v]
 	}
+	return result, nil
+}
+
+func CreateInMemoryExploreMasterRepo(loader IExploreMasterLoader) (*InMemoryExploreMasterRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on load in memory explore master: %w", err)
+	}
+	return &InMemoryExploreMasterRepo{
+		Data: data,
+	}, nil
 }
 
 type SkillMasterData map[core.SkillId]stage.SkillMaster
@@ -160,8 +153,8 @@ type InMemorySkillMasterRepo struct {
 	Skills SkillMasterData
 }
 
-type SkillMasterLoader interface {
-	Load() SkillMasterData
+type ISkillMasterLoader interface {
+	Load() (SkillMasterData, error)
 }
 
 func (m *InMemorySkillMasterRepo) BatchGet(skills []core.SkillId) (stage.BatchGetSkillMasterRes, error) {
@@ -174,12 +167,22 @@ func (m *InMemorySkillMasterRepo) BatchGet(skills []core.SkillId) (stage.BatchGe
 	}, nil
 }
 
-func createInMemorySkillMasterRepo(loader SkillMasterLoader) *InMemorySkillMasterRepo {
-	return &InMemorySkillMasterRepo{Skills: loader.Load()}
+func CreateInMemorySkillMasterRepo(loader ISkillMasterLoader) (*InMemorySkillMasterRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on create in memory skill master repo: %w", err)
+	}
+	return &InMemorySkillMasterRepo{Skills: data}, nil
 }
 
+type UserSkillData map[core.UserId]map[core.SkillId]stage.UserSkillRes
+
 type InMemoryUserSkillRepo struct {
-	Data map[core.UserId]map[core.SkillId]stage.UserSkillRes
+	Data UserSkillData
+}
+
+type IUserSkillLoader interface {
+	Load() (UserSkillData, error)
 }
 
 func (m *InMemoryUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId, token core.AccessToken) (stage.BatchGetUserSkillRes, error) {
@@ -207,8 +210,12 @@ func (m *InMemoryUserSkillRepo) Add(userId core.UserId, skills []stage.UserSkill
 	}
 }
 
-func createMockUserSkillRepo() *InMemoryUserSkillRepo {
-	return &InMemoryUserSkillRepo{Data: map[core.UserId]map[core.SkillId]stage.UserSkillRes{}}
+func CreateInMemoryUserSkillRepo(loader IUserSkillLoader) (*InMemoryUserSkillRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on create in memory user skill data: %w", err)
+	}
+	return &InMemoryUserSkillRepo{Data: data}, err
 }
 
 type mockUserStageRepo struct {
@@ -235,19 +242,21 @@ func createMockUserStageRepo() *mockUserStageRepo {
 	return &repo
 }
 
-type mockStageMasterRepo struct {
-	Data map[stage.StageId]stage.StageMaster
+type StageMasterData map[stage.StageId]stage.StageMaster
+
+type InMemoryStageMasterRepo struct {
+	Data StageMasterData
 }
 
-func (m *mockStageMasterRepo) Add(id stage.StageId, master stage.StageMaster) {
-	m.Data[id] = master
+type IStageMasterLoader interface {
+	Load() (StageMasterData, error)
 }
 
-func (m *mockStageMasterRepo) Get(stageId stage.StageId) (stage.StageMaster, error) {
+func (m *InMemoryStageMasterRepo) Get(stageId stage.StageId) (stage.StageMaster, error) {
 	return m.Data[stageId], nil
 }
 
-func (m *mockStageMasterRepo) GetAllStages() (stage.GetAllStagesRes, error) {
+func (m *InMemoryStageMasterRepo) GetAllStages() (stage.GetAllStagesRes, error) {
 	result := []stage.StageMaster{}
 	for _, v := range m.Data {
 		result = append(result, v)
@@ -255,9 +264,13 @@ func (m *mockStageMasterRepo) GetAllStages() (stage.GetAllStagesRes, error) {
 	return stage.GetAllStagesRes{Stages: result}, nil
 }
 
-func createMockStageMasterRepo() *mockStageMasterRepo {
-	repo := mockStageMasterRepo{Data: map[stage.StageId]stage.StageMaster{}}
-	return &repo
+func CreateInMemoryStageMasterRepo(loader IStageMasterLoader) (*InMemoryStageMasterRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on stage master repo: %w", err)
+	}
+	repo := InMemoryStageMasterRepo{Data: data}
+	return &repo, nil
 }
 
 type MockSkillGrowthDataRepo struct {
@@ -277,28 +290,40 @@ func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
 	return &repo
 }
 
-type mockEarningItemRepo struct {
-	Data map[stage.ExploreId][]stage.EarningItem
+type EarningItemData map[stage.ExploreId][]stage.EarningItem
+
+type InMemoryEarningItemRepo struct {
+	Data EarningItemData
 }
 
-func (m *mockEarningItemRepo) BatchGet(exploreId stage.ExploreId) []stage.EarningItem {
+type IEarningItemLoader interface {
+	Load() (EarningItemData, error)
+}
+
+func (m *InMemoryEarningItemRepo) BatchGet(exploreId stage.ExploreId) []stage.EarningItem {
 	return m.Data[exploreId]
 }
 
-func (m *mockEarningItemRepo) Add(e stage.ExploreId, items []stage.EarningItem) {
-	m.Data[e] = items
+func CreateInMemoryEarningItemRepo(loader IEarningItemLoader) (*InMemoryEarningItemRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on create in memory earning item repo: %w", err)
+	}
+	return &InMemoryEarningItemRepo{Data: data}, nil
 }
 
-func createMockEarningItemRepo() *mockEarningItemRepo {
-	return &mockEarningItemRepo{Data: map[stage.ExploreId][]stage.EarningItem{}}
-}
+type ConsumingItemData map[stage.ExploreId][]stage.ConsumingItem
 
 type InMemoryConsumingItemRepo struct {
-	Data map[stage.ExploreId][]stage.ConsumingItem
+	Data ConsumingItemData
 }
 
 func (m *InMemoryConsumingItemRepo) BatchGet(exploreId stage.ExploreId) ([]stage.ConsumingItem, error) {
-	return m.Data[exploreId], nil
+	data, ok := m.Data[exploreId]
+	if !ok {
+		return []stage.ConsumingItem{}, nil
+	}
+	return data, nil
 }
 
 func (m *InMemoryConsumingItemRepo) AllGet(exploreId []stage.ExploreId) ([]stage.BatchGetConsumingItemRes, error) {
@@ -316,22 +341,32 @@ func (m *InMemoryConsumingItemRepo) Add(exploreId stage.ExploreId, consuming []s
 	m.Data[exploreId] = consuming
 }
 
-func createMockConsumingItemRepo() *InMemoryConsumingItemRepo {
-	return &InMemoryConsumingItemRepo{Data: map[stage.ExploreId][]stage.ConsumingItem{}}
+func CreateInMemoryConsumingItemRepo(loader IConsumingItemLoader) (*InMemoryConsumingItemRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on creating in memory consuming item repo: %w", err)
+	}
+	return &InMemoryConsumingItemRepo{Data: data}, nil
 }
 
-type mockRequiredSkillRepo struct {
-	Data map[stage.ExploreId][]stage.RequiredSkill
+type RequiredSkillData map[stage.ExploreId][]stage.RequiredSkill
+
+type IRequiredSkillLoader interface {
+	Load() (RequiredSkillData, error)
 }
 
-func (m *mockRequiredSkillRepo) Get(exploreId stage.ExploreId) ([]stage.RequiredSkill, error) {
+type InMemoryRequiredSkillRepo struct {
+	Data RequiredSkillData
+}
+
+func (m *InMemoryRequiredSkillRepo) Get(exploreId stage.ExploreId) ([]stage.RequiredSkill, error) {
 	if _, ok := m.Data[exploreId]; !ok {
 		return []stage.RequiredSkill{}, nil
 	}
 	return m.Data[exploreId], nil
 }
 
-func (m *mockRequiredSkillRepo) BatchGet(ids []stage.ExploreId) ([]stage.RequiredSkillRow, error) {
+func (m *InMemoryRequiredSkillRepo) BatchGet(ids []stage.ExploreId) ([]stage.RequiredSkillRow, error) {
 	result := make([]stage.RequiredSkillRow, len(ids))
 	for i, v := range ids {
 		row := stage.RequiredSkillRow{
@@ -343,12 +378,12 @@ func (m *mockRequiredSkillRepo) BatchGet(ids []stage.ExploreId) ([]stage.Require
 	return result, nil
 }
 
-func (m *mockRequiredSkillRepo) Add(e stage.ExploreId, skills []stage.RequiredSkill) {
-	m.Data[e] = skills
-}
-
-func createMockRequiredSkillRepo() *mockRequiredSkillRepo {
-	return &mockRequiredSkillRepo{Data: map[stage.ExploreId][]stage.RequiredSkill{}}
+func CreateInMemoryRequiredSkillRepo(loader IRequiredSkillLoader) (*InMemoryRequiredSkillRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on create required skill repo: %w", err)
+	}
+	return &InMemoryRequiredSkillRepo{Data: data}, nil
 }
 
 type mockItemStorageUpdateRepo struct {
@@ -387,18 +422,28 @@ func createMockSkillUpdateRepo() *mockSkillUpdateRepo {
 	return &mockSkillUpdateRepo{}
 }
 
-type mockReductionStaminaSkillRepo struct {
-	Data map[stage.ExploreId][]core.SkillId
+type ReductionStaminaSkillData map[stage.ExploreId][]core.SkillId
+
+type InMemoryReductionStaminaSkillRepo struct {
+	Data ReductionStaminaSkillData
 }
 
-func (m *mockReductionStaminaSkillRepo) Get(exploreId stage.ExploreId) ([]core.SkillId, error) {
+type IReductionStaminaSkillLoader interface {
+	Load() (ReductionStaminaSkillData, error)
+}
+
+func (m *InMemoryReductionStaminaSkillRepo) Get(exploreId stage.ExploreId) ([]core.SkillId, error) {
 	return m.Data[exploreId], nil
 }
 
-func createMockReductionStaminaSkillRepo() *mockReductionStaminaSkillRepo {
-	return &mockReductionStaminaSkillRepo{Data: map[stage.ExploreId][]core.SkillId{}}
+func CreateInMemoryReductionStaminaSkillRepo(loader IReductionStaminaSkillLoader) (*InMemoryReductionStaminaSkillRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return nil, fmt.Errorf("error on create reduction skill repo: %w", err)
+	}
+	return &InMemoryReductionStaminaSkillRepo{Data: data}, nil
 }
 
-func (m *mockReductionStaminaSkillRepo) Add(e stage.ExploreId, skills []core.SkillId) {
+func (m *InMemoryReductionStaminaSkillRepo) Add(e stage.ExploreId, skills []core.SkillId) {
 	m.Data[e] = skills
 }

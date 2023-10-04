@@ -27,6 +27,7 @@ func CreateGetStageListService(
 	stageMasterRepo StageMasterRepo,
 	userStageRepo UserStageRepo,
 	exploreMasterRepo ExploreMasterRepo,
+	stageExploreRepo StageExploreRelationRepo,
 ) getStageListService {
 	getAllStage := func(userId core.UserId, token core.AccessToken) (getStageListRes, error) {
 		handleError := func(err error) (getStageListRes, error) {
@@ -49,45 +50,32 @@ func CreateGetStageListService(
 		}
 
 		getAllAction := func(stageIds []StageId) map[StageId][]userExplore {
-			exploreToIdArr := func(masters []StageExploreMasterRes) []ExploreId {
-				result := []ExploreId{}
-				for _, v := range masters {
-					for _, w := range v.Explores {
-						result = append(result, w.ExploreId)
-					}
-				}
-				return result
-			}
-
-			exploreToMap := func(masters []StageExploreMasterRes) map[ExploreId]GetExploreMasterRes {
-				result := make(map[ExploreId]GetExploreMasterRes)
-				for _, v := range masters {
-					for _, w := range v.Explores {
-						result[w.ExploreId] = w
-					}
-				}
-				return result
-			}
-
-			exploreToStageIdMap := func(masters []StageExploreMasterRes) map[StageId][]ExploreId {
-				result := make(map[StageId][]ExploreId)
-				for _, v := range masters {
-					if _, ok := result[v.StageId]; !ok {
-						result[v.StageId] = []ExploreId{}
-					}
-					for _, w := range v.Explores {
-						result[v.StageId] = append(result[v.StageId], w.ExploreId)
-					}
-				}
-				return result
-			}
-
-			allExploreActionRes, err := exploreMasterRepo.GetStageAllExploreMaster(stageIds)
+			allExploreIdRes, err := stageExploreRepo.BatchGet(stageIds)
 			if err != nil {
 				return nil
 			}
-			exploreIds := exploreToIdArr(allExploreActionRes.StageExplores)
-			exploreMap := exploreToMap(allExploreActionRes.StageExplores)
+			exploreIds := func(res []StageExploreIdPair) []ExploreId {
+				result := []ExploreId{}
+				for _, v := range res {
+					for _, w := range v.ExploreIds {
+						result = append(result, w)
+					}
+				}
+				return result
+			}(allExploreIdRes)
+			allExplore, err := exploreMasterRepo.BatchGet(exploreIds)
+			if err != nil {
+				return nil
+			}
+
+			exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
+				result := make(map[ExploreId]GetExploreMasterRes)
+				for _, v := range masters {
+					result[v.ExploreId] = v
+				}
+				return result
+			}(allExplore)
+
 			exploreArray, err := makeUserExploreArray(
 				userId,
 				token,
@@ -95,7 +83,18 @@ func CreateGetStageListService(
 				exploreMap,
 			)
 
-			stageIdExploreMap := exploreToStageIdMap(allExploreActionRes.StageExplores)
+			stageIdExploreMap := func(stageExploreIds []StageExploreIdPair) map[StageId][]ExploreId {
+				result := make(map[StageId][]ExploreId)
+				for _, v := range stageExploreIds {
+					if _, ok := result[v.StageId]; !ok {
+						result[v.StageId] = []ExploreId{}
+					}
+					for _, w := range v.ExploreIds {
+						result[v.StageId] = append(result[v.StageId], w)
+					}
+				}
+				return result
+			}(allExploreIdRes)
 
 			userExploreFetchedMap := make(map[ExploreId]userExplore)
 
@@ -103,17 +102,19 @@ func CreateGetStageListService(
 				userExploreFetchedMap[v.ExploreId] = v
 			}
 
-			result := make(map[StageId][]userExplore)
+			result := func() map[StageId][]userExplore {
+				result := make(map[StageId][]userExplore)
 
-			for _, v := range allExploreActionRes.StageExplores {
-				if _, ok := result[v.StageId]; !ok {
-					result[v.StageId] = []userExplore{}
+				for _, v := range stageIds {
+					if _, ok := result[v]; !ok {
+						result[v] = []userExplore{}
+					}
+					for _, w := range stageIdExploreMap[v] {
+						result[v] = append(result[v], userExploreFetchedMap[w])
+					}
 				}
-				for _, w := range stageIdExploreMap[v.StageId] {
-					result[v.StageId] = append(result[v.StageId], userExploreFetchedMap[w])
-				}
-			}
-
+				return result
+			}()
 			return result
 		}
 
