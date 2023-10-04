@@ -87,7 +87,7 @@ func main() {
 			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(res.DisplayName)
+
 		/*
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)

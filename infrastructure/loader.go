@@ -251,8 +251,27 @@ func (loader *ExploreMasterLoader) Load() (ExploreMasterData, error) {
 			}
 			// TODO: implement all field
 			exploreId := stage.ExploreId(v[0])
+			displayName := core.DisplayName(v[1])
+			desc := core.Description(v[2])
+			staminaValue, err := strconv.Atoi(v[3])
+			if err != nil {
+				handleError(err)
+			}
+			payValue, err := strconv.Atoi(v[4])
+			if err != nil {
+				handleError(err)
+			}
+			reduceRate, err := strconv.ParseFloat(v[5], 64)
+			if err != nil {
+				handleError(err)
+			}
 			data := stage.GetExploreMasterRes{
-				ExploreId: exploreId,
+				ExploreId:            exploreId,
+				DisplayName:          displayName,
+				Description:          desc,
+				RequiredPayment:      core.Price(payValue),
+				ConsumingStamina:     core.Stamina(staminaValue),
+				StaminaReducibleRate: stage.StaminaReducibleRate(reduceRate),
 			}
 			result[data.ExploreId] = data
 		}
