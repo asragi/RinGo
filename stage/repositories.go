@@ -234,5 +234,5 @@ type BatchGetReductionStaminaSkill struct {
 
 type ReductionStaminaSkillRepo interface {
 	Get(ExploreId) ([]core.SkillId, error)
-	BatchGetReductionStaminaSkill([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
+	BatchGet([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
 }

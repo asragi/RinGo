@@ -473,7 +473,7 @@ func (m *mockReductionStaminaSkillRepo) Get(exploreId ExploreId) ([]core.SkillId
 	return m.Data[exploreId], nil
 }
 
-func (m *mockReductionStaminaSkillRepo) BatchGetReductionStaminaSkill(exploreIds []ExploreId) ([]BatchGetReductionStaminaSkill, error) {
+func (m *mockReductionStaminaSkillRepo) BatchGet(exploreIds []ExploreId) ([]BatchGetReductionStaminaSkill, error) {
 	result := make([]BatchGetReductionStaminaSkill, len(exploreIds))
 	for i, v := range exploreIds {
 		result[i] = BatchGetReductionStaminaSkill{

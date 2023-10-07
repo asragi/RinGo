@@ -92,7 +92,7 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 	userId := MockUserId
 	type testCase struct {
 		request []GetExploreMasterRes
-		expect  []exploreStaminaPair
+		expect  []ExploreStaminaPair
 	}
 	skillIds := []core.SkillId{
 		"skillA", "skillB", "skillC",
@@ -150,7 +150,7 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 	testCases := []testCase{
 		{
 			request: master,
-			expect: []exploreStaminaPair{
+			expect: []ExploreStaminaPair{
 				{
 					ExploreId:      exploreIds[0],
 					ReducedStamina: 100,

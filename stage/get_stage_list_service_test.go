@@ -15,7 +15,7 @@ func TestCreateGetStageListService(t *testing.T) {
 		request          testRequest
 		mockUserExplores []userExplore
 		expect           getStageListRes
-		mockStaminaRes   []exploreStaminaPair
+		mockStaminaRes   []ExploreStaminaPair
 	}
 	userId := MockUserId
 	stageIds := []StageId{"stageA", "stageB"}
@@ -133,7 +133,7 @@ func TestCreateGetStageListService(t *testing.T) {
 		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]core.Stamina, _ map[ExploreId]GetExploreMasterRes, _ int) ([]userExplore, error) {
 			return userExplores, nil
 		}
-		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]exploreStaminaPair, error) {
+		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]ExploreStaminaPair, error) {
 			return v.mockStaminaRes, nil
 		}
 

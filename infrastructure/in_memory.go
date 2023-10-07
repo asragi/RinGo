@@ -436,6 +436,17 @@ func (m *InMemoryReductionStaminaSkillRepo) Get(exploreId stage.ExploreId) ([]co
 	return m.Data[exploreId], nil
 }
 
+func (m *InMemoryReductionStaminaSkillRepo) BatchGet(exploreIds []stage.ExploreId) ([]stage.BatchGetReductionStaminaSkill, error) {
+	result := make([]stage.BatchGetReductionStaminaSkill, len(exploreIds))
+	for i, v := range exploreIds {
+		result[i] = stage.BatchGetReductionStaminaSkill{
+			ExploreId: v,
+			Skills:    m.Data[v],
+		}
+	}
+	return result, nil
+}
+
 func CreateInMemoryReductionStaminaSkillRepo(loader IReductionStaminaSkillLoader) (*InMemoryReductionStaminaSkillRepo, error) {
 	data, err := loader.Load()
 	if err != nil {

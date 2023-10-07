@@ -61,7 +61,7 @@ func CreateGetItemDetailService(
 			return handleError(err)
 		}
 
-		staminaMap := func(pair []exploreStaminaPair) map[ExploreId]core.Stamina {
+		staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
 			result := map[ExploreId]core.Stamina{}
 			for _, v := range pair {
 				result[v.ExploreId] = v.ReducedStamina

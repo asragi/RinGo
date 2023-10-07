@@ -11,7 +11,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		userId           core.UserId
 		itemId           core.ItemId
 		mockUserExplores []userExplore
-		mockStaminaRes   []exploreStaminaPair
+		mockStaminaRes   []ExploreStaminaPair
 	}
 
 	type testExpect struct {
@@ -116,7 +116,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 			return v.request.mockUserExplores, nil
 		}
 
-		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]exploreStaminaPair, error) {
+		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]ExploreStaminaPair, error) {
 			return v.request.mockStaminaRes, nil
 		}
 

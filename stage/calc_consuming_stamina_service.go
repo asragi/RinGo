@@ -6,13 +6,13 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type exploreStaminaPair struct {
+type ExploreStaminaPair struct {
 	ExploreId      ExploreId
 	ReducedStamina core.Stamina
 }
 
 type calcConsumingStaminaFunc func(core.UserId, core.AccessToken, ExploreId) (core.Stamina, error)
-type calcBatchConsumingStaminaFunc func(core.UserId, core.AccessToken, []GetExploreMasterRes) ([]exploreStaminaPair, error)
+type calcBatchConsumingStaminaFunc func(core.UserId, core.AccessToken, []GetExploreMasterRes) ([]ExploreStaminaPair, error)
 
 type createCalcConsumingStaminaServiceRes struct {
 	// Deprecated: Replace with BatchCalc()
@@ -69,8 +69,8 @@ func CreateCalcConsumingStaminaService(
 		return stamina, nil
 	}
 
-	batchCalc := func(userId core.UserId, token core.AccessToken, explores []GetExploreMasterRes) ([]exploreStaminaPair, error) {
-		handleError := func(err error) ([]exploreStaminaPair, error) {
+	batchCalc := func(userId core.UserId, token core.AccessToken, explores []GetExploreMasterRes) ([]ExploreStaminaPair, error) {
+		handleError := func(err error) ([]ExploreStaminaPair, error) {
 			return nil, fmt.Errorf("error on batch calc stamina: %w", err)
 		}
 		exploreMap := func(explores []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
@@ -87,7 +87,7 @@ func CreateCalcConsumingStaminaService(
 			}
 			return result
 		}(explores)
-		reductionStaminaSkills, err := reductionSkillRepo.BatchGetReductionStaminaSkill(exploreIds)
+		reductionStaminaSkills, err := reductionSkillRepo.BatchGet(exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -146,15 +146,15 @@ func CreateCalcConsumingStaminaService(
 		result := func(
 			exploreMap map[ExploreId]GetExploreMasterRes,
 			reductionSkillMap map[ExploreId][]UserSkillRes,
-		) []exploreStaminaPair {
-			result := make([]exploreStaminaPair, len(exploreMap))
+		) []ExploreStaminaPair {
+			result := make([]ExploreStaminaPair, len(exploreMap))
 			index := 0
 			for k, v := range exploreMap {
 				explore := v
 				baseStamina := explore.ConsumingStamina
 				reducibleRate := explore.StaminaReducibleRate
 				stamina := staminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
-				result[index] = exploreStaminaPair{
+				result[index] = ExploreStaminaPair{
 					ExploreId:      k,
 					ReducedStamina: stamina,
 				}
