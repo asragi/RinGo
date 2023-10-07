@@ -15,6 +15,7 @@ func TestCreateGetStageListService(t *testing.T) {
 		request          testRequest
 		mockUserExplores []userExplore
 		expect           getStageListRes
+		mockStaminaRes   []exploreStaminaPair
 	}
 	userId := MockUserId
 	stageIds := []StageId{"stageA", "stageB"}
@@ -129,10 +130,15 @@ func TestCreateGetStageListService(t *testing.T) {
 	for i, v := range testCases {
 		req := v.request
 		userExplores := v.mockUserExplores
-		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]GetExploreMasterRes) ([]userExplore, error) {
+		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]core.Stamina, _ map[ExploreId]GetExploreMasterRes, _ int) ([]userExplore, error) {
 			return userExplores, nil
 		}
+		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]exploreStaminaPair, error) {
+			return v.mockStaminaRes, nil
+		}
+
 		createService := CreateGetStageListService(
+			calcBatchConsumingStaminaFunc,
 			makeUserExploreArr,
 			stageMasterRepo,
 			userStageRepo,

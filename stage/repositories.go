@@ -5,9 +5,10 @@ import (
 )
 
 type GetResourceRes struct {
-	UserId  core.UserId
-	Stamina core.Stamina
-	Func    core.Fund
+	UserId             core.UserId
+	MaxStamina         core.MaxStamina
+	StaminaRecoverTime core.StaminaRecoverTime
+	Fund               core.Fund
 }
 
 type UserResourceRepo interface {
@@ -226,6 +227,12 @@ type ConsumingItemRepo interface {
 	AllGet([]ExploreId) ([]BatchGetConsumingItemRes, error)
 }
 
+type BatchGetReductionStaminaSkill struct {
+	ExploreId ExploreId
+	Skills    []core.SkillId
+}
+
 type ReductionStaminaSkillRepo interface {
 	Get(ExploreId) ([]core.SkillId, error)
+	BatchGetReductionStaminaSkill([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
 }

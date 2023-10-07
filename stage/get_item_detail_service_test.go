@@ -11,6 +11,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		userId           core.UserId
 		itemId           core.ItemId
 		mockUserExplores []userExplore
+		mockStaminaRes   []exploreStaminaPair
 	}
 
 	type testExpect struct {
@@ -111,11 +112,16 @@ func TestCreateGetItemDetailService(t *testing.T) {
 	}
 	// test
 	for i, v := range testCases {
-		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]GetExploreMasterRes) ([]userExplore, error) {
+		makeUserExploreArr := func(_ core.UserId, _ core.AccessToken, _ []ExploreId, _ map[ExploreId]core.Stamina, _ map[ExploreId]GetExploreMasterRes, _ int) ([]userExplore, error) {
 			return v.request.mockUserExplores, nil
 		}
 
+		calcBatchConsumingStaminaFunc := func(_ core.UserId, _ core.AccessToken, _ []GetExploreMasterRes) ([]exploreStaminaPair, error) {
+			return v.request.mockStaminaRes, nil
+		}
+
 		itemService := CreateGetItemDetailService(
+			calcBatchConsumingStaminaFunc,
 			makeUserExploreArr,
 			itemMasterRepo,
 			itemStorageRepo,

@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"time"
+
 	"github.com/asragi/RinGo/core"
 )
 
@@ -23,6 +25,22 @@ var (
 	requiredSkillRepo        = createMockRequiredSkillRepo()
 	reductionSkillRepo       = createMockReductionStaminaSkillRepo()
 )
+
+type MockUserResourceRepo struct {
+}
+
+func (m *MockUserResourceRepo) GetResource(userId core.UserId, _ core.AccessToken) (GetResourceRes, error) {
+	return GetResourceRes{
+		UserId:             userId,
+		MaxStamina:         6000,
+		StaminaRecoverTime: core.StaminaRecoverTime(time.Unix(1560000000, 0)),
+		Fund:               1000000,
+	}, nil
+}
+
+func (m *MockUserResourceRepo) UpdateStamina(_ core.UserId, _ core.AccessToken, _ core.Stamina) error {
+	return nil
+}
 
 type MockItemMaster struct {
 	ItemId      core.ItemId
@@ -453,6 +471,17 @@ type mockReductionStaminaSkillRepo struct {
 
 func (m *mockReductionStaminaSkillRepo) Get(exploreId ExploreId) ([]core.SkillId, error) {
 	return m.Data[exploreId], nil
+}
+
+func (m *mockReductionStaminaSkillRepo) BatchGetReductionStaminaSkill(exploreIds []ExploreId) ([]BatchGetReductionStaminaSkill, error) {
+	result := make([]BatchGetReductionStaminaSkill, len(exploreIds))
+	for i, v := range exploreIds {
+		result[i] = BatchGetReductionStaminaSkill{
+			Skills:    m.Data[v],
+			ExploreId: v,
+		}
+	}
+	return result, nil
 }
 
 func createMockReductionStaminaSkillRepo() *mockReductionStaminaSkillRepo {

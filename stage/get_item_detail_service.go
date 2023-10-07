@@ -28,6 +28,7 @@ type itemService struct {
 }
 
 func CreateGetItemDetailService(
+	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
 	makeUserExploreArray makeUserExploreArrayFunc,
 	itemMasterRepo ItemMasterRepo,
 	itemStorageRepo ItemStorageRepo,
@@ -55,11 +56,26 @@ func CreateGetItemDetailService(
 			exploreMap[v.ExploreId] = v
 		}
 
+		staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, req.AccessToken, explores)
+		if err != nil {
+			return handleError(err)
+		}
+
+		staminaMap := func(pair []exploreStaminaPair) map[ExploreId]core.Stamina {
+			result := map[ExploreId]core.Stamina{}
+			for _, v := range pair {
+				result[v.ExploreId] = v.ReducedStamina
+			}
+			return result
+		}(staminaRes)
+
 		result, err := makeUserExploreArray(
 			req.UserId,
 			req.AccessToken,
 			exploreIds,
+			staminaMap,
 			exploreMap,
+			1,
 		)
 
 		if err != nil {

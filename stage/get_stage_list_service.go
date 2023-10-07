@@ -23,6 +23,7 @@ type getStageListService struct {
 }
 
 func CreateGetStageListService(
+	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
 	makeUserExploreArray makeUserExploreArrayFunc,
 	stageMasterRepo StageMasterRepo,
 	userStageRepo UserStageRepo,
@@ -49,10 +50,13 @@ func CreateGetStageListService(
 			return result
 		}
 
-		getAllAction := func(stageIds []StageId) map[StageId][]userExplore {
+		getAllAction := func(stageIds []StageId) (map[StageId][]userExplore, error) {
+			handleError := func(err error) (map[StageId][]userExplore, error) {
+				return nil, fmt.Errorf("error on get all action: %w", err)
+			}
 			allExploreIdRes, err := stageExploreRepo.BatchGet(stageIds)
 			if err != nil {
-				return nil
+				return handleError(err)
 			}
 			exploreIds := func(res []StageExploreIdPair) []ExploreId {
 				result := []ExploreId{}
@@ -63,9 +67,9 @@ func CreateGetStageListService(
 				}
 				return result
 			}(allExploreIdRes)
-			allExplore, err := exploreMasterRepo.BatchGet(exploreIds)
+			explores, err := exploreMasterRepo.BatchGet(exploreIds)
 			if err != nil {
-				return nil
+				return handleError(err)
 			}
 
 			exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
@@ -74,13 +78,28 @@ func CreateGetStageListService(
 					result[v.ExploreId] = v
 				}
 				return result
-			}(allExplore)
+			}(explores)
+
+			staminaRes, err := calcBatchConsumingStaminaFunc(userId, token, explores)
+			if err != nil {
+				return handleError(err)
+			}
+
+			staminaMap := func(pair []exploreStaminaPair) map[ExploreId]core.Stamina {
+				result := map[ExploreId]core.Stamina{}
+				for _, v := range pair {
+					result[v.ExploreId] = v.ReducedStamina
+				}
+				return result
+			}(staminaRes)
 
 			exploreArray, err := makeUserExploreArray(
 				userId,
 				token,
 				exploreIds,
+				staminaMap,
 				exploreMap,
+				1,
 			)
 
 			stageIdExploreMap := func(stageExploreIds []StageExploreIdPair) map[StageId][]ExploreId {
@@ -115,7 +134,7 @@ func CreateGetStageListService(
 				}
 				return result
 			}()
-			return result
+			return result, nil
 		}
 
 		masterRes, err := stageMasterRepo.GetAllStages()
@@ -131,7 +150,10 @@ func CreateGetStageListService(
 		}
 		userStageMap := userStageToMap(userStageRes.UserStage)
 
-		allActions := getAllAction(allStageIds)
+		allActions, err := getAllAction(allStageIds)
+		if err != nil {
+			return handleError(err)
+		}
 		result := make([]stageInformation, len(stages))
 		for i, v := range masterRes.Stages {
 			id := v.StageId

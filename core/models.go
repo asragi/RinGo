@@ -16,11 +16,31 @@ type AccessToken string
 type UserId string
 type Fund int
 
+func (f Fund) CheckIsFundEnough(price Price) bool {
+	return int(f) >= int(price)
+}
+
 // 1 point equals to 30 sec.
+const StaminaSec = 30.0
+
 type Stamina int
+
+func (s Stamina) Multiply(value int) Stamina {
+	return Stamina(int(s) * value)
+}
+
+type MaxStamina int
+type StaminaRecoverTime time.Time
 
 func (s Stamina) Reduction(rate float64) Stamina {
 	return Stamina(float64(s) * rate)
+}
+
+func (recoverTime StaminaRecoverTime) CalcStamina(currentTime time.Time, maxStamina MaxStamina) Stamina {
+	timeDiff := time.Time(recoverTime).Unix() - currentTime.Unix()
+	timeDiffSec := float64(timeDiff)
+	lostStamina := Stamina(math.Ceil(timeDiffSec / StaminaSec))
+	return Stamina(maxStamina) - lostStamina
 }
 
 // display
@@ -30,6 +50,11 @@ type Description string
 // item master
 type ItemId string
 type Price int
+
+func (p Price) Multiply(value int) Price {
+	return Price(int(p) * value)
+}
+
 type MaxStock int
 type Count int
 
@@ -38,6 +63,10 @@ type Stock int
 
 func (s Stock) Apply(count Count, max MaxStock) Stock {
 	return Stock(math.Max(0, math.Min(float64(s)+float64(count), float64(max))))
+}
+
+func (s Stock) Multiply(value int) Stock {
+	return Stock(int(s) * value)
 }
 
 // skill master
@@ -73,3 +102,12 @@ func (exp SkillExp) CalcLv() SkillLv {
 // explore user
 type IsKnown bool
 type IsPossible bool
+type IsPossibleType string
+
+const (
+	PossibleTypeAll     IsPossibleType = "All"
+	PossibleTypeSkill   IsPossibleType = "Skill"
+	PossibleTypeItem    IsPossibleType = "Item"
+	PossibleTypeStamina IsPossibleType = "Stamina"
+	PossibleTypeFund    IsPossibleType = "Func"
+)

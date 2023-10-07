@@ -1,6 +1,9 @@
 package core
 
-import "math"
+import (
+	"math"
+	"time"
+)
 
 type IRandom interface {
 	Emit() float32
@@ -17,4 +20,8 @@ func boxMuller(random IRandom) float32 {
 
 func GenerateFromNormalDist(random IRandom, mu float32, sigma float32) float32 {
 	return boxMuller(random)*sigma + mu
+}
+
+type ICurrentTime interface {
+	Get() time.Time
 }
