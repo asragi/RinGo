@@ -11,7 +11,7 @@ func TestCreateTotalItemService(t *testing.T) {
 	itemId := []core.ItemId{
 		"A", "B", "C",
 	}
-	items := []MockItemStorageMaster{
+	items := []ItemData{
 		{
 			UserId: userId,
 			ItemId: itemId[0],
@@ -28,8 +28,7 @@ func TestCreateTotalItemService(t *testing.T) {
 			Stock:  10,
 		},
 	}
-	itemStorageRepo.Add(userId, items)
-	itemMaster := []MockItemMaster{
+	itemMaster := []GetItemMasterRes{
 		{
 			ItemId:   itemId[0],
 			MaxStock: 20,
@@ -43,15 +42,12 @@ func TestCreateTotalItemService(t *testing.T) {
 			MaxStock: 100,
 		},
 	}
-	for _, v := range itemMaster {
-		itemMasterRepo.Add(v.ItemId, v)
-	}
-
-	service := createTotalItemService(itemStorageRepo, itemMasterRepo)
 
 	type request struct {
 		earnedItems  []earnedItem
 		consumedItem []consumedItem
+		storageItem  []ItemData
+		itemMaster   []GetItemMasterRes
 	}
 
 	type expect struct {
@@ -86,6 +82,8 @@ func TestCreateTotalItemService(t *testing.T) {
 						Count:  core.Count(10),
 					},
 				},
+				storageItem: items,
+				itemMaster:  itemMaster,
 			},
 			expect: expect{
 				totalItem: []totalItem{
@@ -107,7 +105,8 @@ func TestCreateTotalItemService(t *testing.T) {
 	}
 
 	for i, v := range testCases {
-		res := service.Calc(userId, "token", v.request.earnedItems, v.request.consumedItem)
+		req := v.request
+		res := calcTotalItem(req.storageItem, req.itemMaster, v.request.earnedItems, v.request.consumedItem)
 		if len(v.expect.totalItem) != len(res) {
 			t.Errorf("case: %d, expect: %d, got: %d", i, len(v.expect.totalItem), len(res))
 		}

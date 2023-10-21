@@ -145,17 +145,18 @@ func TestCheckIsExplorePossible(t *testing.T) {
 
 	for _, v := range testCases {
 		req := v.request
-		actual := checkIsExplorePossible(
-			req.requiredStamina,
-			req.requiredPrice,
-			req.requiredItems,
-			req.requiredSkill,
-			req.currentStamina,
-			req.currentFund,
-			req.itemStockList,
-			req.skillLvList,
-			1,
-		)[core.PossibleTypeAll]
+		args := CheckIsPossibleArgs{
+			requiredStamina: req.requiredStamina,
+			requiredPrice:   req.requiredPrice,
+			requiredItems:   req.requiredItems,
+			requiredSkills:  req.requiredSkill,
+			currentStamina:  req.currentStamina,
+			currentFund:     req.currentFund,
+			itemStockList:   req.itemStockList,
+			skillLvList:     req.skillLvList,
+			execNum:         1,
+		}
+		actual := checkIsExplorePossible(args)[core.PossibleTypeAll]
 		if v.expect != bool(actual) {
 			t.Errorf("expect %t, got %t", v.expect, actual)
 		}

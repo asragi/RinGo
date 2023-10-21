@@ -7,10 +7,13 @@ import (
 )
 
 func TestCalcSkillGrowthApplyResult(t *testing.T) {
-	userId := MockUserId
+	type request struct {
+		skillGrowth []skillGrowthResult
+		userSkills  []UserSkillRes
+	}
 
 	type testCase struct {
-		request []skillGrowthResult
+		request request
 		expect  []growthApplyResult
 	}
 
@@ -23,15 +26,16 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 		},
 	}
 
-	userSkillRepo.Add(userId, userSkill)
-
 	testCases := []testCase{
 		{
-			request: []skillGrowthResult{
-				{
-					SkillId: skillId,
-					GainSum: 30,
+			request: request{
+				skillGrowth: []skillGrowthResult{
+					{
+						SkillId: skillId,
+						GainSum: 30,
+					},
 				},
+				userSkills: userSkill,
 			},
 			expect: []growthApplyResult{
 				{
@@ -42,10 +46,9 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 		},
 	}
 
-	service := calcSkillGrowthApplyResultService(userSkillRepo)
-
 	for _, v := range testCases {
-		res := service.Create(userId, "token", v.request)
+		req := v.request
+		res := calcApplySkillGrowth(req.userSkills, req.skillGrowth)
 		if len(v.expect) != len(res) {
 			t.Errorf("expect: %d, got: %d", len(v.expect), len(res))
 		}

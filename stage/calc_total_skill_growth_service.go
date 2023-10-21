@@ -12,72 +12,47 @@ type growthApplyResult struct {
 	WasLvUp   bool
 }
 
-type growthApplyFunc func(core.UserId, core.AccessToken, []skillGrowthResult) []growthApplyResult
+type GrowthApplyFunc func([]UserSkillRes, []skillGrowthResult) []growthApplyResult
 
 type growthApplyRes struct {
-	Create growthApplyFunc
+	Create GrowthApplyFunc
 }
 
-func calcSkillGrowthApplyResultService(
-	userSkillRepo UserSkillRepo,
-) growthApplyRes {
-	create := func(
-		userId core.UserId,
-		token core.AccessToken,
-		skillGrowth []skillGrowthResult,
-	) []growthApplyResult {
-		toSkillId := func(skillGrowthResults []skillGrowthResult) []core.SkillId {
-			result := make([]core.SkillId, len(skillGrowthResults))
-			for i, v := range skillGrowthResults {
-				result[i] = v.SkillId
-			}
-			return result
+func calcApplySkillGrowth(userSkills []UserSkillRes, skillGrowth []skillGrowthResult) []growthApplyResult {
+	applySkillGrowth := func(userSkill UserSkillRes, skillGrowth skillGrowthResult) growthApplyResult {
+		if userSkill.SkillId != skillGrowth.SkillId {
+			// TODO: proper error handling
+			panic("invalid apply skill growth!")
 		}
-
-		makeSkillGrowthMap := func(skillGrowthResults []skillGrowthResult) map[core.SkillId]skillGrowthResult {
-			result := make(map[core.SkillId]skillGrowthResult)
-			for _, v := range skillGrowthResults {
-				result[v.SkillId] = v
-			}
-			return result
+		beforeExp := userSkill.SkillExp
+		afterExp := skillGrowth.GainSum.ApplyTo(beforeExp)
+		beforeLv := beforeExp.CalcLv()
+		afterLv := afterExp.CalcLv()
+		wasLvUp := beforeLv != afterLv
+		return growthApplyResult{
+			SkillId:   userSkill.SkillId,
+			GainSum:   skillGrowth.GainSum,
+			BeforeLv:  beforeLv,
+			BeforeExp: beforeExp,
+			AfterLv:   afterLv,
+			AfterExp:  afterExp,
+			WasLvUp:   wasLvUp,
 		}
-
-		applySkillGrowth := func(userSkill UserSkillRes, skillGrowth skillGrowthResult) growthApplyResult {
-			if userSkill.SkillId != skillGrowth.SkillId {
-				// TODO: proper error handling
-				panic("invalid apply skill growth!")
-			}
-			beforeExp := userSkill.SkillExp
-			afterExp := skillGrowth.GainSum.ApplyTo(beforeExp)
-			beforeLv := beforeExp.CalcLv()
-			afterLv := afterExp.CalcLv()
-			wasLvUp := beforeLv != afterLv
-			return growthApplyResult{
-				SkillId:   userSkill.SkillId,
-				GainSum:   skillGrowth.GainSum,
-				BeforeLv:  beforeLv,
-				BeforeExp: beforeExp,
-				AfterLv:   afterLv,
-				AfterExp:  afterExp,
-				WasLvUp:   wasLvUp,
-			}
-		}
-
-		skillGrowthMap := makeSkillGrowthMap(skillGrowth)
-		skillsRes, err := userSkillRepo.BatchGet(userId, toSkillId(skillGrowth), token)
-		if err != nil {
-			return []growthApplyResult{}
-		}
-
-		result := make([]growthApplyResult, len(skillsRes.Skills))
-		for i, v := range skillsRes.Skills {
-			userSkill := v
-			result[i] = applySkillGrowth(userSkill, skillGrowthMap[userSkill.SkillId])
+	}
+	makeSkillGrowthMap := func(skillGrowthResults []skillGrowthResult) map[core.SkillId]skillGrowthResult {
+		result := make(map[core.SkillId]skillGrowthResult)
+		for _, v := range skillGrowthResults {
+			result[v.SkillId] = v
 		}
 		return result
 	}
 
-	return growthApplyRes{
-		Create: create,
+	skillGrowthMap := makeSkillGrowthMap(skillGrowth)
+
+	result := make([]growthApplyResult, len(userSkills))
+	for i, v := range userSkills {
+		userSkill := v
+		result[i] = applySkillGrowth(userSkill, skillGrowthMap[userSkill.SkillId])
 	}
+	return result
 }

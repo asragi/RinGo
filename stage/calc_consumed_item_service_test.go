@@ -3,50 +3,50 @@ package stage
 import (
 	"testing"
 
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/test"
 )
 
 func TestCreateCalcConsumingItemService(t *testing.T) {
 	type testRequest struct {
-		exploreId   ExploreId
-		execCount   int
-		randomValue float32
+		consumingItem []ConsumingItem
+		execCount     int
+		randomValue   float32
 	}
 	type testCase struct {
 		request testRequest
 		expect  []consumedItem
 	}
 
-	exploreId := ExploreId("mock")
-	mockData := []ConsumingItem{
+	itemIds := []core.ItemId{"A", "B"}
+
+	consumingData := []ConsumingItem{
 		{
-			ItemId:          "itemA",
+			ItemId:          itemIds[0],
 			ConsumptionProb: 1,
 			MaxCount:        10,
 		},
 		{
-			ItemId:          "itemB",
+			ItemId:          itemIds[1],
 			ConsumptionProb: 0.5,
 			MaxCount:        15,
 		},
 	}
 
-	consumingItemRepo.Add(exploreId, mockData)
-
 	testCases := []testCase{
 		{
 			request: testRequest{
-				exploreId:   exploreId,
-				execCount:   3,
-				randomValue: 0.4,
+				execCount:     3,
+				randomValue:   0.4,
+				consumingItem: consumingData,
 			},
 			expect: []consumedItem{
 				{
-					ItemId: mockData[0].ItemId,
+					ItemId: itemIds[0],
 					Count:  30,
 				},
 				{
-					ItemId: mockData[1].ItemId,
+					ItemId: itemIds[1],
 					Count:  45,
 				},
 			},
@@ -55,9 +55,8 @@ func TestCreateCalcConsumingItemService(t *testing.T) {
 
 	for i, v := range testCases {
 		random := test.TestRandom{Value: v.request.randomValue}
-		service := createCalcConsumedItemService(consumingItemRepo, &random)
 		req := v.request
-		res, _ := service.Calc(req.exploreId, req.execCount)
+		res := calcConsumedItem(req.execCount, req.consumingItem, &random)
 		if len(v.expect) != len(res) {
 			t.Fatalf("case: %d, expect: %d, got: %d", i, len(v.expect), len(res))
 		}

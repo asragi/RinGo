@@ -6,6 +6,28 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+func calcStaminaReduction(
+	baseStamina core.Stamina,
+	reducibleRate StaminaReducibleRate,
+	reductionSkills []UserSkillRes) core.Stamina {
+	skillLvs := func(skills []UserSkillRes) []core.SkillLv {
+		result := make([]core.SkillLv, len(skills))
+		for i, v := range skills {
+			result[i] = v.SkillExp.CalcLv()
+		}
+		return result
+	}(reductionSkills)
+	skillRate := func(skillLvs []core.SkillLv) float64 {
+		result := 1.0
+		for _, v := range skillLvs {
+			result = v.ApplySkillRate(result)
+		}
+		return result
+	}(skillLvs)
+	stamina := ApplyReduction(baseStamina, skillRate, reducibleRate)
+	return stamina
+}
+
 type ExploreStaminaPair struct {
 	ExploreId      ExploreId
 	ReducedStamina core.Stamina
@@ -25,28 +47,6 @@ func CreateCalcConsumingStaminaService(
 	exploreMasterRepo ExploreMasterRepo,
 	reductionSkillRepo ReductionStaminaSkillRepo,
 ) createCalcConsumingStaminaServiceRes {
-	staminaReduction := func(
-		baseStamina core.Stamina,
-		reducibleRate StaminaReducibleRate,
-		reductionSkills []UserSkillRes) core.Stamina {
-		skillLvs := func(skills []UserSkillRes) []core.SkillLv {
-			result := make([]core.SkillLv, len(skills))
-			for i, v := range skills {
-				result[i] = v.SkillExp.CalcLv()
-			}
-			return result
-		}(reductionSkills)
-		skillRate := func(skillLvs []core.SkillLv) float64 {
-			result := 1.0
-			for _, v := range skillLvs {
-				result = v.ApplySkillRate(result)
-			}
-			return result
-		}(skillLvs)
-		stamina := ApplyReduction(baseStamina, skillRate, reducibleRate)
-		return stamina
-	}
-
 	calc := func(userId core.UserId, token core.AccessToken, exploreId ExploreId) (core.Stamina, error) {
 		handleError := func(err error) (core.Stamina, error) {
 			return 0, fmt.Errorf("error on calculating stamina: %w", err)
@@ -65,7 +65,7 @@ func CreateCalcConsumingStaminaService(
 		if err != nil {
 			return handleError(err)
 		}
-		stamina := staminaReduction(baseStamina, reducibleRate, userSkillsRes.Skills)
+		stamina := calcStaminaReduction(baseStamina, reducibleRate, userSkillsRes.Skills)
 		return stamina, nil
 	}
 
@@ -153,7 +153,7 @@ func CreateCalcConsumingStaminaService(
 				explore := v
 				baseStamina := explore.ConsumingStamina
 				reducibleRate := explore.StaminaReducibleRate
-				stamina := staminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
+				stamina := calcStaminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
 				result[index] = ExploreStaminaPair{
 					ExploreId:      k,
 					ReducedStamina: stamina,

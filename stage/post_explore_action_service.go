@@ -6,72 +6,134 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type PostActionRes struct {
+type invalidActionError struct{}
+
+func (err invalidActionError) Error() string {
+	return "invalid action error"
 }
 
-type createPostActionResultRes struct {
-	Post func(core.UserId, core.AccessToken, ExploreId, int) (PostActionRes, error)
-}
+type PostActionFunc func(
+	userId core.UserId,
+	token core.AccessToken,
+	execCount int,
+	skillGrowthList []SkillGrowthData,
+	skillsRes BatchGetUserSkillRes,
+	earningItemData []EarningItem,
+	consumingItemData []ConsumingItem,
+	allStorageItems BatchGetStorageRes,
+	allItemMasterRes []GetItemMasterRes,
+	checkIsPossibleArgs CheckIsPossibleArgs,
+	random core.IRandom,
+) error
 
-func CreatePostActionExecService(
-	calcSkillGrowth calcSkillGrowthFunc,
-	calcSkillGrowthApply growthApplyFunc,
-	calcEarnedItem calcEarnedItemFunc,
-	calcConsumedItem calcConsumedItemFunc,
-	calcTotalItem calcTotalItemFunc,
-	itemStorageUpdateRepo ItemStorageUpdateRepo,
-	skillGrowthPostRepo SkillGrowthPostRepo,
-) createPostActionResultRes {
+func postAction(
+	userId core.UserId,
+	token core.AccessToken,
+	execCount int,
+	skillGrowthList []SkillGrowthData,
+	skillsRes BatchGetUserSkillRes,
+	earningItemData []EarningItem,
+	consumingItemData []ConsumingItem,
+	allStorageItems BatchGetStorageRes,
+	allItemMasterRes []GetItemMasterRes,
+	checkIsPossibleArgs CheckIsPossibleArgs,
+	validateAction ValidateActionFunc,
+	calcSkillGrowth CalcSkillGrowthFunc,
+	calcGrowthApply GrowthApplyFunc,
+	calcEarnedItem CalcEarnedItemFunc,
+	calcConsumedItem CalcConsumedItemFunc,
+	calcTotalItem CalcTotalItemFunc,
+	updateItemStorage UpdateItemStorageFunc,
+	updateSkill SkillGrowthPostFunc,
+	random core.IRandom,
+) error {
+	handleError := func(err error) error {
+		return fmt.Errorf("error on post action: %w", err)
+	}
 
-	postResult := func(
-		userId core.UserId,
-		token core.AccessToken,
-		exploreId ExploreId,
-		execCount int,
-	) (PostActionRes, error) {
-		skillGrowth := calcSkillGrowth(exploreId, execCount)
-		growthApplyResults := calcSkillGrowthApply(userId, token, skillGrowth)
-		skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
-			result := make([]SkillGrowthPostRow, len(skillGrowth))
-			for i, v := range skillGrowth {
-				result[i] = SkillGrowthPostRow{
-					SkillId:  v.SkillId,
-					SkillExp: v.AfterExp,
-				}
+	isPossible := validateAction(checkIsPossibleArgs)
+	if !isPossible {
+		return invalidActionError{}
+	}
+
+	skillGrowth := calcSkillGrowth(skillGrowthList, execCount)
+	applySkillGrowth := calcGrowthApply(skillsRes.Skills, skillGrowth)
+	skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
+		result := make([]SkillGrowthPostRow, len(skillGrowth))
+		for i, v := range skillGrowth {
+			result[i] = SkillGrowthPostRow{
+				SkillId:  v.SkillId,
+				SkillExp: v.AfterExp,
 			}
-			return result
-		}(growthApplyResults)
-		earnedItems := calcEarnedItem(exploreId, execCount)
-		consumedItems, err := calcConsumedItem(exploreId, execCount)
-		if err != nil {
-			return PostActionRes{}, fmt.Errorf("postResultError: %w", err)
 		}
-		totalItemRes := calcTotalItem(userId, token, earnedItems, consumedItems)
-		itemStockReq := func(totalItems []totalItem) []ItemStock {
-			result := make([]ItemStock, len(totalItems))
-			for i, v := range totalItems {
-				result[i] = ItemStock{
-					ItemId:     v.ItemId,
-					AfterStock: v.Stock,
-				}
-			}
-			return result
-		}(totalItemRes)
+		return result
+	}(applySkillGrowth)
 
-		// POST
-		skillGrowthPostRepo.Update(SkillGrowthPost{
+	earnedItems := calcEarnedItem(execCount, earningItemData, random)
+	consumedItems := calcConsumedItem(execCount, consumingItemData, random)
+	calculatedTotalItem := calcTotalItem(allStorageItems.ItemData, allItemMasterRes, earnedItems, consumedItems)
+	itemStockReq := func(totalItems []totalItem) []ItemStock {
+		result := make([]ItemStock, len(totalItems))
+		for i, v := range totalItems {
+			result[i] = ItemStock{
+				ItemId:     v.ItemId,
+				AfterStock: v.Stock,
+			}
+		}
+		return result
+	}(calculatedTotalItem)
+
+	err := updateItemStorage(userId, itemStockReq, token)
+	if err != nil {
+		return handleError(err)
+	}
+
+	err = updateSkill(
+		SkillGrowthPost{
 			UserId:      userId,
 			AccessToken: token,
 			SkillGrowth: skillGrowthReq,
-		})
-		itemStorageUpdateRepo.Update(
+		},
+	)
+
+	return nil
+}
+
+func CreatePostAction() PostActionFunc {
+	postFunc := func(
+		userId core.UserId,
+		token core.AccessToken,
+		execCount int,
+		skillGrowthList []SkillGrowthData,
+		skillsRes BatchGetUserSkillRes,
+		earningItemData []EarningItem,
+		consumingItemData []ConsumingItem,
+		allStorageItems BatchGetStorageRes,
+		allItemMasterRes []GetItemMasterRes,
+		checkIsPossibleArgs CheckIsPossibleArgs,
+		random core.IRandom,
+	) error {
+		return postAction(
 			userId,
-			itemStockReq,
 			token,
+			execCount,
+			skillGrowthList,
+			skillsRes,
+			earningItemData,
+			consumingItemData,
+			allStorageItems,
+			allItemMasterRes,
+			checkIsPossibleArgs,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			random,
 		)
-
-		return PostActionRes{}, nil
 	}
-
-	return createPostActionResultRes{Post: postResult}
+	return postFunc
 }

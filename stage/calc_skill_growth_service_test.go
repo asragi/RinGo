@@ -8,37 +8,33 @@ import (
 
 func TestCalcSkillGrowthService(t *testing.T) {
 	type testRequest struct {
-		exploreId ExploreId
-		execCount int
+		execCount  int
+		growthData []SkillGrowthData
 	}
 	type testCase struct {
 		request testRequest
 		expect  []skillGrowthResult
 	}
 
-	exploreIds := []ExploreId{"growth"}
 	skills := []core.SkillId{
 		"skillA", "skillB",
 	}
-	repoData := []SkillGrowthData{
+	growthData := []SkillGrowthData{
 		{
 			SkillId:      skills[0],
-			ExploreId:    exploreIds[0],
 			GainingPoint: 10,
 		},
 		{
 			SkillId:      skills[1],
-			ExploreId:    exploreIds[0],
 			GainingPoint: 10,
 		},
 	}
-	skillGrowthDataRepo.Add(exploreIds[0], repoData)
 
 	testCases := []testCase{
 		{
 			request: testRequest{
-				exploreId: exploreIds[0],
-				execCount: 3,
+				growthData: growthData,
+				execCount:  3,
 			},
 			expect: []skillGrowthResult{
 				{
@@ -53,11 +49,9 @@ func TestCalcSkillGrowthService(t *testing.T) {
 		},
 	}
 
-	service := createCalcSkillGrowthService(skillGrowthDataRepo)
-
 	for i, v := range testCases {
 		req := v.request
-		res := service.Calc(req.exploreId, req.execCount)
+		res := calcSkillGrowthService(req.execCount, req.growthData)
 		if len(v.expect) != len(res) {
 			t.Errorf("expect: %d, got: %d", len(v.expect), len(res))
 		}

@@ -56,6 +56,8 @@ type ItemStock struct {
 	AfterStock core.Stock
 }
 
+type UpdateItemStorageFunc func(core.UserId, []ItemStock, core.AccessToken) error
+
 type ItemStorageUpdateRepo interface {
 	Update(core.UserId, []ItemStock, core.AccessToken) error
 }
@@ -110,6 +112,8 @@ type SkillGrowthPost struct {
 	AccessToken core.AccessToken
 	SkillGrowth []SkillGrowthPostRow
 }
+
+type SkillGrowthPostFunc func(SkillGrowthPost) error
 
 // Skill Growth User
 type SkillGrowthPostRepo interface {
