@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/asragi/RinGo/core"
 )
@@ -23,6 +24,52 @@ type CheckIsPossibleArgs struct {
 	itemStockList   map[core.ItemId]core.Stock
 	skillLvList     map[core.SkillId]core.SkillLv
 	execNum         int
+}
+
+func createIsPossibleArgs(
+	exploreMaster GetExploreMasterRes,
+	userResources GetResourceRes,
+	requiredItems []ConsumingItem,
+	requiredSkills []RequiredSkill,
+	userSkills []UserSkillRes,
+	storage []ItemData,
+	execNum int,
+	staminaReductionFunc StaminaReductionFunc,
+	currentTime time.Time,
+) CheckIsPossibleArgs {
+	requiredStamina := staminaReductionFunc(
+		exploreMaster.ConsumingStamina,
+		exploreMaster.StaminaReducibleRate,
+		userSkills,
+	)
+	currentStamina := userResources.StaminaRecoverTime.CalcStamina(
+		currentTime, userResources.MaxStamina,
+	)
+	itemStockList := func(storage []ItemData) map[core.ItemId]core.Stock {
+		result := map[core.ItemId]core.Stock{}
+		for _, v := range storage {
+			result[v.ItemId] = v.Stock
+		}
+		return result
+	}(storage)
+	skillLvList := func(userSkills []UserSkillRes) map[core.SkillId]core.SkillLv {
+		result := map[core.SkillId]core.SkillLv{}
+		for _, v := range userSkills {
+			result[v.SkillId] = v.SkillExp.CalcLv()
+		}
+		return result
+	}(userSkills)
+	return CheckIsPossibleArgs{
+		requiredStamina: requiredStamina,
+		requiredPrice:   exploreMaster.RequiredPayment,
+		requiredItems:   requiredItems,
+		requiredSkills:  requiredSkills,
+		currentStamina:  currentStamina,
+		currentFund:     userResources.Fund,
+		itemStockList:   itemStockList,
+		skillLvList:     skillLvList,
+		execNum:         execNum,
+	}
 }
 
 type checkIsExplorePossibleFunc func(CheckIsPossibleArgs) map[core.IsPossibleType]core.IsPossible

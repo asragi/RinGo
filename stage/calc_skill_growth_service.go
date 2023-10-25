@@ -9,7 +9,7 @@ type skillGrowthResult struct {
 	GainSum GainingPoint
 }
 
-type CalcSkillGrowthFunc func([]SkillGrowthData, int) []skillGrowthResult
+type CalcSkillGrowthFunc func(int, []SkillGrowthData) []skillGrowthResult
 
 func calcSkillGrowthService(execCount int, gainingData []SkillGrowthData) []skillGrowthResult {
 	growth := make([]skillGrowthResult, len(gainingData))

@@ -27,6 +27,13 @@ func calcTotalItem(
 		}
 		return result
 	}(earnedItems)
+	idOrder := func(allMasterRes []GetItemMasterRes) map[int]core.ItemId {
+		result := map[int]core.ItemId{}
+		for i, v := range allMasterRes {
+			result[i] = v.ItemId
+		}
+		return result
+	}(allMasterRes)
 
 	consumedItemMap := func(consumedItems []consumedItem) map[core.ItemId]consumedItem {
 		result := make(map[core.ItemId]consumedItem)
@@ -53,6 +60,7 @@ func calcTotalItem(
 	}(allMasterRes)
 
 	return func(
+		idMap map[int]core.ItemId,
 		storageMap map[core.ItemId]core.Stock,
 		maxStockMap map[core.ItemId]core.MaxStock,
 		earnedItemMap map[core.ItemId]earnedItem,
@@ -60,22 +68,23 @@ func calcTotalItem(
 	) []totalItem {
 		result := make([]totalItem, len(storageMap))
 		index := 0
-		for k, v := range storageMap {
+		for _, v := range storageMap {
+			id := idMap[index]
 			stock := v
 			diff := core.Count(0)
-			if _, ok := earnedItemMap[k]; ok {
-				diff += earnedItemMap[k].Count
+			if _, ok := earnedItemMap[id]; ok {
+				diff += earnedItemMap[id].Count
 			}
-			if _, ok := consumedItemMap[k]; ok {
-				diff -= consumedItemMap[k].Count
+			if _, ok := consumedItemMap[id]; ok {
+				diff -= consumedItemMap[id].Count
 			}
-			afterStock := stock.Apply(diff, maxStockMap[k])
+			afterStock := stock.Apply(diff, maxStockMap[id])
 			result[index] = totalItem{
-				ItemId: k,
+				ItemId: id,
 				Stock:  afterStock,
 			}
 			index++
 		}
 		return result
-	}(storageMap, maxStockMap, earnedItemMap, consumedItemMap)
+	}(idOrder, storageMap, maxStockMap, earnedItemMap, consumedItemMap)
 }

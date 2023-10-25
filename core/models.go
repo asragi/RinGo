@@ -43,6 +43,11 @@ func (recoverTime StaminaRecoverTime) CalcStamina(currentTime time.Time, maxStam
 	return Stamina(maxStamina) - lostStamina
 }
 
+func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceStamina Stamina) StaminaRecoverTime {
+	extendTime := int64(float64(reduceStamina) * StaminaSec)
+	return StaminaRecoverTime(time.Unix(time.Time(currentStamina).Unix()+extendTime, 0))
+}
+
 // display
 type DisplayName string
 type Description string

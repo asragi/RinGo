@@ -6,6 +6,8 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type StaminaReductionFunc func(core.Stamina, StaminaReducibleRate, []UserSkillRes) core.Stamina
+
 func calcStaminaReduction(
 	baseStamina core.Stamina,
 	reducibleRate StaminaReducibleRate,

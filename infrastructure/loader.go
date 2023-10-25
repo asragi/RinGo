@@ -435,6 +435,48 @@ func (loader *RequiredSkillLoader) Load() (RequiredSkillData, error) {
 
 }
 
+type SkillGrowthLoader struct {
+	Path string
+}
+
+func (loader *SkillGrowthLoader) Load() (SkillGrowthRepoData, error) {
+	handleError := func(err error) (SkillGrowthRepoData, error) {
+		return nil, fmt.Errorf("error on load skill growth master: %w", err)
+	}
+	allCSVData, err := readCSV(loader.Path)
+	if err != nil {
+		return handleError(err)
+	}
+	toData := func(csvData [][]string) (SkillGrowthRepoData, error) {
+		result := make(SkillGrowthRepoData)
+		for i, v := range csvData {
+			if i == 0 {
+				continue
+			}
+			exploreId := stage.ExploreId(v[1])
+			skillId := core.SkillId(v[2])
+			gainValue, err := strconv.Atoi(v[3])
+			if err != nil {
+				return result, fmt.Errorf("error on reading value: %w", err)
+			}
+			data := stage.SkillGrowthData{
+				ExploreId:    exploreId,
+				SkillId:      skillId,
+				GainingPoint: stage.GainingPoint(gainValue),
+			}
+			result[exploreId] = append(result[exploreId], data)
+		}
+		return result, nil
+	}
+	data, err := toData(allCSVData)
+	if err != nil {
+		return handleError(err)
+	}
+
+	return data, nil
+
+}
+
 type ReductionStaminaSkillLoader struct {
 	Path string
 }

@@ -13,7 +13,7 @@ type GetResourceRes struct {
 
 type UserResourceRepo interface {
 	GetResource(core.UserId, core.AccessToken) (GetResourceRes, error)
-	UpdateStamina(core.UserId, core.AccessToken, core.Stamina) error
+	UpdateStamina(core.UserId, core.AccessToken, core.StaminaRecoverTime) error
 }
 
 type GetItemMasterRes struct {

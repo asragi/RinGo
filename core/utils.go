@@ -2,11 +2,18 @@ package core
 
 import (
 	"math"
+	"math/rand"
 	"time"
 )
 
 type IRandom interface {
 	Emit() float32
+}
+
+type RandomEmitter struct{}
+
+func (emitter *RandomEmitter) Emit() float32 {
+	return rand.Float32()
 }
 
 // Generate random value from normal distribution (N(0, 1)) using uniform distribution.
@@ -24,4 +31,10 @@ func GenerateFromNormalDist(random IRandom, mu float32, sigma float32) float32 {
 
 type ICurrentTime interface {
 	Get() time.Time
+}
+
+type CurrentTimeEmitter struct{}
+
+func (t *CurrentTimeEmitter) Get() time.Time {
+	return time.Now()
 }

@@ -7,6 +7,29 @@ import (
 	"github.com/asragi/RinGo/stage"
 )
 
+type InMemoryUserRepo struct {
+	StaminaTime core.StaminaRecoverTime
+	Fund        core.Fund
+}
+
+func (m *InMemoryUserRepo) GetResource(userId core.UserId, token core.AccessToken) (stage.GetResourceRes, error) {
+	return stage.GetResourceRes{
+		UserId:             userId,
+		MaxStamina:         6000,
+		StaminaRecoverTime: m.StaminaTime,
+		Fund:               m.Fund,
+	}, nil
+}
+
+func (m *InMemoryUserRepo) UpdateStamina(userId core.UserId, token core.AccessToken, stamina core.StaminaRecoverTime) error {
+	m.StaminaTime = stamina
+	return nil
+}
+
+func CreateInMemoryUserResourceRepo() *InMemoryUserRepo {
+	return &InMemoryUserRepo{}
+}
+
 type itemMasterData map[core.ItemId]stage.GetItemMasterRes
 
 type IItemMasterLoader interface {
@@ -78,6 +101,18 @@ func (m *InMemoryItemStorageRepo) BatchGet(userId core.UserId, itemId []core.Ite
 
 func (m *InMemoryItemStorageRepo) GetStock(userId core.UserId, itemId core.ItemId) core.Stock {
 	return m.Data[userId][itemId].Stock
+}
+
+func (m *InMemoryItemStorageRepo) Update(userId core.UserId, items []stage.ItemStock, token core.AccessToken) error {
+	for _, v := range items {
+		m.Data[userId][v.ItemId] = stage.ItemData{
+			UserId:  userId,
+			ItemId:  v.ItemId,
+			Stock:   v.AfterStock,
+			IsKnown: true,
+		}
+	}
+	return nil
 }
 
 func CreateInMemoryItemStorageRepo(loader IItemStorageDataLoader) (*InMemoryItemStorageRepo, error) {
@@ -210,6 +245,18 @@ func (m *InMemoryUserSkillRepo) Add(userId core.UserId, skills []stage.UserSkill
 	}
 }
 
+func (m *InMemoryUserSkillRepo) Update(growth stage.SkillGrowthPost) error {
+	growthData := growth.SkillGrowth
+	for _, v := range growthData {
+		m.Data[growth.UserId][v.SkillId] = stage.UserSkillRes{
+			UserId:   growth.UserId,
+			SkillId:  v.SkillId,
+			SkillExp: v.SkillExp,
+		}
+	}
+	return nil
+}
+
 func CreateInMemoryUserSkillRepo(loader IUserSkillLoader) (*InMemoryUserSkillRepo, error) {
 	data, err := loader.Load()
 	if err != nil {
@@ -273,21 +320,31 @@ func CreateInMemoryStageMasterRepo(loader IStageMasterLoader) (*InMemoryStageMas
 	return &repo, nil
 }
 
-type MockSkillGrowthDataRepo struct {
-	Data map[stage.ExploreId][]stage.SkillGrowthData
+type SkillGrowthRepoData map[stage.ExploreId][]stage.SkillGrowthData
+
+type ISkillGrowthLoader interface {
+	Load() (SkillGrowthRepoData, error)
 }
 
-func (m *MockSkillGrowthDataRepo) BatchGet(exploreId stage.ExploreId) []stage.SkillGrowthData {
+type InMemorySkillGrowthDataRepo struct {
+	Data SkillGrowthRepoData
+}
+
+func (m *InMemorySkillGrowthDataRepo) BatchGet(exploreId stage.ExploreId) []stage.SkillGrowthData {
 	return m.Data[exploreId]
 }
 
-func (m *MockSkillGrowthDataRepo) Add(e stage.ExploreId, skills []stage.SkillGrowthData) {
+func (m *InMemorySkillGrowthDataRepo) Add(e stage.ExploreId, skills []stage.SkillGrowthData) {
 	m.Data[e] = skills
 }
 
-func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
-	repo := MockSkillGrowthDataRepo{Data: map[stage.ExploreId][]stage.SkillGrowthData{}}
-	return &repo
+func CreateInMemorySkillGrowthDataRepo(loader ISkillGrowthLoader) (*InMemorySkillGrowthDataRepo, error) {
+	data, err := loader.Load()
+	if err != nil {
+		return &InMemorySkillGrowthDataRepo{}, err
+	}
+	repo := InMemorySkillGrowthDataRepo{Data: data}
+	return &repo, nil
 }
 
 type EarningItemData map[stage.ExploreId][]stage.EarningItem
@@ -386,22 +443,22 @@ func CreateInMemoryRequiredSkillRepo(loader IRequiredSkillLoader) (*InMemoryRequ
 	return &InMemoryRequiredSkillRepo{Data: data}, nil
 }
 
-type mockItemStorageUpdateRepo struct {
+type InMemoryItemStorageUpdateRepo struct {
 	Data map[core.UserId][]stage.ItemStock
 }
 
-func (m *mockItemStorageUpdateRepo) Update(userId core.UserId, items []stage.ItemStock, _ core.AccessToken) error {
+func (m *InMemoryItemStorageUpdateRepo) Update(userId core.UserId, items []stage.ItemStock, _ core.AccessToken) error {
 	m.Data = make(map[core.UserId][]stage.ItemStock)
 	m.Data[userId] = items
 	return nil
 }
 
-func (m *mockItemStorageUpdateRepo) Get(userId core.UserId) []stage.ItemStock {
+func (m *InMemoryItemStorageUpdateRepo) Get(userId core.UserId) []stage.ItemStock {
 	return m.Data[userId]
 }
 
-func createMockItemStorageUpdateRepo() *mockItemStorageUpdateRepo {
-	return &mockItemStorageUpdateRepo{}
+func CreateInMemoryItemStorageUpdateRepo() *InMemoryItemStorageUpdateRepo {
+	return &InMemoryItemStorageUpdateRepo{}
 }
 
 type mockSkillUpdateRepo struct {
