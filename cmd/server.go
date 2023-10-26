@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/core"
@@ -37,48 +38,49 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	handleError := func(err error) (*infrastructuresStruct, error) {
 		return nil, fmt.Errorf("error on create infrastructures: %w", err)
 	}
-	dataDir := "./infrastructure/data/%s.csv"
+	gwd, _ := os.Getwd()
+	dataDir := gwd + "/infrastructure/data/%s.csv"
 	userResource := infrastructure.CreateInMemoryUserResourceRepo()
 	itemMaster, err := infrastructure.CreateInMemoryItemMasterRepo(&infrastructure.ItemMasterLoader{Path: fmt.Sprintf(dataDir, "item-master")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	itemStorage, err := infrastructure.CreateInMemoryItemStorageRepo(&infrastructure.ItemStorageLoader{Path: fmt.Sprintf(dataDir, "item-storage")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	userSkill, err := infrastructure.CreateInMemoryUserSkillRepo(&infrastructure.UserSkillLoader{Path: "./infrastructure/data/user-skill.csv"})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	stageMaster, err := infrastructure.CreateInMemoryStageMasterRepo(&infrastructure.StageMasterLoader{Path: fmt.Sprintf(dataDir, "stage-master")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	skillMaster, err := infrastructure.CreateInMemorySkillMasterRepo(&infrastructure.SkillMasterLoader{Path: "./infrastructure/data/skill-master.csv"})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	exploreMaster, err := infrastructure.CreateInMemoryExploreMasterRepo(&infrastructure.ExploreMasterLoader{Path: "./infrastructure/data/explore-master.csv"})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	earningItem, err := infrastructure.CreateInMemoryEarningItemRepo(&infrastructure.EarningItemLoader{Path: fmt.Sprintf(dataDir, "earning-item")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	consumingItem, err := infrastructure.CreateInMemoryConsumingItemRepo(&infrastructure.ConsumingItemLoader{Path: "./infrastructure/data/consuming-item.csv"})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	requiredSkill, err := infrastructure.CreateInMemoryRequiredSkillRepo(&infrastructure.RequiredSkillLoader{Path: fmt.Sprintf(dataDir, "required-skill")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
-	skillGrowth, err := infrastructure.CreateInMemorySkillGrowthDataRepo(&infrastructure.SkillGrowthLoader{Path: fmt.Sprintf(dataDir)})
+	skillGrowth, err := infrastructure.CreateInMemorySkillGrowthDataRepo(&infrastructure.SkillGrowthLoader{Path: fmt.Sprintf(dataDir, "skill-growth")})
 	reductionSkill, err := infrastructure.CreateInMemoryReductionStaminaSkillRepo(&infrastructure.ReductionStaminaSkillLoader{Path: fmt.Sprintf(dataDir, "reduction-stamina-skill")})
 	if err != nil {
-		handleError(err)
+		return handleError(err)
 	}
 	return &infrastructuresStruct{
 		userResource:   userResource,
@@ -194,10 +196,16 @@ func createPostHandler(
 			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
+		setHeader(w)
+		w.WriteHeader(http.StatusOK)
 		w.Write(resJson)
 	}
 	return postActionHandler
+}
+
+func setHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {

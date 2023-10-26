@@ -105,6 +105,9 @@ func (m *InMemoryItemStorageRepo) GetStock(userId core.UserId, itemId core.ItemI
 
 func (m *InMemoryItemStorageRepo) Update(userId core.UserId, items []stage.ItemStock, token core.AccessToken) error {
 	for _, v := range items {
+		if _, ok := m.Data[userId]; !ok {
+			m.Data[userId] = map[core.ItemId]stage.ItemData{}
+		}
 		m.Data[userId][v.ItemId] = stage.ItemData{
 			UserId:  userId,
 			ItemId:  v.ItemId,
@@ -166,6 +169,7 @@ func (m *InMemoryExploreMasterRepo) Get(e stage.ExploreId) (stage.GetExploreMast
 
 func (m *InMemoryExploreMasterRepo) BatchGet(e []stage.ExploreId) ([]stage.GetExploreMasterRes, error) {
 	result := make([]stage.GetExploreMasterRes, len(e))
+	fmt.Printf("m is nil? :%t", m == nil)
 	for i, v := range e {
 		result[i] = m.Data[v]
 	}
@@ -248,6 +252,9 @@ func (m *InMemoryUserSkillRepo) Add(userId core.UserId, skills []stage.UserSkill
 func (m *InMemoryUserSkillRepo) Update(growth stage.SkillGrowthPost) error {
 	growthData := growth.SkillGrowth
 	for _, v := range growthData {
+		if _, ok := m.Data[growth.UserId]; !ok {
+			m.Data[growth.UserId] = map[core.SkillId]stage.UserSkillRes{}
+		}
 		m.Data[growth.UserId][v.SkillId] = stage.UserSkillRes{
 			UserId:   growth.UserId,
 			SkillId:  v.SkillId,

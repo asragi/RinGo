@@ -18,6 +18,8 @@ func TestCreateInfrastructures(t *testing.T) {
 }
 
 func TestPostActionHttp(t *testing.T) {
+	type testCase struct {
+	}
 	infrastructures, err := createInfrastructures()
 	if err != nil {
 		t.Fatalf("error on test post action: %s", err.Error())
@@ -32,9 +34,14 @@ func TestPostActionHttp(t *testing.T) {
 		&timer,
 	)
 
-	reqBody := bytes.NewBufferString("")
-	req := httptest.NewRequest(http.MethodGet, "/action", reqBody)
+	reqBody := bytes.NewBufferString(`{"user_id": "1", "token": "", "explore_id": "1", "exec_count": 1 }`)
+	req := httptest.NewRequest(http.MethodPost, "/", reqBody)
 	rec := httptest.NewRecorder()
 
 	postActionHandler(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Status is :%d", rec.Code)
+		t.Errorf("Body is: %s", rec.Body)
+	}
 }

@@ -66,6 +66,7 @@ func GetPostActionArgs(
 	if err != nil {
 		return handleError(err)
 	}
+
 	exploreMasters, err := exploreMasterRepo.BatchGet([]ExploreId{exploreId})
 	skillGrowthList := skillGrowthDataRepo.BatchGet(exploreId)
 	skillIds := func(data []SkillGrowthData) []core.SkillId {

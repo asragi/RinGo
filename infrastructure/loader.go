@@ -249,7 +249,6 @@ func (loader *ExploreMasterLoader) Load() (ExploreMasterData, error) {
 			if i == 0 {
 				continue
 			}
-			// TODO: implement all field
 			exploreId := stage.ExploreId(v[0])
 			displayName := core.DisplayName(v[1])
 			desc := core.Description(v[2])
