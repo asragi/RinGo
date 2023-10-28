@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,6 +20,8 @@ func TestCreateInfrastructures(t *testing.T) {
 
 func TestPostActionHttp(t *testing.T) {
 	type testCase struct {
+		requestBody string
+		status      int
 	}
 	infrastructures, err := createInfrastructures()
 	if err != nil {
@@ -34,14 +37,30 @@ func TestPostActionHttp(t *testing.T) {
 		&timer,
 	)
 
-	reqBody := bytes.NewBufferString(`{"user_id": "1", "token": "", "explore_id": "1", "exec_count": 1 }`)
-	req := httptest.NewRequest(http.MethodPost, "/", reqBody)
-	rec := httptest.NewRecorder()
+	testCases := []testCase{
+		{
+			requestBody: `{"user_id": "1", "token": "", "explore_id": "1", "exec_count": 1 }`,
+			status:      http.StatusOK,
+		},
+		/*
+			{
+				requestBody: `{"user_id": "123456", "token": "", "explore_id": "1", "exec_count": 1 }`,
+				status:      http.StatusBadRequest,
+			},
+		*/
+	}
 
-	postActionHandler(rec, req)
+	for i, v := range testCases {
+		reqBody := bytes.NewBufferString(v.requestBody)
+		req := httptest.NewRequest(http.MethodPost, "/", reqBody)
+		rec := httptest.NewRecorder()
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("Status is :%d", rec.Code)
-		t.Errorf("Body is: %s", rec.Body)
+		postActionHandler(rec, req)
+
+		if rec.Code != v.status {
+			t.Errorf("case: %d, expect :%d, got: %d", i, v.status, rec.Code)
+			t.Errorf("Body is: %s", rec.Body)
+		}
+		fmt.Printf("Body is: %s", rec.Body)
 	}
 }

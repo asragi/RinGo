@@ -8,13 +8,14 @@ import (
 )
 
 type CreatePostActionRes struct {
-	Post func(core.UserId, core.AccessToken, stage.ExploreId, int) error
+	Post func(core.UserId, core.AccessToken, stage.ExploreId, int) (stage.PostActionResult, error)
 }
 
 func CreatePostActionService(
 	userResourceRepo stage.UserResourceRepo,
 	exploreMasterRepo stage.ExploreMasterRepo,
 	skillGrowthDataRepo stage.SkillGrowthDataRepo,
+	skillMasterRepo stage.SkillMasterRepo,
 	userSkillRepo stage.UserSkillRepo,
 	earningItemRepo stage.EarningItemRepo,
 	consumingItemRepo stage.ConsumingItemRepo,
@@ -40,9 +41,9 @@ func CreatePostActionService(
 		token core.AccessToken,
 		exploreId stage.ExploreId,
 		execCount int,
-	) error {
-		handleError := func(err error) error {
-			return fmt.Errorf("error on post action: %w", err)
+	) (stage.PostActionResult, error) {
+		handleError := func(err error) (stage.PostActionResult, error) {
+			return stage.PostActionResult{}, fmt.Errorf("error on post action: %w", err)
 		}
 		postArgs, err := getPostActionArgsFunc(
 			userId,
@@ -51,6 +52,7 @@ func CreatePostActionService(
 			exploreId,
 			userResourceRepo,
 			exploreMasterRepo,
+			skillMasterRepo,
 			skillGrowthDataRepo,
 			userSkillRepo,
 			earningItemRepo,
@@ -65,7 +67,7 @@ func CreatePostActionService(
 
 		currentTime := currentTimeEmitter.Get()
 
-		err = postActionFunc(
+		res, err := postActionFunc(
 			postArgs,
 			validateAction,
 			calcSkillGrowth,
@@ -82,7 +84,7 @@ func CreatePostActionService(
 		if err != nil {
 			return handleError(err)
 		}
-		return nil
+		return res, nil
 	}
 
 	return CreatePostActionRes{Post: postResult}

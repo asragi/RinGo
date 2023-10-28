@@ -156,6 +156,7 @@ func createPostHandler(
 		infrastructures.userResource,
 		infrastructures.exploreMaster,
 		infrastructures.skillGrowth,
+		infrastructures.skillMaster,
 		infrastructures.userSkill,
 		infrastructures.earningItem,
 		infrastructures.consumingItem,

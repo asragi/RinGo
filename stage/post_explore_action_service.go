@@ -21,6 +21,7 @@ type PostActionArgs struct {
 	exploreMaster     GetExploreMasterRes
 	skillGrowthList   []SkillGrowthData
 	skillsRes         BatchGetUserSkillRes
+	skillMaster       []SkillMaster
 	earningItemData   []EarningItem
 	consumingItemData []ConsumingItem
 	requiredSkills    []RequiredSkill
@@ -35,6 +36,7 @@ type GetPostActionArgsFunc func(
 	exploreId ExploreId,
 	userResourceRepo UserResourceRepo,
 	exploreMasterRepo ExploreMasterRepo,
+	skillMasterRepo SkillMasterRepo,
 	skillGrowthDataRepo SkillGrowthDataRepo,
 	userSkillRepo UserSkillRepo,
 	earningItemRepo EarningItemRepo,
@@ -51,6 +53,7 @@ func GetPostActionArgs(
 	exploreId ExploreId,
 	userResourceRepo UserResourceRepo,
 	exploreMasterRepo ExploreMasterRepo,
+	skillMasterRepo SkillMasterRepo,
 	skillGrowthDataRepo SkillGrowthDataRepo,
 	userSkillRepo UserSkillRepo,
 	earningItemRepo EarningItemRepo,
@@ -120,11 +123,17 @@ func GetPostActionArgs(
 		return handleError(err)
 	}
 	requiredSkills := requiredSkillsRow[0].RequiredSkills
+
+	skillMaster, err := skillMasterRepo.BatchGet(skillIds)
 	return PostActionArgs{
+		userId:            userId,
+		token:             token,
+		execCount:         execCount,
 		userResources:     userResources,
 		exploreMaster:     exploreMasters[0],
 		skillGrowthList:   skillGrowthList,
 		skillsRes:         skillsRes,
+		skillMaster:       skillMaster.Skills,
 		earningItemData:   earningItemData,
 		consumingItemData: consumingItemData,
 		requiredSkills:    requiredSkills,
@@ -146,7 +155,18 @@ type PostActionFunc func(
 	staminaReductionFunc StaminaReductionFunc,
 	random core.IRandom,
 	currentTime time.Time,
-) error
+) (PostActionResult, error)
+
+type skillGrowthInformation struct {
+	DisplayName  core.DisplayName
+	GrowthResult growthApplyResult
+}
+
+type PostActionResult struct {
+	EarnedItems            []earnedItem
+	ConsumedItems          []consumedItem
+	SkillGrowthInformation []skillGrowthInformation
+}
 
 func PostAction(
 	args PostActionArgs,
@@ -161,9 +181,9 @@ func PostAction(
 	staminaReductionFunc StaminaReductionFunc,
 	random core.IRandom,
 	currentTime time.Time,
-) error {
-	handleError := func(err error) error {
-		return fmt.Errorf("error on post action: %w", err)
+) (PostActionResult, error) {
+	handleError := func(err error) (PostActionResult, error) {
+		return PostActionResult{}, fmt.Errorf("error on post action: %w", err)
 	}
 
 	checkIsPossibleArgs := createIsPossibleArgs(
@@ -179,7 +199,7 @@ func PostAction(
 	)
 	isPossible := validateAction(checkIsPossibleArgs)
 	if !isPossible {
-		return invalidActionError{}
+		return PostActionResult{}, invalidActionError{}
 	}
 
 	skillGrowth := calcSkillGrowth(args.execCount, args.skillGrowthList)
@@ -221,6 +241,60 @@ func PostAction(
 			SkillGrowth: skillGrowthReq,
 		},
 	)
+	if err != nil {
+		return handleError(err)
+	}
 
-	return nil
+	postResult := func(
+		earnedItem []earnedItem,
+		consumedItem []consumedItem,
+		skillMaster []SkillMaster,
+		skillGrowth []growthApplyResult,
+	) PostActionResult {
+		skillMasterMap := func() map[core.SkillId]SkillMaster {
+			result := map[core.SkillId]SkillMaster{}
+			for _, v := range skillMaster {
+				result[v.SkillId] = v
+			}
+			return result
+		}()
+		skillGrowthMap := func() map[core.SkillId]growthApplyResult {
+			result := map[core.SkillId]growthApplyResult{}
+			for _, v := range skillGrowth {
+				result[v.SkillId] = v
+			}
+			return result
+		}()
+		idArr := func() map[int]core.SkillId {
+			result := map[int]core.SkillId{}
+			for i, v := range skillMaster {
+				result[i] = v.SkillId
+			}
+			return result
+		}()
+		growthInfo := func() []skillGrowthInformation {
+			result := make([]skillGrowthInformation, len(idArr))
+			for i := 0; i < len(idArr); i++ {
+				id := idArr[i]
+				master := skillMasterMap[id]
+				growth := skillGrowthMap[id]
+				result[i] = skillGrowthInformation{
+					DisplayName:  master.DisplayName,
+					GrowthResult: growth,
+				}
+			}
+			return result
+		}()
+		return PostActionResult{
+			EarnedItems:            earnedItem,
+			ConsumedItems:          consumedItem,
+			SkillGrowthInformation: growthInfo,
+		}
+	}(
+		earnedItems,
+		consumedItems,
+		args.skillMaster,
+		applySkillGrowth,
+	)
+	return postResult, nil
 }

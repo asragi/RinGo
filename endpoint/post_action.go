@@ -29,12 +29,54 @@ func CreatePostAction(
 		exploreId := stage.ExploreId(req.ExploreId)
 		token := core.AccessToken(req.Token)
 		execCount := int(req.ExecCount)
-		err := postAction.Post(userId, token, exploreId, execCount)
+		res, err := postAction.Post(userId, token, exploreId, execCount)
 		if err != nil {
 			return handleError(err)
 		}
 
-		return &gateway.PostActionResponse{}, nil
+		earnedItem := func() []*gateway.EarnedItems {
+			result := make([]*gateway.EarnedItems, len(res.EarnedItems))
+			for i, v := range res.EarnedItems {
+				result[i] = &gateway.EarnedItems{
+					ItemId: string(v.ItemId),
+					Count:  int32(v.Count),
+				}
+			}
+			return result
+		}()
+		consumedItem := func() []*gateway.ConsumedItems {
+			result := make([]*gateway.ConsumedItems, len(res.ConsumedItems))
+			for i, v := range res.ConsumedItems {
+				result[i] = &gateway.ConsumedItems{
+					ItemId: string(v.ItemId),
+					Count:  int32(v.Count),
+				}
+			}
+			return result
+		}()
+		skillGrowth := func() []*gateway.SkillGrowthResult {
+			result := make([]*gateway.SkillGrowthResult, len(res.SkillGrowthInformation))
+			for i, v := range res.SkillGrowthInformation {
+				result[i] = &gateway.SkillGrowthResult{
+					DisplayName: string(v.DisplayName),
+					BeforeExp:   int32(v.GrowthResult.BeforeExp),
+					BeforeLv:    int32(v.GrowthResult.BeforeLv),
+					SkillId:     string(v.GrowthResult.SkillId),
+					AfterExp:    int32(v.GrowthResult.AfterExp),
+					AfterLv:     int32(v.GrowthResult.AfterLv),
+				}
+			}
+			return result
+		}()
+		return &gateway.PostActionResponse{
+			Error: &gateway.Error{
+				ErrorOccured:   false,
+				DisplayMessage: "",
+			},
+			EarnedItems:       earnedItem,
+			ConsumedItems:     consumedItem,
+			SkillGrowthResult: skillGrowth,
+		}, nil
 	}
 
 	return postActionEndpoint{

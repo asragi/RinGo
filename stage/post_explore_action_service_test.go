@@ -83,7 +83,7 @@ func TestPostAction(t *testing.T) {
 			allStorageItems:   req.allStorageItems,
 			allItemMasterRes:  req.allItemMasterRes,
 		}
-		err := PostAction(
+		_, err := PostAction(
 			args,
 			mockValidateAction,
 			mockSkillGrowth,
