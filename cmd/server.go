@@ -152,7 +152,7 @@ func createPostHandler(
 	random core.IRandom,
 	currentTime core.ICurrentTime,
 ) handler {
-	postActionApp := application.CreatePostActionService(
+	createArgs := application.EmitPostActionArgsFunc(
 		infrastructures.userResource,
 		infrastructures.exploreMaster,
 		infrastructures.skillGrowth,
@@ -163,6 +163,9 @@ func createPostHandler(
 		infrastructures.requiredSkill,
 		infrastructures.itemStorage,
 		infrastructures.itemMaster,
+		diContainer.GetPostActionArgs,
+	)
+	postFunc := application.CompensatePostActionFunctions(
 		diContainer.ValidateAction,
 		diContainer.CalcSkillGrowth,
 		diContainer.CalcGrowthApply,
@@ -174,8 +177,11 @@ func createPostHandler(
 		infrastructures.updateSkill.Update,
 		random,
 		stage.PostAction,
-		diContainer.GetPostActionArgs,
+	)
+	postActionApp := application.CreatePostActionService(
 		currentTime,
+		postFunc,
+		createArgs,
 	)
 	postAction := endpoint.CreatePostAction(postActionApp)
 

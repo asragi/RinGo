@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/test"
 )
@@ -23,6 +24,7 @@ func TestPostActionHttp(t *testing.T) {
 		requestBody string
 		status      int
 	}
+
 	infrastructures, err := createInfrastructures()
 	if err != nil {
 		t.Fatalf("error on test post action: %s", err.Error())
@@ -55,12 +57,37 @@ func TestPostActionHttp(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/", reqBody)
 		rec := httptest.NewRecorder()
 
+		userId := core.UserId("1")
+		itemId := core.ItemId("1")
+		itemStorage := infrastructures.itemStorage
+		beforeItemRes, _ := itemStorage.Get(
+			userId,
+			itemId,
+			"",
+		)
+		beforeItemNum := beforeItemRes.Stock
 		postActionHandler(rec, req)
 
 		if rec.Code != v.status {
 			t.Errorf("case: %d, expect :%d, got: %d", i, v.status, rec.Code)
 			t.Errorf("Body is: %s", rec.Body)
 		}
+		afterItemNum, _ := itemStorage.Get(
+			userId,
+			itemId,
+			"",
+		)
+		if beforeItemNum == afterItemNum.Stock {
+			t.Errorf("")
+		}
 		fmt.Printf("Body is: %s", rec.Body)
 	}
 }
+
+/*
+func TestGetStageActionDetail(t *testing.T) {
+	getActionDetail := stage.CreateCommonGetActionDetail(
+
+	)
+}
+*/
