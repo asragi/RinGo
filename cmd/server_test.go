@@ -80,14 +80,43 @@ func TestPostActionHttp(t *testing.T) {
 		if beforeItemNum == afterItemNum.Stock {
 			t.Errorf("")
 		}
-		fmt.Printf("Body is: %s", rec.Body)
+		fmt.Printf("Body is: %s\n", rec.Body)
+		fmt.Printf("Num: %d -> %d\n", beforeItemNum, afterItemNum.Stock)
 	}
 }
 
-/*
 func TestGetStageActionDetail(t *testing.T) {
-	getActionDetail := stage.CreateCommonGetActionDetail(
+	infrastructures, err := createInfrastructures()
+	if err != nil {
+		t.Fatalf("error on test post action: %s", err.Error())
+	}
+	type expect struct {
+		StatusCode int
+	}
+	type testCase struct {
+		expect  expect
+		request string
+	}
 
-	)
+	testCases := []testCase{
+		{
+			expect: expect{
+				StatusCode: http.StatusOK,
+			},
+			request: `{"user_id": "1", "stage_id": "1", "explore_id": "1", "token": "1"}`,
+		},
+	}
+
+	for _, v := range testCases {
+		reqBody := bytes.NewBufferString(v.request)
+		expect := v.expect
+		req := httptest.NewRequest(http.MethodGet, "/", reqBody)
+		rec := httptest.NewRecorder()
+		handler := CreateGetStageActionDetailHandler(*infrastructures)
+		handler(rec, req)
+		if rec.Code != expect.StatusCode {
+			t.Errorf("expect: %d, got: %d", expect.StatusCode, rec.Code)
+		}
+		fmt.Printf("Body is: %s\n", rec.Body)
+	}
 }
-*/

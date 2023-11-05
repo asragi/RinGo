@@ -42,6 +42,106 @@ type createCommonGetActionDetailRes struct {
 	GetAction commonGetActionFunc
 }
 
+func getCommonActionDetail(
+	userId core.UserId,
+	exploreMasterRes GetExploreMasterRes,
+	consumingItems []ConsumingItem,
+	consumingItemStorage []ItemData,
+	earningItems []EarningItem,
+	requiredSkills []RequiredSkill,
+	requiredSkillMasters []SkillMaster,
+	requiredUserSkills []UserSkillRes,
+	calcConsumingStamina StaminaReductionFunc,
+) commonGetActionRes {
+	consumingItemMap := func(itemStorage []ItemData) map[core.ItemId]ItemData {
+		result := make(map[core.ItemId]ItemData)
+		for _, v := range itemStorage {
+			result[v.ItemId] = v
+		}
+		return result
+	}(consumingItemStorage)
+	requiredItems := func(consuming []ConsumingItem) []requiredItemsRes {
+		result := make([]requiredItemsRes, len(consuming))
+		for i, v := range consuming {
+			userData := consumingItemMap[v.ItemId]
+			result[i] = requiredItemsRes{
+				ItemId:   v.ItemId,
+				MaxCount: v.MaxCount,
+				Stock:    userData.Stock,
+				IsKnown:  userData.IsKnown,
+			}
+		}
+		return result
+	}(consumingItems)
+	requiredStamina := calcConsumingStamina(
+		exploreMasterRes.ConsumingStamina,
+		exploreMasterRes.StaminaReducibleRate,
+		requiredUserSkills,
+	)
+
+	earningItemsRes := func(items []EarningItem) []earningItemRes {
+		result := make([]earningItemRes, len(items))
+		for i, v := range items {
+			result[i] = earningItemRes{
+				ItemId: v.ItemId,
+				// TODO: change display depends on user data
+				IsKnown: true,
+			}
+		}
+		return result
+	}(earningItems)
+
+	requiredSkillsRes := func(
+		requiredSkills []RequiredSkill,
+		requiredSkillMasters []SkillMaster,
+		requiredUserSkills []UserSkillRes,
+	) []requiredSkillsRes {
+		skillMasterMap := func(skills []SkillMaster) map[core.SkillId]SkillMaster {
+			result := make(map[core.SkillId]SkillMaster)
+			for _, v := range skills {
+				result[v.SkillId] = v
+			}
+			return result
+		}(requiredSkillMasters)
+
+		userSkillMap := func(userSkill []UserSkillRes) map[core.SkillId]UserSkillRes {
+			result := make(map[core.SkillId]UserSkillRes)
+			for _, v := range userSkill {
+				result[v.SkillId] = v
+			}
+			return result
+		}(requiredUserSkills)
+
+		result := make([]requiredSkillsRes, len(requiredSkills))
+		for i, v := range requiredSkills {
+			master := skillMasterMap[v.SkillId]
+			userSkill := userSkillMap[v.SkillId]
+			skill := requiredSkillsRes{
+				SkillId:     v.SkillId,
+				RequiredLv:  v.RequiredLv,
+				DisplayName: master.DisplayName,
+				SkillLv:     userSkill.SkillExp.CalcLv(),
+			}
+			result[i] = skill
+		}
+		return result
+	}(
+		requiredSkills,
+		requiredSkillMasters,
+		requiredUserSkills,
+	)
+
+	return commonGetActionRes{
+		UserId:            userId,
+		ActionDisplayName: exploreMasterRes.DisplayName,
+		RequiredPayment:   exploreMasterRes.RequiredPayment,
+		RequiredStamina:   requiredStamina,
+		RequiredItems:     requiredItems,
+		EarningItems:      earningItemsRes,
+		RequiredSkills:    requiredSkillsRes,
+	}
+}
+
 func CreateCommonGetActionDetail(
 	calcConsumingStamina calcConsumingStaminaFunc,
 	itemStorageRepo ItemStorageRepo,
