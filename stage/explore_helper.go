@@ -133,6 +133,110 @@ type makeUserExploreArrayFunc func(
 	execNum int,
 ) ([]userExplore, error)
 
+func makeUserExplore(
+	resourceRes GetResourceRes,
+	currentTimer core.ICurrentTime,
+	actionsRes GetActionsRes,
+	requiredSkillRes []RequiredSkillRow,
+	consumingItemRes []BatchGetConsumingItemRes,
+	itemData []ItemData,
+	batchGetSkillRes BatchGetUserSkillRes,
+) []userExplore {
+	handleError := func(err error) ([]userExplore, error) {
+		return []userExplore{}, fmt.Errorf("error on makeUserExploreArray: %w", err)
+	}
+	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
+		recoverTime := resource.StaminaRecoverTime
+		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
+	}(resourceRes, currentTimer)
+	currentFund := resourceRes.Fund
+	exploreMap := makeExploreIdMap(actionsRes.Explores)
+	itemDataToStockMap := func(arr []ItemData) map[core.ItemId]core.Stock {
+		result := make(map[core.ItemId]core.Stock)
+		for _, v := range arr {
+			result[v.ItemId] = v.Stock
+		}
+		return result
+	}
+
+	skillDataToLvMap := func(arr []UserSkillRes) map[core.SkillId]core.SkillLv {
+		result := make(map[core.SkillId]core.SkillLv)
+		for _, v := range arr {
+			result[v.SkillId] = v.SkillExp.CalcLv()
+		}
+		return result
+	}
+
+	allSkillId := func(requiredSkills []RequiredSkillRow) []core.SkillId {
+		result := []core.SkillId{}
+		isExistMap := make(map[core.SkillId]bool)
+		for _, v := range requiredSkills {
+			for _, w := range v.RequiredSkills {
+				if _, ok := isExistMap[w.SkillId]; ok {
+					continue
+				}
+				isExistMap[w.SkillId] = true
+				result = append(result, w.SkillId)
+			}
+		}
+		return result
+	}(requiredSkillRes)
+	requiredSkillMap := func(rows []RequiredSkillRow) map[ExploreId][]RequiredSkill {
+		result := make(map[ExploreId][]RequiredSkill)
+		for _, v := range rows {
+			result[v.ExploreId] = v.RequiredSkills
+		}
+		return result
+	}(requiredSkillRes)
+
+	consumingItemRes, err := consumingItemRepo.AllGet(exploreIds)
+	if err != nil {
+		return handleError(err)
+	}
+	consumingItemMap := func(consuming []BatchGetConsumingItemRes) map[ExploreId][]ConsumingItem {
+		result := make(map[ExploreId][]ConsumingItem)
+		for _, v := range consuming {
+			result[v.ExploreId] = v.ConsumingItems
+		}
+		return result
+	}(consumingItemRes)
+
+	allItemId := func(explores []BatchGetConsumingItemRes) []core.ItemId {
+		result := []core.ItemId{}
+		isExistMap := make(map[core.ItemId]bool)
+		for _, v := range explores {
+			for _, w := range v.ConsumingItems {
+				if _, ok := isExistMap[w.ItemId]; ok {
+					continue
+				}
+				isExistMap[w.ItemId] = true
+				result = append(result, w.ItemId)
+			}
+		}
+		return result
+	}(consumingItemRes)
+	itemStockList := itemDataToStockMap(batchGetRes.ItemData)
+
+	skillLvList := skillDataToLvMap(batchGetSkillRes.Skills)
+
+	result := make([]userExplore, len(exploreIds))
+	for i, v := range exploreIds {
+		requiredPrice := exploreMasterMap[v].RequiredPayment
+		stamina := calculatedStamina[v]
+		isPossibleList := checkIsExplorePossible(CheckIsPossibleArgs{stamina, requiredPrice, consumingItemMap[v], requiredSkillMap[v], currentStamina, currentFund, itemStockList, skillLvList, execNum})
+		isPossible := isPossibleList[core.PossibleTypeAll]
+		isKnown := exploreMap[v].IsKnown
+		result[i] = userExplore{
+			ExploreId:   v,
+			IsPossible:  isPossible,
+			IsKnown:     isKnown,
+			DisplayName: exploreMasterMap[v].DisplayName,
+		}
+	}
+	return result, nil
+
+}
+
 func createMakeUserExploreArray(
 	userResourceRepo UserResourceRepo,
 	requiredSkillRepo RequiredSkillRepo,

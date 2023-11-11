@@ -22,6 +22,110 @@ type getStageListService struct {
 	GetAllStage func(core.UserId, core.AccessToken) (getStageListRes, error)
 }
 
+func getAllStage(
+	stageMaster GetAllStagesRes,
+	userStageData GetAllUserStagesRes,
+	stageExplores []StageExploreIdPair,
+	exploreStaminaPair []ExploreStaminaPair,
+) []stageInformation {
+	stages := stageMaster.Stages
+
+	userStageMap := func(userStages []UserStage) map[StageId]UserStage {
+		result := make(map[StageId]UserStage)
+		for _, v := range userStages {
+			result[v.StageId] = v
+		}
+		return result
+	}(userStageData.UserStage)
+
+	allActions := func(
+		explores []GetExploreMasterRes,
+		makeUserExploreArray makeUserExploreArrayFunc,
+	) map[StageId][]userExplore {
+		handleError := func(err error) (map[StageId][]userExplore, error) {
+			return nil, fmt.Errorf("error on get all action: %w", err)
+		}
+
+		exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
+			result := make(map[ExploreId]GetExploreMasterRes)
+			for _, v := range masters {
+				result[v.ExploreId] = v
+			}
+			return result
+		}(explores)
+
+		staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
+			result := map[ExploreId]core.Stamina{}
+			for _, v := range pair {
+				result[v.ExploreId] = v.ReducedStamina
+			}
+			return result
+		}(exploreStaminaPair)
+
+		exploreArray, err := makeUserExploreArray(
+			userId,
+			token,
+			exploreIds,
+			staminaMap,
+			exploreMap,
+			1,
+		)
+
+		if err != nil {
+			return handleError(err)
+		}
+
+		stageIdExploreMap := func(stageExploreIds []StageExploreIdPair) map[StageId][]ExploreId {
+			result := make(map[StageId][]ExploreId)
+			for _, v := range stageExploreIds {
+				if _, ok := result[v.StageId]; !ok {
+					result[v.StageId] = []ExploreId{}
+				}
+				for _, w := range v.ExploreIds {
+					result[v.StageId] = append(result[v.StageId], w)
+				}
+			}
+			return result
+		}(stageExplores)
+
+		userExploreFetchedMap := func(exploreArray []userExplore) map[ExploreId]userExplore {
+			result := make(map[ExploreId]userExplore)
+			for _, v := range exploreArray {
+				result[v.ExploreId] = v
+			}
+			return result
+		}(exploreArray)
+
+		result := func() map[StageId][]userExplore {
+			result := make(map[StageId][]userExplore)
+			for _, v := range stageIds {
+				if _, ok := result[v]; !ok {
+					result[v] = []userExplore{}
+				}
+				for _, w := range stageIdExploreMap[v] {
+					result[v] = append(result[v], userExploreFetchedMap[w])
+				}
+			}
+			return result
+		}()
+		return result
+	}()
+
+	result := make([]stageInformation, len(stages))
+	for i, v := range stages {
+		id := v.StageId
+		actions := allActions[id]
+		result[i] = stageInformation{
+			StageId:      id,
+			DisplayName:  v.DisplayName,
+			Description:  v.Description,
+			IsKnown:      userStageMap[id].IsKnown,
+			UserExplores: actions,
+		}
+	}
+	return result
+}
+
 func CreateGetStageListService(
 	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
 	makeUserExploreArray makeUserExploreArrayFunc,
