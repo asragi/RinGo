@@ -24,6 +24,8 @@ type GetItemMasterRes struct {
 	MaxStock    core.MaxStock
 }
 
+type GetItemMasterFunc func(core.ItemId) (GetItemMasterRes, error)
+
 type ItemMasterRepo interface {
 	Get(core.ItemId) (GetItemMasterRes, error)
 	BatchGet([]core.ItemId) ([]GetItemMasterRes, error)
@@ -45,6 +47,8 @@ type BatchGetStorageRes struct {
 	UserId   core.UserId
 	ItemData []ItemData
 }
+
+type GetItemStorageFunc func(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
 
 type ItemStorageRepo interface {
 	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
@@ -135,6 +139,9 @@ type StageExploreIdPair struct {
 	ExploreIds []ExploreId
 }
 
+type GetItemExploreRelationFunc func(core.ItemId) ([]ExploreId, error)
+
+// Deprecated: Replace with GetItemExploreRelationFunc
 type ItemExploreRelationRepo interface {
 	Get(core.ItemId) ([]ExploreId, error)
 }
@@ -143,7 +150,10 @@ type StageExploreRelationRepo interface {
 	BatchGet([]StageId) ([]StageExploreIdPair, error)
 }
 
+type BatchGetExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
+
 type ExploreMasterRepo interface {
+	// Deprecated: Replace with BatchGet
 	Get(ExploreId) (GetExploreMasterRes, error)
 	BatchGet([]ExploreId) ([]GetExploreMasterRes, error)
 }

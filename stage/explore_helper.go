@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/asragi/RinGo/core"
@@ -125,13 +124,18 @@ func makeExploreIdMap(explores []ExploreUserData) map[ExploreId]ExploreUserData 
 }
 
 type makeUserExploreArrayFunc func(
-	userId core.UserId,
-	token core.AccessToken,
+	resourceRes GetResourceRes,
+	currentTimer core.ICurrentTime,
+	actionsRes GetActionsRes,
+	requiredSkillRes []RequiredSkillRow,
+	consumingItemRes []BatchGetConsumingItemRes,
+	itemData []ItemData,
+	batchGetSkillRes BatchGetUserSkillRes,
 	exploreIds []ExploreId,
 	calculatedStamina map[ExploreId]core.Stamina,
 	exploreMasterMap map[ExploreId]GetExploreMasterRes,
 	execNum int,
-) ([]userExplore, error)
+) []userExplore
 
 func makeUserExplore(
 	resourceRes GetResourceRes,
@@ -141,10 +145,11 @@ func makeUserExplore(
 	consumingItemRes []BatchGetConsumingItemRes,
 	itemData []ItemData,
 	batchGetSkillRes BatchGetUserSkillRes,
+	exploreIds []ExploreId,
+	calculatedStamina map[ExploreId]core.Stamina,
+	exploreMasterMap map[ExploreId]GetExploreMasterRes,
+	execNum int,
 ) []userExplore {
-	handleError := func(err error) ([]userExplore, error) {
-		return []userExplore{}, fmt.Errorf("error on makeUserExploreArray: %w", err)
-	}
 	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
 		recoverTime := resource.StaminaRecoverTime
 		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
@@ -166,21 +171,22 @@ func makeUserExplore(
 		}
 		return result
 	}
-
-	allSkillId := func(requiredSkills []RequiredSkillRow) []core.SkillId {
-		result := []core.SkillId{}
-		isExistMap := make(map[core.SkillId]bool)
-		for _, v := range requiredSkills {
-			for _, w := range v.RequiredSkills {
-				if _, ok := isExistMap[w.SkillId]; ok {
-					continue
+	/*
+		allSkillId := func(requiredSkills []RequiredSkillRow) []core.SkillId {
+			result := []core.SkillId{}
+			isExistMap := make(map[core.SkillId]bool)
+			for _, v := range requiredSkills {
+				for _, w := range v.RequiredSkills {
+					if _, ok := isExistMap[w.SkillId]; ok {
+						continue
+					}
+					isExistMap[w.SkillId] = true
+					result = append(result, w.SkillId)
 				}
-				isExistMap[w.SkillId] = true
-				result = append(result, w.SkillId)
 			}
-		}
-		return result
-	}(requiredSkillRes)
+			return result
+		}(requiredSkillRes)
+	*/
 	requiredSkillMap := func(rows []RequiredSkillRow) map[ExploreId][]RequiredSkill {
 		result := make(map[ExploreId][]RequiredSkill)
 		for _, v := range rows {
@@ -189,10 +195,6 @@ func makeUserExplore(
 		return result
 	}(requiredSkillRes)
 
-	consumingItemRes, err := consumingItemRepo.AllGet(exploreIds)
-	if err != nil {
-		return handleError(err)
-	}
 	consumingItemMap := func(consuming []BatchGetConsumingItemRes) map[ExploreId][]ConsumingItem {
 		result := make(map[ExploreId][]ConsumingItem)
 		for _, v := range consuming {
@@ -200,22 +202,23 @@ func makeUserExplore(
 		}
 		return result
 	}(consumingItemRes)
-
-	allItemId := func(explores []BatchGetConsumingItemRes) []core.ItemId {
-		result := []core.ItemId{}
-		isExistMap := make(map[core.ItemId]bool)
-		for _, v := range explores {
-			for _, w := range v.ConsumingItems {
-				if _, ok := isExistMap[w.ItemId]; ok {
-					continue
+	/*
+		allItemId := func(explores []BatchGetConsumingItemRes) []core.ItemId {
+			result := []core.ItemId{}
+			isExistMap := make(map[core.ItemId]bool)
+			for _, v := range explores {
+				for _, w := range v.ConsumingItems {
+					if _, ok := isExistMap[w.ItemId]; ok {
+						continue
+					}
+					isExistMap[w.ItemId] = true
+					result = append(result, w.ItemId)
 				}
-				isExistMap[w.ItemId] = true
-				result = append(result, w.ItemId)
 			}
-		}
-		return result
-	}(consumingItemRes)
-	itemStockList := itemDataToStockMap(batchGetRes.ItemData)
+			return result
+		}(consumingItemRes)
+	*/
+	itemStockList := itemDataToStockMap(itemData)
 
 	skillLvList := skillDataToLvMap(batchGetSkillRes.Skills)
 
@@ -233,10 +236,10 @@ func makeUserExplore(
 			DisplayName: exploreMasterMap[v].DisplayName,
 		}
 	}
-	return result, nil
-
+	return result
 }
 
+/*
 func createMakeUserExploreArray(
 	userResourceRepo UserResourceRepo,
 	requiredSkillRepo RequiredSkillRepo,
@@ -369,3 +372,4 @@ func createMakeUserExploreArray(
 	}
 	return makeUserExploreArray
 }
+*/

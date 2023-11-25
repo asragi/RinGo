@@ -1,8 +1,6 @@
 package stage
 
 import (
-	"fmt"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -14,19 +12,89 @@ type stageInformation struct {
 	UserExplores []userExplore
 }
 
-type getStageListRes struct {
-	Information []stageInformation
+type makeUserExploreArgs struct {
+	exploreIds        []ExploreId
+	calculatedStamina map[ExploreId]core.Stamina
+	exploreMasterMap  map[ExploreId]GetExploreMasterRes
 }
 
-type getStageListService struct {
-	GetAllStage func(core.UserId, core.AccessToken) (getStageListRes, error)
+type compensatedMakeUserExploreFunc func(
+	makeUserExploreArgs,
+) []userExplore
+
+func compensateMakeUserExplore(
+	resourceRes GetResourceRes,
+	currentTimer core.ICurrentTime,
+	actionsRes GetActionsRes,
+	requiredSkillRes []RequiredSkillRow,
+	consumingItemRes []BatchGetConsumingItemRes,
+	itemData []ItemData,
+	batchGetSkillRes BatchGetUserSkillRes,
+	execNum int,
+	makeUserExplore makeUserExploreArrayFunc,
+) compensatedMakeUserExploreFunc {
+	exploreFunc := func(
+		args makeUserExploreArgs,
+	) []userExplore {
+		return makeUserExplore(
+			resourceRes,
+			currentTimer,
+			actionsRes,
+			requiredSkillRes,
+			consumingItemRes,
+			itemData,
+			batchGetSkillRes,
+			args.exploreIds,
+			args.calculatedStamina,
+			args.exploreMasterMap,
+			execNum,
+		)
+	}
+	return exploreFunc
+}
+
+func getAllStageExploreData(
+	exploreStaminaPair []ExploreStaminaPair,
+	explores []GetExploreMasterRes,
+) makeUserExploreArgs {
+	exploreIds := func(exploreStaminaPair []ExploreStaminaPair) []ExploreId {
+		result := make([]ExploreId, len(exploreStaminaPair))
+		for i, v := range exploreStaminaPair {
+			result[i] = v.ExploreId
+		}
+		return result
+	}(exploreStaminaPair)
+	exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
+		result := make(map[ExploreId]GetExploreMasterRes)
+		for _, v := range masters {
+			result[v.ExploreId] = v
+		}
+		return result
+	}(explores)
+
+	staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
+		result := map[ExploreId]core.Stamina{}
+		for _, v := range pair {
+			result[v.ExploreId] = v.ReducedStamina
+		}
+		return result
+	}(exploreStaminaPair)
+
+	return makeUserExploreArgs{
+		exploreIds:        exploreIds,
+		calculatedStamina: staminaMap,
+		exploreMasterMap:  exploreMap,
+	}
 }
 
 func getAllStage(
+	stageIds []StageId,
 	stageMaster GetAllStagesRes,
 	userStageData GetAllUserStagesRes,
 	stageExplores []StageExploreIdPair,
 	exploreStaminaPair []ExploreStaminaPair,
+	explores []GetExploreMasterRes,
+	compensatedMakeUserExplore compensatedMakeUserExploreFunc,
 ) []stageInformation {
 	stages := stageMaster.Stages
 
@@ -39,13 +107,17 @@ func getAllStage(
 	}(userStageData.UserStage)
 
 	allActions := func(
+		stageIds []StageId,
 		explores []GetExploreMasterRes,
-		makeUserExploreArray makeUserExploreArrayFunc,
+		compensatedMakeUserExplore compensatedMakeUserExploreFunc,
 	) map[StageId][]userExplore {
-		handleError := func(err error) (map[StageId][]userExplore, error) {
-			return nil, fmt.Errorf("error on get all action: %w", err)
-		}
-
+		exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
+			res := make([]ExploreId, len(explores))
+			for i, v := range explores {
+				res[i] = v.ExploreId
+			}
+			return res
+		}(explores)
 		exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
 			result := make(map[ExploreId]GetExploreMasterRes)
 			for _, v := range masters {
@@ -62,18 +134,13 @@ func getAllStage(
 			return result
 		}(exploreStaminaPair)
 
-		exploreArray, err := makeUserExploreArray(
-			userId,
-			token,
-			exploreIds,
-			staminaMap,
-			exploreMap,
-			1,
+		exploreArray := compensatedMakeUserExplore(
+			makeUserExploreArgs{
+				exploreIds:        exploreIds,
+				exploreMasterMap:  exploreMap,
+				calculatedStamina: staminaMap,
+			},
 		)
-
-		if err != nil {
-			return handleError(err)
-		}
 
 		stageIdExploreMap := func(stageExploreIds []StageExploreIdPair) map[StageId][]ExploreId {
 			result := make(map[StageId][]ExploreId)
@@ -109,7 +176,7 @@ func getAllStage(
 			return result
 		}()
 		return result
-	}()
+	}(stageIds, explores, compensatedMakeUserExplore)
 
 	result := make([]stageInformation, len(stages))
 	for i, v := range stages {
@@ -124,159 +191,4 @@ func getAllStage(
 		}
 	}
 	return result
-}
-
-func CreateGetStageListService(
-	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
-	makeUserExploreArray makeUserExploreArrayFunc,
-	stageMasterRepo StageMasterRepo,
-	userStageRepo UserStageRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	stageExploreRepo StageExploreRelationRepo,
-) getStageListService {
-	getAllStage := func(userId core.UserId, token core.AccessToken) (getStageListRes, error) {
-		handleError := func(err error) (getStageListRes, error) {
-			return getStageListRes{}, fmt.Errorf("error on getAllStage: %w", err)
-		}
-		stagesToIdArr := func(stages []StageMaster) []StageId {
-			result := make([]StageId, len(stages))
-			for i, v := range stages {
-				result[i] = v.StageId
-			}
-			return result
-		}
-
-		userStageToMap := func(userStages []UserStage) map[StageId]UserStage {
-			result := make(map[StageId]UserStage)
-			for _, v := range userStages {
-				result[v.StageId] = v
-			}
-			return result
-		}
-
-		getAllAction := func(stageIds []StageId) (map[StageId][]userExplore, error) {
-			handleError := func(err error) (map[StageId][]userExplore, error) {
-				return nil, fmt.Errorf("error on get all action: %w", err)
-			}
-			allExploreIdRes, err := stageExploreRepo.BatchGet(stageIds)
-			if err != nil {
-				return handleError(err)
-			}
-			exploreIds := func(res []StageExploreIdPair) []ExploreId {
-				result := []ExploreId{}
-				for _, v := range res {
-					for _, w := range v.ExploreIds {
-						result = append(result, w)
-					}
-				}
-				return result
-			}(allExploreIdRes)
-			explores, err := exploreMasterRepo.BatchGet(exploreIds)
-			if err != nil {
-				return handleError(err)
-			}
-
-			exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
-				result := make(map[ExploreId]GetExploreMasterRes)
-				for _, v := range masters {
-					result[v.ExploreId] = v
-				}
-				return result
-			}(explores)
-
-			staminaRes, err := calcBatchConsumingStaminaFunc(userId, token, explores)
-			if err != nil {
-				return handleError(err)
-			}
-
-			staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
-				result := map[ExploreId]core.Stamina{}
-				for _, v := range pair {
-					result[v.ExploreId] = v.ReducedStamina
-				}
-				return result
-			}(staminaRes)
-
-			exploreArray, err := makeUserExploreArray(
-				userId,
-				token,
-				exploreIds,
-				staminaMap,
-				exploreMap,
-				1,
-			)
-
-			stageIdExploreMap := func(stageExploreIds []StageExploreIdPair) map[StageId][]ExploreId {
-				result := make(map[StageId][]ExploreId)
-				for _, v := range stageExploreIds {
-					if _, ok := result[v.StageId]; !ok {
-						result[v.StageId] = []ExploreId{}
-					}
-					for _, w := range v.ExploreIds {
-						result[v.StageId] = append(result[v.StageId], w)
-					}
-				}
-				return result
-			}(allExploreIdRes)
-
-			userExploreFetchedMap := make(map[ExploreId]userExplore)
-
-			for _, v := range exploreArray {
-				userExploreFetchedMap[v.ExploreId] = v
-			}
-
-			result := func() map[StageId][]userExplore {
-				result := make(map[StageId][]userExplore)
-
-				for _, v := range stageIds {
-					if _, ok := result[v]; !ok {
-						result[v] = []userExplore{}
-					}
-					for _, w := range stageIdExploreMap[v] {
-						result[v] = append(result[v], userExploreFetchedMap[w])
-					}
-				}
-				return result
-			}()
-			return result, nil
-		}
-
-		masterRes, err := stageMasterRepo.GetAllStages()
-		if err != nil {
-			return handleError(err)
-		}
-		stages := masterRes.Stages
-		allStageIds := stagesToIdArr(stages)
-
-		userStageRes, err := userStageRepo.GetAllUserStages(userId, allStageIds)
-		if err != nil {
-			return handleError(err)
-		}
-		userStageMap := userStageToMap(userStageRes.UserStage)
-
-		allActions, err := getAllAction(allStageIds)
-		if err != nil {
-			return handleError(err)
-		}
-		result := make([]stageInformation, len(stages))
-		for i, v := range masterRes.Stages {
-			id := v.StageId
-			actions := allActions[id]
-			result[i] = stageInformation{
-				StageId:      id,
-				DisplayName:  v.DisplayName,
-				Description:  v.Description,
-				IsKnown:      userStageMap[id].IsKnown,
-				UserExplores: actions,
-			}
-		}
-
-		return getStageListRes{
-			Information: result,
-		}, nil
-	}
-
-	return getStageListService{
-		GetAllStage: getAllStage,
-	}
 }
