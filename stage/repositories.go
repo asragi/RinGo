@@ -4,6 +4,8 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type GetResourceFunc func(core.UserId, core.AccessToken) (GetResourceRes, error)
+
 type GetResourceRes struct {
 	UserId             core.UserId
 	MaxStamina         core.MaxStamina
@@ -48,7 +50,10 @@ type BatchGetStorageRes struct {
 	ItemData []ItemData
 }
 
+// Deprecated: user BatchGetStorageFunc
 type GetItemStorageFunc func(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
+
+type BatchGetStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
 
 type ItemStorageRepo interface {
 	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
@@ -90,6 +95,8 @@ type BatchGetUserSkillRes struct {
 	UserId core.UserId
 	Skills []UserSkillRes
 }
+
+type BatchGetUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
 type UserSkillRepo interface {
 	BatchGet(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
@@ -146,14 +153,17 @@ type ItemExploreRelationRepo interface {
 	Get(core.ItemId) ([]ExploreId, error)
 }
 
+type fetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
+
+// Deprecated: use fetchStageExploreRelation
 type StageExploreRelationRepo interface {
 	BatchGet([]StageId) ([]StageExploreIdPair, error)
 }
 
-type BatchGetExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
+type fetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
 
+// Deprecated: use fetchExploreMasterFunc
 type ExploreMasterRepo interface {
-	// Deprecated: Replace with BatchGet
 	Get(ExploreId) (GetExploreMasterRes, error)
 	BatchGet([]ExploreId) ([]GetExploreMasterRes, error)
 }
@@ -162,6 +172,8 @@ type ExploreUserData struct {
 	ExploreId ExploreId
 	IsKnown   core.IsKnown
 }
+
+type GetActionsFunc func(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
 
 type GetActionsRes struct {
 	UserId   core.UserId
@@ -176,6 +188,8 @@ type RequiredSkill struct {
 	SkillId    core.SkillId
 	RequiredLv core.SkillLv
 }
+
+type GetRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
 
 type RequiredSkillRow struct {
 	ExploreId      ExploreId
@@ -197,10 +211,14 @@ type GetAllStagesRes struct {
 	Stages []StageMaster
 }
 
+type fetchAllStageFunc func() (GetAllStagesRes, error)
+
 type StageMasterRepo interface {
 	GetAllStages() (GetAllStagesRes, error)
 	Get(StageId) (StageMaster, error)
 }
+
+type fetchUserStageFunc func(core.UserId, []StageId) (GetAllUserStagesRes, error)
 
 type UserStage struct {
 	StageId StageId
@@ -211,6 +229,7 @@ type GetAllUserStagesRes struct {
 	UserStage []UserStage
 }
 
+// Deprecated: use fetchUserStageFunc
 type UserStageRepo interface {
 	GetAllUserStages(core.UserId, []StageId) (GetAllUserStagesRes, error)
 }
@@ -235,6 +254,8 @@ type BatchGetConsumingItemRes struct {
 	ExploreId      ExploreId
 	ConsumingItems []ConsumingItem
 }
+
+type GetConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
 
 type ConsumingItemRepo interface {
 	BatchGet(ExploreId) ([]ConsumingItem, error)

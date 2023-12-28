@@ -1,8 +1,70 @@
 package stage
 
 import (
+	"reflect"
 	"testing"
+
+	"github.com/asragi/RinGo/core"
 )
+
+func TestGetStageList(t *testing.T) {
+	type testCase struct {
+		mockExplore     []userExplore
+		mockInformation []stageInformation
+	}
+
+	testCases := []testCase{
+		{
+			mockExplore: []userExplore{},
+			mockInformation: []stageInformation{
+				{
+					StageId: "A",
+				},
+			},
+		},
+	}
+
+	for _, v := range testCases {
+		userId := core.UserId("userId")
+
+		createCompensatedMakeUserExplore := func(
+			_ compensatedMakeUserExploreArgs,
+			_ core.ICurrentTime,
+			_ int,
+			makeUserExplore makeUserExploreArrayFunc,
+		) compensatedMakeUserExploreFunc {
+			f := func(makeUserExploreArgs) []userExplore {
+				return makeUserExplore(makeUserExploreArrayArgs{})
+			}
+
+			return f
+		}
+		fetchMakeUserExploreArgs := func(core.UserId, core.AccessToken, []ExploreId) (compensatedMakeUserExploreArgs, error) {
+			return compensatedMakeUserExploreArgs{}, nil
+		}
+		makeUserExploreFunc := func(makeUserExploreArrayArgs) []userExplore {
+			return v.mockExplore
+		}
+		getAllStageFunc := func(getAllStageArgs, compensatedMakeUserExploreFunc) []stageInformation {
+			return v.mockInformation
+		}
+		fetchStageData := func(core.UserId) (getAllStageArgs, error) {
+			return getAllStageArgs{}, nil
+		}
+		getStageListFunc := getStageList(
+			createCompensatedMakeUserExplore,
+			fetchMakeUserExploreArgs,
+			makeUserExploreFunc,
+			getAllStageFunc,
+			fetchStageData,
+		)
+
+		res, _ := getStageListFunc(userId, "token", nil)
+		if !reflect.DeepEqual(v.mockInformation, res) {
+			t.Errorf("expect: %+v, got: %+v", v.mockInformation, res)
+		}
+	}
+}
 
 func TestGetAllStage(t *testing.T) {
 	type request struct {
@@ -146,13 +208,25 @@ func TestGetAllStage(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		res := getAllStage(
-			req.stageIds,
-			req.stageMaster,
-			req.userStageData,
-			req.stageExplores,
-			req.exploreStaminaPair,
+		exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
+			result := make([]ExploreId, len(explores))
+			for i, v := range explores {
+				result[i] = v.ExploreId
+			}
+			return result
+		}(
 			req.explores,
+		)
+		res := getAllStage(
+			getAllStageArgs{
+				req.stageIds,
+				req.stageMaster,
+				req.userStageData,
+				req.stageExplores,
+				req.exploreStaminaPair,
+				req.explores,
+				exploreIds,
+			},
 			req.makeUserExplore,
 		)
 

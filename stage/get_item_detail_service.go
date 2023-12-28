@@ -38,7 +38,7 @@ func createGetItemDetailArgs(
 	req GetUserItemDetailReq,
 	getItemMaster GetItemMasterFunc,
 	getItemStorage GetItemStorageFunc,
-	getExploreMaster BatchGetExploreMasterFunc,
+	getExploreMaster fetchExploreMasterFunc,
 	getItemExploreRelation GetItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error) {

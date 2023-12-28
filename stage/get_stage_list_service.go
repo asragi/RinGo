@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"fmt"
+
 	"github.com/asragi/RinGo/core"
 )
 
@@ -12,24 +14,65 @@ type stageInformation struct {
 	UserExplores []userExplore
 }
 
-type makeUserExploreArgs struct {
-	exploreIds        []ExploreId
-	calculatedStamina map[ExploreId]core.Stamina
-	exploreMasterMap  map[ExploreId]GetExploreMasterRes
+type getStageListFunc func(
+	core.UserId,
+	core.AccessToken,
+	core.ICurrentTime,
+) ([]stageInformation, error)
+
+func getStageList(
+	createCompensateMakeUserExploreFunc createCompensateMakeUserExploreFunc,
+	fetchMakeUserExploreArgsFunc fetchMakeUserExploreArgs,
+	makeUserExploreFunc makeUserExploreArrayFunc,
+	getAllStage getAllStageFunc,
+	fetchStageData fetchStageDataFunc,
+) getStageListFunc {
+	getStageListFunc := func(
+		userId core.UserId,
+		token core.AccessToken,
+		currentTime core.ICurrentTime,
+	) ([]stageInformation, error) {
+		handleError := func(err error) ([]stageInformation, error) {
+			return nil, fmt.Errorf("error on get stage list: %w", err)
+		}
+		stageData, err := fetchStageData(userId)
+		if err != nil {
+			return handleError(err)
+		}
+		makeUserExploreArgs, err := fetchMakeUserExploreArgsFunc(
+			userId,
+			token,
+			stageData.exploreId,
+		)
+		if err != nil {
+			return handleError(err)
+		}
+		compensatedMakeUserExploreFunc := createCompensateMakeUserExploreFunc(
+			makeUserExploreArgs,
+			currentTime,
+			1,
+			makeUserExploreFunc,
+		)
+		stageInformation := getAllStage(
+			stageData,
+			compensatedMakeUserExploreFunc,
+		)
+		return stageInformation, nil
+	}
+
+	return getStageListFunc
 }
 
-type compensatedMakeUserExploreFunc func(
-	makeUserExploreArgs,
-) []userExplore
+type createCompensateMakeUserExploreFunc func(
+	compensatedMakeUserExploreArgs,
+	core.ICurrentTime,
+	int,
+	makeUserExploreArrayFunc,
+) compensatedMakeUserExploreFunc
 
 func compensateMakeUserExplore(
-	resourceRes GetResourceRes,
+	repoArgs compensatedMakeUserExploreArgs,
 	currentTimer core.ICurrentTime,
-	actionsRes GetActionsRes,
-	requiredSkillRes []RequiredSkillRow,
-	consumingItemRes []BatchGetConsumingItemRes,
-	itemData []ItemData,
-	batchGetSkillRes BatchGetUserSkillRes,
 	execNum int,
 	makeUserExplore makeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc {
@@ -37,65 +80,103 @@ func compensateMakeUserExplore(
 		args makeUserExploreArgs,
 	) []userExplore {
 		return makeUserExplore(
-			resourceRes,
-			currentTimer,
-			actionsRes,
-			requiredSkillRes,
-			consumingItemRes,
-			itemData,
-			batchGetSkillRes,
-			args.exploreIds,
-			args.calculatedStamina,
-			args.exploreMasterMap,
-			execNum,
+			makeUserExploreArrayArgs{
+				repoArgs.resourceRes,
+				currentTimer,
+				repoArgs.actionsRes,
+				repoArgs.requiredSkillRes,
+				repoArgs.consumingItemRes,
+				repoArgs.itemData,
+				repoArgs.batchGetSkillRes,
+				args.exploreIds,
+				args.calculatedStamina,
+				args.exploreMasterMap,
+				execNum,
+			},
 		)
 	}
 	return exploreFunc
 }
 
-func getAllStageExploreData(
-	exploreStaminaPair []ExploreStaminaPair,
-	explores []GetExploreMasterRes,
-) makeUserExploreArgs {
-	exploreIds := func(exploreStaminaPair []ExploreStaminaPair) []ExploreId {
-		result := make([]ExploreId, len(exploreStaminaPair))
-		for i, v := range exploreStaminaPair {
-			result[i] = v.ExploreId
-		}
-		return result
-	}(exploreStaminaPair)
-	exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
-		result := make(map[ExploreId]GetExploreMasterRes)
-		for _, v := range masters {
-			result[v.ExploreId] = v
-		}
-		return result
-	}(explores)
+type fetchStageDataFunc func(core.UserId) (getAllStageArgs, error)
 
-	staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
-		result := map[ExploreId]core.Stamina{}
-		for _, v := range pair {
-			result[v.ExploreId] = v.ReducedStamina
+func createFetchStageData(
+	fetchAllStage fetchAllStageFunc,
+	fetchUserStageFunc fetchUserStageFunc,
+	fetchStageExploreRelation fetchStageExploreRelation,
+	fetchExploreMaster fetchExploreMasterFunc,
+) fetchStageDataFunc {
+	fetch := func(
+		userId core.UserId,
+	) (getAllStageArgs, error) {
+		handleError := func(err error) (getAllStageArgs, error) {
+			return getAllStageArgs{}, fmt.Errorf("error on fetch stage data: %w", err)
 		}
-		return result
-	}(exploreStaminaPair)
-
-	return makeUserExploreArgs{
-		exploreIds:        exploreIds,
-		calculatedStamina: staminaMap,
-		exploreMasterMap:  exploreMap,
+		allStageRes, err := fetchAllStage()
+		if err != nil {
+			return handleError(err)
+		}
+		stageId := func(stageRes []StageMaster) []StageId {
+			result := make([]StageId, len(stageRes))
+			for i, v := range stageRes {
+				result[i] = v.StageId
+			}
+			return result
+		}(allStageRes.Stages)
+		userStage, err := fetchUserStageFunc(userId, stageId)
+		if err != nil {
+			return handleError(err)
+		}
+		stageExplorePair, err := fetchStageExploreRelation(stageId)
+		exploreIds := func(stageExplore []StageExploreIdPair) []ExploreId {
+			result := []ExploreId{}
+			for _, v := range stageExplore {
+				result = append(result, v.ExploreIds...)
+			}
+			return result
+		}(stageExplorePair)
+		exploreMaster, err := fetchExploreMaster(exploreIds)
+		if err != nil {
+			return handleError(err)
+		}
+		return getAllStageArgs{
+			stageId:        stageId,
+			allStageRes:    allStageRes,
+			userStageRes:   userStage,
+			stageExploreId: stageExplorePair,
+			exploreMaster:  exploreMaster,
+			exploreId:      exploreIds,
+		}, nil
 	}
+
+	return fetch
 }
 
+type getAllStageArgs struct {
+	stageId            []StageId
+	allStageRes        GetAllStagesRes
+	userStageRes       GetAllUserStagesRes
+	stageExploreId     []StageExploreIdPair
+	exploreStaminaPair []ExploreStaminaPair
+	exploreMaster      []GetExploreMasterRes
+	exploreId          []ExploreId
+}
+
+type getAllStageFunc func(
+	getAllStageArgs,
+	compensatedMakeUserExploreFunc,
+) []stageInformation
+
 func getAllStage(
-	stageIds []StageId,
-	stageMaster GetAllStagesRes,
-	userStageData GetAllUserStagesRes,
-	stageExplores []StageExploreIdPair,
-	exploreStaminaPair []ExploreStaminaPair,
-	explores []GetExploreMasterRes,
+	args getAllStageArgs,
 	compensatedMakeUserExplore compensatedMakeUserExploreFunc,
 ) []stageInformation {
+	stageMaster := args.allStageRes
+	userStageData := args.userStageRes
+	exploreStaminaPair := args.exploreStaminaPair
+	stageExplores := args.stageExploreId
+	stageIds := args.stageId
+	explores := args.exploreMaster
 	stages := stageMaster.Stages
 
 	userStageMap := func(userStages []UserStage) map[StageId]UserStage {
