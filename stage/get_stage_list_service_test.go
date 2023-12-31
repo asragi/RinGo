@@ -9,14 +9,14 @@ import (
 
 func TestGetStageList(t *testing.T) {
 	type testCase struct {
-		mockExplore     []userExplore
-		mockInformation []stageInformation
+		mockExplore     []UserExplore
+		mockInformation []StageInformation
 	}
 
 	testCases := []testCase{
 		{
-			mockExplore: []userExplore{},
-			mockInformation: []stageInformation{
+			mockExplore: []UserExplore{},
+			mockInformation: []StageInformation{
 				{
 					StageId: "A",
 				},
@@ -33,7 +33,7 @@ func TestGetStageList(t *testing.T) {
 			_ int,
 			makeUserExplore makeUserExploreArrayFunc,
 		) compensatedMakeUserExploreFunc {
-			f := func(makeUserExploreArgs) []userExplore {
+			f := func(makeUserExploreArgs) []UserExplore {
 				return makeUserExplore(makeUserExploreArrayArgs{})
 			}
 
@@ -42,10 +42,10 @@ func TestGetStageList(t *testing.T) {
 		fetchMakeUserExploreArgs := func(core.UserId, core.AccessToken, []ExploreId) (compensatedMakeUserExploreArgs, error) {
 			return compensatedMakeUserExploreArgs{}, nil
 		}
-		makeUserExploreFunc := func(makeUserExploreArrayArgs) []userExplore {
+		makeUserExploreFunc := func(makeUserExploreArrayArgs) []UserExplore {
 			return v.mockExplore
 		}
-		getAllStageFunc := func(getAllStageArgs, compensatedMakeUserExploreFunc) []stageInformation {
+		getAllStageFunc := func(getAllStageArgs, compensatedMakeUserExploreFunc) []StageInformation {
 			return v.mockInformation
 		}
 		fetchStageData := func(core.UserId) (getAllStageArgs, error) {
@@ -79,7 +79,7 @@ func TestGetAllStage(t *testing.T) {
 
 	type testCase struct {
 		request          request
-		expect           []stageInformation
+		expect           []StageInformation
 		expectPassedArgs makeUserExploreArgs
 	}
 	stageIds := []StageId{"stageA", "stageB"}
@@ -143,18 +143,18 @@ func TestGetAllStage(t *testing.T) {
 		},
 	}
 
-	mockUserExplore := userExplore{
+	mockUserExplore := UserExplore{
 		DisplayName: "MockText",
 		IsKnown:     false,
 		IsPossible:  true,
 	}
 
 	var passedArgs makeUserExploreArgs
-	mockMakeUserExplores := func(args makeUserExploreArgs) []userExplore {
+	mockMakeUserExplores := func(args makeUserExploreArgs) []UserExplore {
 		passedArgs = args
-		result := make([]userExplore, len(args.exploreIds))
+		result := make([]UserExplore, len(args.exploreIds))
 		for i, v := range args.exploreIds {
-			result[i] = userExplore{
+			result[i] = UserExplore{
 				ExploreId:   v,
 				DisplayName: mockUserExplore.DisplayName,
 				IsKnown:     mockUserExplore.IsKnown,
@@ -175,11 +175,11 @@ func TestGetAllStage(t *testing.T) {
 				explores:           exploreMasters,
 				makeUserExplore:    mockMakeUserExplores,
 			},
-			expect: []stageInformation{
+			expect: []StageInformation{
 				{
 					StageId: stageIds[0],
 					IsKnown: true,
-					UserExplores: []userExplore{
+					UserExplores: []UserExplore{
 						{
 							ExploreId:   exploreIds[0],
 							DisplayName: mockUserExplore.DisplayName,
@@ -197,7 +197,7 @@ func TestGetAllStage(t *testing.T) {
 				{
 					StageId:      stageIds[1],
 					IsKnown:      false,
-					UserExplores: []userExplore{},
+					UserExplores: []UserExplore{},
 				},
 			},
 			expectPassedArgs: makeUserExploreArgs{

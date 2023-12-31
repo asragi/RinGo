@@ -1,5 +1,7 @@
 github.com/asragi/RingoSuPBGo v0.0.0-20231027094441-6e63ff73b70c h1:RpB4J1HejlJlojXbsGkO/BDQBbjvAozQDbWmbbfHSSQ=
 github.com/asragi/RingoSuPBGo v0.0.0-20231027094441-6e63ff73b70c/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
+github.com/asragi/RingoSuPBGo v0.0.0-20231230164638-e888cb47417d h1:N4zZcvYG+2cNgM+w9bULgMITHxgHnnXOLW1y6eNo7vY=
+github.com/asragi/RingoSuPBGo v0.0.0-20231230164638-e888cb47417d/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
 github.com/google/go-cmp v0.5.5 h1:Khx7svrCpmxxtHBq5j2mp/xVjsi8hQMfNLvJFAlrGgU=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=

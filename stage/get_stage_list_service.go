@@ -6,19 +6,19 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type stageInformation struct {
+type StageInformation struct {
 	StageId      StageId
 	DisplayName  core.DisplayName
 	IsKnown      core.IsKnown
 	Description  core.Description
-	UserExplores []userExplore
+	UserExplores []UserExplore
 }
 
-type getStageListFunc func(
+type GetStageListFunc func(
 	core.UserId,
 	core.AccessToken,
 	core.ICurrentTime,
-) ([]stageInformation, error)
+) ([]StageInformation, error)
 
 func getStageList(
 	createCompensateMakeUserExploreFunc createCompensateMakeUserExploreFunc,
@@ -26,13 +26,13 @@ func getStageList(
 	makeUserExploreFunc makeUserExploreArrayFunc,
 	getAllStage getAllStageFunc,
 	fetchStageData fetchStageDataFunc,
-) getStageListFunc {
+) GetStageListFunc {
 	getStageListFunc := func(
 		userId core.UserId,
 		token core.AccessToken,
 		currentTime core.ICurrentTime,
-	) ([]stageInformation, error) {
-		handleError := func(err error) ([]stageInformation, error) {
+	) ([]StageInformation, error) {
+		handleError := func(err error) ([]StageInformation, error) {
 			return nil, fmt.Errorf("error on get stage list: %w", err)
 		}
 		stageData, err := fetchStageData(userId)
@@ -78,7 +78,7 @@ func compensateMakeUserExplore(
 ) compensatedMakeUserExploreFunc {
 	exploreFunc := func(
 		args makeUserExploreArgs,
-	) []userExplore {
+	) []UserExplore {
 		return makeUserExplore(
 			makeUserExploreArrayArgs{
 				repoArgs.resourceRes,
@@ -165,12 +165,12 @@ type getAllStageArgs struct {
 type getAllStageFunc func(
 	getAllStageArgs,
 	compensatedMakeUserExploreFunc,
-) []stageInformation
+) []StageInformation
 
 func getAllStage(
 	args getAllStageArgs,
 	compensatedMakeUserExplore compensatedMakeUserExploreFunc,
-) []stageInformation {
+) []StageInformation {
 	stageMaster := args.allStageRes
 	userStageData := args.userStageRes
 	exploreStaminaPair := args.exploreStaminaPair
@@ -191,7 +191,7 @@ func getAllStage(
 		stageIds []StageId,
 		explores []GetExploreMasterRes,
 		compensatedMakeUserExplore compensatedMakeUserExploreFunc,
-	) map[StageId][]userExplore {
+	) map[StageId][]UserExplore {
 		exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
 			res := make([]ExploreId, len(explores))
 			for i, v := range explores {
@@ -236,19 +236,19 @@ func getAllStage(
 			return result
 		}(stageExplores)
 
-		userExploreFetchedMap := func(exploreArray []userExplore) map[ExploreId]userExplore {
-			result := make(map[ExploreId]userExplore)
+		userExploreFetchedMap := func(exploreArray []UserExplore) map[ExploreId]UserExplore {
+			result := make(map[ExploreId]UserExplore)
 			for _, v := range exploreArray {
 				result[v.ExploreId] = v
 			}
 			return result
 		}(exploreArray)
 
-		result := func() map[StageId][]userExplore {
-			result := make(map[StageId][]userExplore)
+		result := func() map[StageId][]UserExplore {
+			result := make(map[StageId][]UserExplore)
 			for _, v := range stageIds {
 				if _, ok := result[v]; !ok {
-					result[v] = []userExplore{}
+					result[v] = []UserExplore{}
 				}
 				for _, w := range stageIdExploreMap[v] {
 					result[v] = append(result[v], userExploreFetchedMap[w])
@@ -259,11 +259,11 @@ func getAllStage(
 		return result
 	}(stageIds, explores, compensatedMakeUserExplore)
 
-	result := make([]stageInformation, len(stages))
+	result := make([]StageInformation, len(stages))
 	for i, v := range stages {
 		id := v.StageId
 		actions := allActions[id]
-		result[i] = stageInformation{
+		result[i] = StageInformation{
 			StageId:      id,
 			DisplayName:  v.DisplayName,
 			Description:  v.Description,

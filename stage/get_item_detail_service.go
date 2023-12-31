@@ -20,7 +20,7 @@ type getUserItemDetailRes struct {
 	Description  core.Description
 	MaxStock     core.MaxStock
 	Stock        core.Stock
-	UserExplores []userExplore
+	UserExplores []UserExplore
 }
 
 type itemService struct {
@@ -77,7 +77,7 @@ func createGetItemDetailArgs(
 func getItemDetail(
 	masterRes GetItemMasterRes,
 	storageRes GetItemStorageRes,
-	explores []userExplore,
+	explores []UserExplore,
 ) getUserItemDetailRes {
 	return getUserItemDetailRes{
 		UserId:       storageRes.UserId,
@@ -95,7 +95,7 @@ func getAllItemAction(
 	exploreStaminaPair []ExploreStaminaPair,
 	explores []GetExploreMasterRes,
 	compensatedMakeUserExploreFunc compensatedMakeUserExploreFunc,
-) []userExplore {
+) []UserExplore {
 	exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
 		res := make([]ExploreId, len(explores))
 		for i, v := range explores {

@@ -21,7 +21,7 @@ type compensatedMakeUserExploreArgs struct {
 	batchGetSkillRes BatchGetUserSkillRes
 }
 
-type compensatedMakeUserExploreFunc func(makeUserExploreArgs) []userExplore
+type compensatedMakeUserExploreFunc func(makeUserExploreArgs) []UserExplore
 
 type fetchMakeUserExploreArgs func(
 	core.UserId,

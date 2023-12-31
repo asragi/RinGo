@@ -6,7 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type userExplore struct {
+type UserExplore struct {
 	ExploreId   ExploreId
 	DisplayName core.DisplayName
 	IsKnown     core.IsKnown
@@ -139,11 +139,11 @@ type makeUserExploreArrayArgs struct {
 
 type makeUserExploreArrayFunc func(
 	makeUserExploreArrayArgs,
-) []userExplore
+) []UserExplore
 
 func makeUserExplore(
 	args makeUserExploreArrayArgs,
-) []userExplore {
+) []UserExplore {
 	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
 		recoverTime := resource.StaminaRecoverTime
 		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
@@ -186,14 +186,14 @@ func makeUserExplore(
 
 	skillLvList := skillDataToLvMap(args.batchGetSkillRes.Skills)
 
-	result := make([]userExplore, len(args.exploreIds))
+	result := make([]UserExplore, len(args.exploreIds))
 	for i, v := range args.exploreIds {
 		requiredPrice := args.exploreMasterMap[v].RequiredPayment
 		stamina := args.calculatedStamina[v]
 		isPossibleList := checkIsExplorePossible(CheckIsPossibleArgs{stamina, requiredPrice, consumingItemMap[v], requiredSkillMap[v], currentStamina, currentFund, itemStockList, skillLvList, args.execNum})
 		isPossible := isPossibleList[core.PossibleTypeAll]
 		isKnown := exploreMap[v].IsKnown
-		result[i] = userExplore{
+		result[i] = UserExplore{
 			ExploreId:   v,
 			IsPossible:  isPossible,
 			IsKnown:     isKnown,
