@@ -26,7 +26,9 @@ type GetItemMasterRes struct {
 	MaxStock    core.MaxStock
 }
 
+// Deprecated: use BatchGetItemMasterFunc
 type GetItemMasterFunc func(core.ItemId) (GetItemMasterRes, error)
+type BatchGetItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
 
 type ItemMasterRepo interface {
 	Get(core.ItemId) (GetItemMasterRes, error)
@@ -54,6 +56,8 @@ type BatchGetStorageRes struct {
 type GetItemStorageFunc func(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
 
 type BatchGetStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
+
+type GetAllStorageFunc func(core.UserId) ([]ItemData, error)
 
 type ItemStorageRepo interface {
 	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)

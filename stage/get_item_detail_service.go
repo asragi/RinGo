@@ -34,13 +34,13 @@ type getItemDetailArgs struct {
 	explores           []GetExploreMasterRes
 }
 
-type getItemDetailFunc func(GetUserItemDetailReq) (getUserItemDetailRes, error)
+type GetItemDetailFunc func(GetUserItemDetailReq) (getUserItemDetailRes, error)
 
 func CreateGetItemDetailService(
 	createArgs ICreateGetItemDetailArgs,
 	getAllAction IGetAllItemAction,
 	compensatedMakeUserExploreFunc compensatedMakeUserExploreFunc,
-) getItemDetailFunc {
+) GetItemDetailFunc {
 	get := func(req GetUserItemDetailReq) (getUserItemDetailRes, error) {
 		handleError := func(err error) (getUserItemDetailRes, error) {
 			return getUserItemDetailRes{}, fmt.Errorf("error on get user item data: %w", err)
