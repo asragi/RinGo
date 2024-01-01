@@ -18,20 +18,23 @@ import (
 type handler func(http.ResponseWriter, *http.Request)
 
 type infrastructuresStruct struct {
-	userResource   stage.UserResourceRepo
-	itemMaster     stage.ItemMasterRepo
-	itemStorage    stage.ItemStorageRepo
-	userSkill      stage.UserSkillRepo
-	stageMaster    stage.StageMasterRepo
-	exploreMaster  stage.ExploreMasterRepo
-	skillMaster    stage.SkillMasterRepo
-	earningItem    stage.EarningItemRepo
-	consumingItem  stage.ConsumingItemRepo
-	requiredSkill  stage.RequiredSkillRepo
-	skillGrowth    stage.SkillGrowthDataRepo
-	reductionSkill stage.ReductionStaminaSkillRepo
-	updateStorage  stage.ItemStorageUpdateRepo
-	updateSkill    stage.SkillGrowthPostRepo
+	userResource              stage.UserResourceRepo
+	itemMaster                stage.ItemMasterRepo
+	itemStorage               stage.ItemStorageRepo
+	userSkill                 stage.UserSkillRepo
+	stageMaster               stage.StageMasterRepo
+	exploreMaster             stage.ExploreMasterRepo
+	skillMaster               stage.SkillMasterRepo
+	earningItem               stage.EarningItemRepo
+	consumingItem             stage.ConsumingItemRepo
+	requiredSkill             stage.RequiredSkillRepo
+	skillGrowth               stage.SkillGrowthDataRepo
+	reductionSkill            stage.ReductionStaminaSkillRepo
+	updateStorage             stage.ItemStorageUpdateRepo
+	updateSkill               stage.SkillGrowthPostRepo
+	getAction                 stage.GetActionsFunc
+	fetchStageExploreRelation stage.FetchStageExploreRelation
+	fetchUserStage            stage.FetchUserStageFunc
 }
 
 func createInfrastructures() (*infrastructuresStruct, error) {
@@ -97,7 +100,16 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		reductionSkill: reductionSkill,
 		updateStorage:  itemStorage,
 		updateSkill:    userSkill,
+		getAction:      nil,
 	}, nil
+}
+
+func ErrorOnDecode(w http.ResponseWriter, err error) {
+	http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
+}
+
+func ErrorOnGenerateResponse(w http.ResponseWriter, err error) {
+	http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 }
 
 func CreateGetStageActionDetailHandler(
@@ -144,6 +156,62 @@ func CreateGetStageActionDetailHandler(
 		w.Write(resJson)
 	}
 	return getStageActionDetailHandler
+}
+
+func createGetStageListHandler(
+	infrastructures infrastructuresStruct,
+	diContainer stage.DependencyInjectionContainer,
+	timer core.ICurrentTime,
+	getStageListEndpoint endpoint.GetStageListEndpoint,
+	createMakeUserExplores stage.ICreateMakeUserExploreFunc,
+	createFetchStageData stage.ICreateFetchStageData,
+	getStageList stage.IGetStageList,
+) handler {
+	fetchArgs := createMakeUserExplores(
+		infrastructures.userResource.GetResource,
+		infrastructures.getAction,
+		infrastructures.requiredSkill.BatchGet,
+		infrastructures.consumingItem.AllGet,
+		infrastructures.itemStorage.BatchGet,
+		infrastructures.userSkill.BatchGet,
+	)
+	fetchStageData := createFetchStageData(
+		infrastructures.stageMaster.GetAllStages,
+		infrastructures.fetchUserStage,
+		infrastructures.fetchStageExploreRelation,
+		infrastructures.exploreMaster.BatchGet,
+	)
+	get := getStageList(
+		diContainer.MakeStageUserExplore,
+		fetchArgs,
+		diContainer.MakeUserExplore,
+		diContainer.GetAllStage,
+		fetchStageData,
+	)
+	endpoint := getStageListEndpoint(get, timer)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var req gateway.GetStageListRequest
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			ErrorOnDecode(w, err)
+			return
+		}
+		res, err := endpoint(&req)
+		if err != nil {
+			ErrorOnGenerateResponse(w, err)
+			return
+		}
+		resJson, err := json.Marshal(res)
+		if err != nil {
+			ErrorOnGenerateResponse(w, err)
+			return
+		}
+		setHeader(w)
+		w.WriteHeader(http.StatusOK)
+		w.Write(resJson)
+	}
+
+	return handler
 }
 
 func createPostHandler(
@@ -231,8 +299,17 @@ func main() {
 
 	postActionHandler := createPostHandler(*infrastructures, diContainer, &random, &currentTimeEmitter)
 	getStageActionDetailHandler := CreateGetStageActionDetailHandler(*infrastructures)
+	getStageListHandler := createGetStageListHandler(
+		*infrastructures,
+		diContainer,
+		&currentTimeEmitter,
+		endpoint.CreateGetStageList,
+		stage.CreateMakeUserExploreFunc,
+		stage.CreateFetchStageData,
+		stage.GetStageList)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
+	http.HandleFunc("/stages", getStageListHandler)
 	http.HandleFunc("/", hello)
 	http.ListenAndServe(":4444", nil)
 }

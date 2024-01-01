@@ -29,7 +29,16 @@ type fetchMakeUserExploreArgs func(
 	[]ExploreId,
 ) (compensatedMakeUserExploreArgs, error)
 
-func createMakeUserExploreFunc(
+type ICreateMakeUserExploreFunc func(
+	GetResourceFunc,
+	GetActionsFunc,
+	GetRequiredSkillsFunc,
+	GetConsumingItemFunc,
+	BatchGetStorageFunc,
+	BatchGetUserSkillFunc,
+) fetchMakeUserExploreArgs
+
+func CreateMakeUserExploreFunc(
 	getResource GetResourceFunc,
 	getAction GetActionsFunc,
 	getRequiredSkills GetRequiredSkillsFunc,

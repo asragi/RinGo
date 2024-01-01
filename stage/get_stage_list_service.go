@@ -20,7 +20,15 @@ type GetStageListFunc func(
 	core.ICurrentTime,
 ) ([]StageInformation, error)
 
-func getStageList(
+type IGetStageList func(
+	createCompensateMakeUserExploreFunc,
+	fetchMakeUserExploreArgs,
+	makeUserExploreArrayFunc,
+	getAllStageFunc,
+	fetchStageDataFunc,
+) GetStageListFunc
+
+func GetStageList(
 	createCompensateMakeUserExploreFunc createCompensateMakeUserExploreFunc,
 	fetchMakeUserExploreArgsFunc fetchMakeUserExploreArgs,
 	makeUserExploreFunc makeUserExploreArrayFunc,
@@ -99,11 +107,17 @@ func compensateMakeUserExplore(
 }
 
 type fetchStageDataFunc func(core.UserId) (getAllStageArgs, error)
+type ICreateFetchStageData func(
+	fetchAllStageFunc,
+	FetchUserStageFunc,
+	FetchStageExploreRelation,
+	fetchExploreMasterFunc,
+) fetchStageDataFunc
 
-func createFetchStageData(
+func CreateFetchStageData(
 	fetchAllStage fetchAllStageFunc,
-	fetchUserStageFunc fetchUserStageFunc,
-	fetchStageExploreRelation fetchStageExploreRelation,
+	fetchUserStageFunc FetchUserStageFunc,
+	fetchStageExploreRelation FetchStageExploreRelation,
 	fetchExploreMaster fetchExploreMasterFunc,
 ) fetchStageDataFunc {
 	fetch := func(

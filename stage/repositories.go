@@ -153,7 +153,7 @@ type ItemExploreRelationRepo interface {
 	Get(core.ItemId) ([]ExploreId, error)
 }
 
-type fetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
+type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
 
 // Deprecated: use fetchStageExploreRelation
 type StageExploreRelationRepo interface {
@@ -218,7 +218,7 @@ type StageMasterRepo interface {
 	Get(StageId) (StageMaster, error)
 }
 
-type fetchUserStageFunc func(core.UserId, []StageId) (GetAllUserStagesRes, error)
+type FetchUserStageFunc func(core.UserId, []StageId) (GetAllUserStagesRes, error)
 
 type UserStage struct {
 	StageId StageId

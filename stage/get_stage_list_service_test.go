@@ -51,7 +51,7 @@ func TestGetStageList(t *testing.T) {
 		fetchStageData := func(core.UserId) (getAllStageArgs, error) {
 			return getAllStageArgs{}, nil
 		}
-		getStageListFunc := getStageList(
+		getStageListFunc := GetStageList(
 			createCompensatedMakeUserExplore,
 			fetchMakeUserExploreArgs,
 			makeUserExploreFunc,

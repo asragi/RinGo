@@ -34,6 +34,71 @@ type getItemDetailArgs struct {
 	explores           []GetExploreMasterRes
 }
 
+type getItemDetailFunc func(GetUserItemDetailReq) (getUserItemDetailRes, error)
+
+func CreateGetItemDetailService(
+	createArgs ICreateGetItemDetailArgs,
+	getAllAction IGetAllItemAction,
+	compensatedMakeUserExploreFunc compensatedMakeUserExploreFunc,
+) getItemDetailFunc {
+	get := func(req GetUserItemDetailReq) (getUserItemDetailRes, error) {
+		handleError := func(err error) (getUserItemDetailRes, error) {
+			return getUserItemDetailRes{}, fmt.Errorf("error on get user item data: %w", err)
+		}
+		args, err := createArgs(req)
+		if err != nil {
+			handleError(err)
+		}
+
+		userExplores := getAllAction(
+			args.exploreStaminaPair,
+			args.explores,
+			compensatedMakeUserExploreFunc,
+		)
+
+		return getItemDetail(
+			args.masterRes,
+			args.storageRes,
+			userExplores,
+		), nil
+	}
+
+	return get
+}
+
+type ICreateGetItemDetailArgs func(GetUserItemDetailReq) (getItemDetailArgs, error)
+
+func createArgs(
+	getItemMaster GetItemMasterFunc,
+	getItemStorage GetItemStorageFunc,
+	getExploreMaster fetchExploreMasterFunc,
+	getItemExploreRelation GetItemExploreRelationFunc,
+	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
+	createArgs ICreateFetchItemDetailArgs,
+) ICreateGetItemDetailArgs {
+	return func(
+		req GetUserItemDetailReq,
+	) (getItemDetailArgs, error) {
+		return createArgs(
+			req,
+			getItemMaster,
+			getItemStorage,
+			getExploreMaster,
+			getItemExploreRelation,
+			calcBatchConsumingStaminaFunc,
+		)
+	}
+}
+
+type ICreateFetchItemDetailArgs func(
+	GetUserItemDetailReq,
+	GetItemMasterFunc,
+	GetItemStorageFunc,
+	fetchExploreMasterFunc,
+	GetItemExploreRelationFunc,
+	calcBatchConsumingStaminaFunc,
+) (getItemDetailArgs, error)
+
 func createGetItemDetailArgs(
 	req GetUserItemDetailReq,
 	getItemMaster GetItemMasterFunc,
@@ -90,6 +155,12 @@ func getItemDetail(
 		UserExplores: explores,
 	}
 }
+
+type IGetAllItemAction func(
+	[]ExploreStaminaPair,
+	[]GetExploreMasterRes,
+	compensatedMakeUserExploreFunc,
+) []UserExplore
 
 func getAllItemAction(
 	exploreStaminaPair []ExploreStaminaPair,

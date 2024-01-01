@@ -8,6 +8,11 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
+type GetStageListEndpoint func(
+	stage.GetStageListFunc,
+	core.ICurrentTime,
+) getStageListRes
+
 type getStageListRes func(
 	*gateway.GetStageListRequest,
 ) (*gateway.GetStageListResponse, error)
