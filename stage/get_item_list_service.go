@@ -6,9 +6,9 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type GetItemListFunc func(core.UserId) ([]itemListRow, error)
+type GetItemListFunc func(core.UserId) ([]ItemListRow, error)
 
-type itemListRow struct {
+type ItemListRow struct {
 	ItemId      core.ItemId
 	DisplayName core.DisplayName
 	Stock       core.Stock
@@ -22,8 +22,8 @@ func CreateGetItemListService(
 ) GetItemListFunc {
 	get := func(
 		userId core.UserId,
-	) ([]itemListRow, error) {
-		handleError := func(err error) ([]itemListRow, error) {
+	) ([]ItemListRow, error) {
+		handleError := func(err error) ([]ItemListRow, error) {
 			return nil, fmt.Errorf("error on get all storage: %w", err)
 		}
 		storages, err := getAllStorage(userId)
@@ -59,12 +59,12 @@ func CreateGetItemListService(
 			items []core.ItemId,
 			itemMasterMap map[core.ItemId]GetItemMasterRes,
 			itemStorageMap map[core.ItemId]ItemData,
-		) []itemListRow {
-			result := make([]itemListRow, len(items))
+		) []ItemListRow {
+			result := make([]ItemListRow, len(items))
 			for i, v := range items {
 				master := itemMasterMap[v]
 				storage := itemStorageMap[v]
-				result[i] = itemListRow{
+				result[i] = ItemListRow{
 					ItemId:      v,
 					DisplayName: master.DisplayName,
 					Stock:       storage.Stock,

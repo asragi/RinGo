@@ -14,6 +14,14 @@ type AccessToken string
 
 // user
 type UserId string
+
+func (id UserId) IsValid() error {
+	if len(id) <= 0 {
+		return UserIdIsInvalidError{userId: id}
+	}
+	return nil
+}
+
 type Fund int
 
 func (f Fund) CheckIsFundEnough(price Price) bool {

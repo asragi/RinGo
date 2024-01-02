@@ -1,6 +1,37 @@
 package core
 
-import "testing"
+import (
+	"testing"
+)
+
+func TestUserId(t *testing.T) {
+	type testCase struct {
+		userId UserId
+		isNil  bool
+	}
+
+	testCases := []testCase{
+		{
+			userId: "test",
+			isNil:  true,
+		},
+		{
+			userId: "",
+			isNil:  false,
+		},
+	}
+
+	for _, v := range testCases {
+		err := v.userId.IsValid()
+		if (err == nil) != v.isNil {
+			if err == nil {
+				t.Errorf("expected error is not nil, got: nil")
+				continue
+			}
+			t.Errorf("expected error is nil, got: %s", err.Error())
+		}
+	}
+}
 
 func TestCalcLv(t *testing.T) {
 	type testCase struct {
