@@ -89,7 +89,7 @@ func GetPostActionArgs(
 		return handleError(err)
 	}
 	itemIds := func(earningItems []EarningItem, consumingItem []ConsumingItem) []core.ItemId {
-		result := []core.ItemId{}
+		var result []core.ItemId
 		check := map[core.ItemId]bool{}
 		for _, v := range earningItems {
 			if _, ok := check[v.ItemId]; ok {
@@ -166,6 +166,8 @@ type PostActionResult struct {
 	EarnedItems            []earnedItem
 	ConsumedItems          []consumedItem
 	SkillGrowthInformation []skillGrowthInformation
+	AfterFund              core.Fund
+	AfterStamina           core.StaminaRecoverTime
 }
 
 func PostAction(
@@ -178,6 +180,8 @@ func PostAction(
 	calcTotalItem CalcTotalItemFunc,
 	updateItemStorage UpdateItemStorageFunc,
 	updateSkill SkillGrowthPostFunc,
+	updateStamina UpdateStaminaFunc,
+	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
 	random core.IRandom,
 	currentTime time.Time,
@@ -185,7 +189,7 @@ func PostAction(
 	handleError := func(err error) (PostActionResult, error) {
 		return PostActionResult{}, fmt.Errorf("error on post action: %w", err)
 	}
-
+	userId := args.userId
 	checkIsPossibleArgs := createIsPossibleArgs(
 		args.exploreMaster,
 		args.userResources,
@@ -234,6 +238,22 @@ func PostAction(
 		return handleError(err)
 	}
 
+	currentStaminaRecoverTime := args.userResources.StaminaRecoverTime
+	requiredStamina := checkIsPossibleArgs.requiredStamina
+	afterStaminaTime := core.CalcAfterStamina(
+		currentStaminaRecoverTime,
+		requiredStamina,
+	)
+	err = updateStamina(userId, afterStaminaTime)
+	if err != nil {
+		return handleError(err)
+	}
+
+	currentFund := checkIsPossibleArgs.currentFund
+	requiredCost := checkIsPossibleArgs.requiredPrice
+	afterFund := currentFund.ReduceFund(requiredCost)
+	err = updateFund(userId, afterFund)
+
 	err = updateSkill(
 		SkillGrowthPost{
 			UserId:      args.userId,
@@ -250,6 +270,8 @@ func PostAction(
 		consumedItem []consumedItem,
 		skillMaster []SkillMaster,
 		skillGrowth []growthApplyResult,
+		afterFund core.Fund,
+		afterStamina core.StaminaRecoverTime,
 	) PostActionResult {
 		skillMasterMap := func() map[core.SkillId]SkillMaster {
 			result := map[core.SkillId]SkillMaster{}
@@ -289,12 +311,16 @@ func PostAction(
 			EarnedItems:            earnedItem,
 			ConsumedItems:          consumedItem,
 			SkillGrowthInformation: growthInfo,
+			AfterFund:              afterFund,
+			AfterStamina:           afterStamina,
 		}
 	}(
 		earnedItems,
 		consumedItems,
 		args.skillMaster,
 		applySkillGrowth,
+		afterFund,
+		afterStaminaTime,
 	)
 	return postResult, nil
 }

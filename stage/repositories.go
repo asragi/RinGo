@@ -13,6 +13,11 @@ type GetResourceRes struct {
 	Fund               core.Fund
 }
 
+type UpdateFundFunc func(core.UserId, core.Fund) error
+
+type UpdateStaminaFunc func(core.UserId, core.StaminaRecoverTime) error
+
+// Deprecated: use GetResourceFunc or UpdateStaminaFunc
 type UserResourceRepo interface {
 	GetResource(core.UserId, core.AccessToken) (GetResourceRes, error)
 	UpdateStamina(core.UserId, core.AccessToken, core.StaminaRecoverTime) error

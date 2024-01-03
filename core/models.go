@@ -35,6 +35,11 @@ func (f Fund) CheckIsFundEnough(price Price) bool {
 	return int(f) >= int(price)
 }
 
+func (f Fund) ReduceFund(reducePrice Price) Fund {
+	afterValue := int(f) - int(reducePrice)
+	return Fund(int(math.Max(0, float64(afterValue))))
+}
+
 // 1 point equals to 30 sec.
 const StaminaSec = 30.0
 
@@ -56,6 +61,16 @@ func (recoverTime StaminaRecoverTime) CalcStamina(currentTime time.Time, maxStam
 	timeDiffSec := float64(timeDiff)
 	lostStamina := Stamina(math.Ceil(timeDiffSec / StaminaSec))
 	return Stamina(maxStamina) - lostStamina
+}
+
+func CalcAfterStamina(
+	beforeStaminaTime StaminaRecoverTime,
+	reducedStaminaValue Stamina,
+) StaminaRecoverTime {
+	return CalcStaminaRecoverTimeOnReduce(
+		beforeStaminaTime,
+		reducedStaminaValue,
+	)
 }
 
 func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceStamina Stamina) StaminaRecoverTime {
