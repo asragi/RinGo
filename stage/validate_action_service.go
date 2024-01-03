@@ -4,10 +4,6 @@ import "github.com/asragi/RinGo/core"
 
 type ValidateActionFunc func(CheckIsPossibleArgs) core.IsPossible
 
-func createValidateArgs() CheckIsPossibleArgs {
-	return CheckIsPossibleArgs{}
-}
-
 func validateAction(
 	checkIsExplorePossibleFunc checkIsExplorePossibleFunc,
 	checkIsPossibleArgs CheckIsPossibleArgs,
