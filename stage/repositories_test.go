@@ -27,11 +27,18 @@ type MockItemStorageRepo struct {
 	Data map[core.UserId]map[core.ItemId]MockItemStorageMaster
 }
 
-func (m *MockItemStorageRepo) Get(userId core.UserId, itemId core.ItemId, token core.AccessToken) (GetItemStorageRes, error) {
+func (m *MockItemStorageRepo) Get(userId core.UserId, itemId core.ItemId, _ core.AccessToken) (
+	GetItemStorageRes,
+	error,
+) {
 	return GetItemStorageRes{UserId: userId, Stock: m.GetStock(userId, itemId)}, nil
 }
 
-func (m *MockItemStorageRepo) BatchGet(userId core.UserId, itemId []core.ItemId, token core.AccessToken) (BatchGetStorageRes, error) {
+func (m *MockItemStorageRepo) BatchGet(
+	userId core.UserId,
+	itemId []core.ItemId,
+	_ core.AccessToken,
+) (BatchGetStorageRes, error) {
 	result := make([]ItemData, len(itemId))
 	for i, v := range itemId {
 		itemData := ItemData{
@@ -142,7 +149,11 @@ type MockUserSkillRepo struct {
 	Data map[core.UserId]map[core.SkillId]UserSkillRes
 }
 
-func (m *MockUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId, token core.AccessToken) (BatchGetUserSkillRes, error) {
+func (m *MockUserSkillRepo) BatchGet(
+	userId core.UserId,
+	skillIds []core.SkillId,
+	_ core.AccessToken,
+) (BatchGetUserSkillRes, error) {
 	list := m.Data[userId]
 	result := make([]UserSkillRes, len(skillIds))
 	for i, v := range skillIds {
@@ -243,34 +254,6 @@ func (m *mockRequiredSkillRepo) Add(e ExploreId, skills []RequiredSkill) {
 
 func createMockRequiredSkillRepo() *mockRequiredSkillRepo {
 	return &mockRequiredSkillRepo{Data: map[ExploreId][]RequiredSkill{}}
-}
-
-type mockItemStorageUpdateRepo struct {
-	Data map[core.UserId][]ItemStock
-}
-
-func (m *mockItemStorageUpdateRepo) Update(userId core.UserId, items []ItemStock, _ core.AccessToken) error {
-	m.Data = make(map[core.UserId][]ItemStock)
-	m.Data[userId] = items
-	return nil
-}
-
-func (m *mockItemStorageUpdateRepo) Get(userId core.UserId) []ItemStock {
-	return m.Data[userId]
-}
-
-type mockSkillUpdateRepo struct {
-	Data map[core.UserId][]SkillGrowthPostRow
-}
-
-func (m *mockSkillUpdateRepo) Update(req SkillGrowthPost) error {
-	m.Data = make(map[core.UserId][]SkillGrowthPostRow)
-	m.Data[req.UserId] = req.SkillGrowth
-	return nil
-}
-
-func (m *mockSkillUpdateRepo) Get(userId core.UserId) []SkillGrowthPostRow {
-	return m.Data[userId]
 }
 
 type mockReductionStaminaSkillRepo struct {
