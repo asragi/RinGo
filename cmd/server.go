@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/asragi/RinGo/handler"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type handler func(http.ResponseWriter, *http.Request)
+type handlerFunc func(http.ResponseWriter, *http.Request)
 
 type infrastructuresStruct struct {
 	userResource              stage.UserResourceRepo
@@ -35,6 +36,8 @@ type infrastructuresStruct struct {
 	getAction                 stage.GetActionsFunc
 	fetchStageExploreRelation stage.FetchStageExploreRelation
 	fetchUserStage            stage.FetchUserStageFunc
+	getResource               stage.GetResourceFunc
+	validateToken             core.ValidateTokenRepoFunc
 }
 
 func createInfrastructures() (*infrastructuresStruct, error) {
@@ -150,6 +153,8 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		updateStorage:  itemStorage,
 		updateSkill:    userSkill,
 		getAction:      nil,
+		getResource:    userResource.GetResource,
+		validateToken:  nil,
 	}, nil
 }
 
@@ -163,7 +168,7 @@ func errorOnGenerateResponse(w http.ResponseWriter, err error) {
 
 func createGetStageActionDetailHandler(
 	infrastructures infrastructuresStruct,
-) handler {
+) handlerFunc {
 	calcStaminaService := stage.CreateCalcConsumingStaminaService(
 		infrastructures.userSkill,
 		infrastructures.exploreMaster,
@@ -217,7 +222,7 @@ func createGetStageListHandler(
 	createMakeUserExplores stage.ICreateMakeUserExploreFunc,
 	createFetchStageData stage.ICreateFetchStageData,
 	getStageList stage.IGetStageList,
-) handler {
+) handlerFunc {
 	fetchArgs := createMakeUserExplores(
 		infrastructures.userResource.GetResource,
 		infrastructures.getAction,
@@ -270,7 +275,7 @@ func createPostHandler(
 	diContainer stage.DependencyInjectionContainer,
 	random core.IRandom,
 	currentTime core.ICurrentTime,
-) handler {
+) handlerFunc {
 	createArgs := application.EmitPostActionArgsFunc(
 		infrastructures.userResource,
 		infrastructures.exploreMaster,
@@ -347,6 +352,8 @@ func main() {
 	}
 
 	diContainer := stage.CreateDIContainer()
+	validateToken := core.ValidateTokenFunc(infrastructures.validateToken)
+	writeLogger := handler.LogHttpWrite
 	currentTimeEmitter := core.CurrentTimeEmitter{}
 	random := core.RandomEmitter{}
 
@@ -361,13 +368,23 @@ func main() {
 		stage.CreateFetchStageData,
 		stage.GetStageList,
 	)
+	getResource := handler.CreateGetResourceHandler(
+		validateToken,
+		infrastructures.getResource,
+		diContainer.CreateGetUserResourceServiceFunc,
+		writeLogger,
+	)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)
+	http.HandleFunc("/users", getResource)
 	http.HandleFunc("/", hello)
-	http.ListenAndServe(":4444", nil)
+	err = http.ListenAndServe(":4444", nil)
+	if err != nil {
+		log.Printf("Http Server Error: %v", err)
+	}
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello, Kisaragi!")
+	_, _ = fmt.Fprintln(w, "Hello, Kisaragi!")
 }

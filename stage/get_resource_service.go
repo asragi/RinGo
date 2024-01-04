@@ -6,6 +6,10 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type CreateGetUserResourceServiceFunc func(
+	tokenFunc core.ValidateTokenFunc,
+	resourceFunc GetResourceFunc,
+) GetUserResourceServiceFunc
 type GetUserResourceServiceFunc func(core.UserId, core.AccessToken) (GetResourceRes, error)
 
 func CreateGetUserResourceService(
