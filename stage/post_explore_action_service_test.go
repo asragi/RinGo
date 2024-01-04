@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -9,7 +11,6 @@ import (
 )
 
 func TestPostAction(t *testing.T) {
-	userId := MockUserId
 	type request struct {
 		execCount           int
 		userResources       GetResourceRes
@@ -25,22 +26,134 @@ func TestPostAction(t *testing.T) {
 		randomValue         float32
 	}
 
-	type expect struct {
-		err error
-	}
-
 	type testCase struct {
-		request request
-		expect  expect
+		request                    request
+		validateActionResult       bool
+		expectedError              error
+		reducedStamina             core.Stamina
+		expectedUpdatedStamina     core.Stamina
+		expectedUpdatedSkillGrowth SkillGrowthPost
 	}
 
-	testCases := []testCase{}
+	userId := core.UserId("userId")
+	exploreId := ExploreId("explore")
+	token := core.AccessToken("token")
+
+	req := request{
+		execCount: 2,
+		userResources: GetResourceRes{
+			UserId:             userId,
+			MaxStamina:         300,
+			StaminaRecoverTime: core.StaminaRecoverTime(time.Unix(100000, 0)),
+			Fund:               100000,
+		},
+		exploreMaster: GetExploreMasterRes{
+			ExploreId:            exploreId,
+			DisplayName:          "explore-display-name",
+			Description:          "explore-description",
+			ConsumingStamina:     20,
+			RequiredPayment:      10000,
+			StaminaReducibleRate: 0.5,
+		},
+		skillGrowthList: []SkillGrowthData{
+			{
+				ExploreId:    exploreId,
+				SkillId:      "skillA",
+				GainingPoint: 10,
+			},
+			{
+				ExploreId:    exploreId,
+				SkillId:      "skillB",
+				GainingPoint: 15,
+			},
+		},
+		skillsRes: BatchGetUserSkillRes{
+			UserId: userId,
+			Skills: []UserSkillRes{
+				{
+					UserId:   userId,
+					SkillId:  "skillA",
+					SkillExp: 100,
+				},
+				{
+					UserId:   userId,
+					SkillId:  "skillB",
+					SkillExp: 200,
+				},
+			},
+		},
+		earningItemData: []EarningItem{
+			{
+				ItemId:   "itemA",
+				MinCount: 1,
+				MaxCount: 10,
+			},
+		},
+		consumingItemData: nil,
+		requiredSkills:    nil,
+		allStorageItems: BatchGetStorageRes{
+			UserId:   "",
+			ItemData: nil,
+		},
+		allItemMasterRes: nil,
+		checkIsPossibleArgs: CheckIsPossibleArgs{
+			requiredStamina: 0,
+			requiredPrice:   0,
+			requiredItems:   nil,
+			requiredSkills:  nil,
+			currentStamina:  0,
+			currentFund:     0,
+			itemStockList:   nil,
+			skillLvList:     nil,
+			execNum:         0,
+		},
+		randomValue: 0,
+	}
+
+	expectedStamina := core.Stamina(250)
+	reducedStamina := core.Stamina(50)
+
+	testCases := []testCase{
+		{
+			request:                req,
+			expectedUpdatedStamina: expectedStamina,
+			reducedStamina:         reducedStamina,
+			validateActionResult:   false,
+			expectedError:          invalidActionError{},
+			expectedUpdatedSkillGrowth: SkillGrowthPost{
+				UserId:      userId,
+				AccessToken: token,
+				SkillGrowth: []SkillGrowthPostRow{},
+			},
+		},
+		{
+			request:                req,
+			validateActionResult:   true,
+			expectedUpdatedStamina: expectedStamina,
+			reducedStamina:         reducedStamina,
+			expectedUpdatedSkillGrowth: SkillGrowthPost{
+				UserId:      userId,
+				AccessToken: token,
+				SkillGrowth: []SkillGrowthPostRow{},
+			},
+		},
+		{
+			validateActionResult:   true,
+			expectedUpdatedStamina: expectedStamina,
+			reducedStamina:         reducedStamina,
+			request:                req,
+			expectedUpdatedSkillGrowth: SkillGrowthPost{
+				UserId:      userId,
+				AccessToken: token,
+				SkillGrowth: []SkillGrowthPostRow{},
+			},
+		},
+	}
 
 	for _, v := range testCases {
 		req := v.request
-		exp := v.expect
-		mockValidateAction := func(_ CheckIsPossibleArgs) core.IsPossible {
-			return true
+		mockValidateAction := func(CheckIsPossibleArgs) core.IsPossible {
+			return core.IsPossible(v.validateActionResult)
 		}
 		mockSkillGrowth := func(int, []SkillGrowthData) []skillGrowthResult {
 			return nil
@@ -60,18 +173,28 @@ func TestPostAction(t *testing.T) {
 		mockItemUpdate := func(core.UserId, []ItemStock, core.AccessToken) error {
 			return nil
 		}
-		mockSkillUpdate := func(SkillGrowthPost) error {
+		var updatedSkillGrowth SkillGrowthPost
+		mockSkillUpdate := func(skillGrowth SkillGrowthPost) error {
+			updatedSkillGrowth = skillGrowth
 			return nil
 		}
 		mockStaminaReduction := func(core.Stamina, StaminaReducibleRate, []UserSkillRes) core.Stamina {
-			return 0
+			return v.reducedStamina
+		}
+		var updatedStaminaRecoverTime core.StaminaRecoverTime
+		mockUpdateStamina := func(id core.UserId, recoverTime core.StaminaRecoverTime) error {
+			updatedStaminaRecoverTime = recoverTime
+			return nil
+		}
+		mockUpdateFund := func(id core.UserId, afterFund core.Fund) error {
+			return nil
 		}
 
 		random := test.TestRandom{Value: v.request.randomValue}
 		currentTime := time.Unix(100000, 0)
 		args := PostActionArgs{
 			userId:            userId,
-			token:             "token",
+			token:             token,
 			execCount:         req.execCount,
 			userResources:     req.userResources,
 			exploreMaster:     req.exploreMaster,
@@ -93,13 +216,34 @@ func TestPostAction(t *testing.T) {
 			mockTotal,
 			mockItemUpdate,
 			mockSkillUpdate,
+			mockUpdateStamina,
+			mockUpdateFund,
 			mockStaminaReduction,
 			&random,
 			currentTime,
 		)
 
-		if err != exp.err {
-			t.Errorf("err expect: %s, got: %s", err.Error(), exp.err.Error())
+		if !errors.Is(v.expectedError, err) {
+			errorText := func(err error) string {
+				if err == nil {
+					return "{error is nil}"
+				}
+				return err.Error()
+			}
+			t.Errorf("err expect: %s, got: %s", errorText(v.expectedError), errorText(err))
+		}
+
+		if err != nil {
+			continue
+		}
+
+		maxStamina := v.request.userResources.MaxStamina
+		afterStamina := updatedStaminaRecoverTime.CalcStamina(currentTime, maxStamina)
+		if v.expectedUpdatedStamina != afterStamina {
+			t.Errorf("expected: %d, got: %d", v.expectedUpdatedStamina, afterStamina)
+		}
+		if !reflect.DeepEqual(v.expectedUpdatedSkillGrowth, updatedSkillGrowth) {
+			t.Errorf("expected: %+v, got: %+v", v.expectedUpdatedSkillGrowth, updatedSkillGrowth)
 		}
 	}
 }
