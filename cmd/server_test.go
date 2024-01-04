@@ -112,7 +112,7 @@ func TestGetStageActionDetail(t *testing.T) {
 		expect := v.expect
 		req := httptest.NewRequest(http.MethodGet, "/", reqBody)
 		rec := httptest.NewRecorder()
-		handler := CreateGetStageActionDetailHandler(*infrastructures)
+		handler := createGetStageActionDetailHandler(*infrastructures)
 		handler(rec, req)
 		if rec.Code != expect.StatusCode {
 			t.Errorf("expect: %d, got: %d", expect.StatusCode, rec.Code)

@@ -153,15 +153,15 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	}, nil
 }
 
-func ErrorOnDecode(w http.ResponseWriter, err error) {
+func errorOnDecode(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
 }
 
-func ErrorOnGenerateResponse(w http.ResponseWriter, err error) {
+func errorOnGenerateResponse(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 }
 
-func CreateGetStageActionDetailHandler(
+func createGetStageActionDetailHandler(
 	infrastructures infrastructuresStruct,
 ) handler {
 	calcStaminaService := stage.CreateCalcConsumingStaminaService(
@@ -244,17 +244,17 @@ func createGetStageListHandler(
 		var req gateway.GetStageListRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			ErrorOnDecode(w, err)
+			errorOnDecode(w, err)
 			return
 		}
 		res, err := endpoint(&req)
 		if err != nil {
-			ErrorOnGenerateResponse(w, err)
+			errorOnGenerateResponse(w, err)
 			return
 		}
 		resJson, err := json.Marshal(res)
 		if err != nil {
-			ErrorOnGenerateResponse(w, err)
+			errorOnGenerateResponse(w, err)
 			return
 		}
 		setHeader(w)
@@ -351,7 +351,7 @@ func main() {
 	random := core.RandomEmitter{}
 
 	postActionHandler := createPostHandler(*infrastructures, diContainer, &random, &currentTimeEmitter)
-	getStageActionDetailHandler := CreateGetStageActionDetailHandler(*infrastructures)
+	getStageActionDetailHandler := createGetStageActionDetailHandler(*infrastructures)
 	getStageListHandler := createGetStageListHandler(
 		*infrastructures,
 		diContainer,
