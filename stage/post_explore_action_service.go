@@ -152,6 +152,8 @@ type PostActionFunc func(
 	calcTotalItem CalcTotalItemFunc,
 	updateItemStorage UpdateItemStorageFunc,
 	updateSkill SkillGrowthPostFunc,
+	updateStamina UpdateStaminaFunc,
+	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
 	random core.IRandom,
 	currentTime time.Time,
@@ -221,7 +223,12 @@ func PostAction(
 
 	earnedItems := calcEarnedItem(args.execCount, args.earningItemData, random)
 	consumedItems := calcConsumedItem(args.execCount, args.consumingItemData, random)
-	calculatedTotalItem := calcTotalItem(args.allStorageItems.ItemData, args.allItemMasterRes, earnedItems, consumedItems)
+	calculatedTotalItem := calcTotalItem(
+		args.allStorageItems.ItemData,
+		args.allItemMasterRes,
+		earnedItems,
+		consumedItems,
+	)
 	itemStockReq := func(totalItems []totalItem) []ItemStock {
 		result := make([]ItemStock, len(totalItems))
 		for i, v := range totalItems {

@@ -44,11 +44,25 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	gwd, _ := os.Getwd()
 	dataDir := gwd + "/infrastructure/data/%s.csv"
 	userResource := infrastructure.CreateInMemoryUserResourceRepo()
-	itemMaster, err := infrastructure.CreateInMemoryItemMasterRepo(&infrastructure.ItemMasterLoader{Path: fmt.Sprintf(dataDir, "item-master")})
+	itemMaster, err := infrastructure.CreateInMemoryItemMasterRepo(
+		&infrastructure.ItemMasterLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"item-master",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
-	itemStorage, err := infrastructure.CreateInMemoryItemStorageRepo(&infrastructure.ItemStorageLoader{Path: fmt.Sprintf(dataDir, "item-storage")})
+	itemStorage, err := infrastructure.CreateInMemoryItemStorageRepo(
+		&infrastructure.ItemStorageLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"item-storage",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
@@ -56,7 +70,14 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	if err != nil {
 		return handleError(err)
 	}
-	stageMaster, err := infrastructure.CreateInMemoryStageMasterRepo(&infrastructure.StageMasterLoader{Path: fmt.Sprintf(dataDir, "stage-master")})
+	stageMaster, err := infrastructure.CreateInMemoryStageMasterRepo(
+		&infrastructure.StageMasterLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"stage-master",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
@@ -68,7 +89,14 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	if err != nil {
 		return handleError(err)
 	}
-	earningItem, err := infrastructure.CreateInMemoryEarningItemRepo(&infrastructure.EarningItemLoader{Path: fmt.Sprintf(dataDir, "earning-item")})
+	earningItem, err := infrastructure.CreateInMemoryEarningItemRepo(
+		&infrastructure.EarningItemLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"earning-item",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
@@ -76,12 +104,33 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	if err != nil {
 		return handleError(err)
 	}
-	requiredSkill, err := infrastructure.CreateInMemoryRequiredSkillRepo(&infrastructure.RequiredSkillLoader{Path: fmt.Sprintf(dataDir, "required-skill")})
+	requiredSkill, err := infrastructure.CreateInMemoryRequiredSkillRepo(
+		&infrastructure.RequiredSkillLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"required-skill",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
-	skillGrowth, err := infrastructure.CreateInMemorySkillGrowthDataRepo(&infrastructure.SkillGrowthLoader{Path: fmt.Sprintf(dataDir, "skill-growth")})
-	reductionSkill, err := infrastructure.CreateInMemoryReductionStaminaSkillRepo(&infrastructure.ReductionStaminaSkillLoader{Path: fmt.Sprintf(dataDir, "reduction-stamina-skill")})
+	skillGrowth, err := infrastructure.CreateInMemorySkillGrowthDataRepo(
+		&infrastructure.SkillGrowthLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"skill-growth",
+			),
+		},
+	)
+	reductionSkill, err := infrastructure.CreateInMemoryReductionStaminaSkillRepo(
+		&infrastructure.ReductionStaminaSkillLoader{
+			Path: fmt.Sprintf(
+				dataDir,
+				"reduction-stamina-skill",
+			),
+		},
+	)
 	if err != nil {
 		return handleError(err)
 	}
@@ -118,7 +167,8 @@ func CreateGetStageActionDetailHandler(
 	calcStaminaService := stage.CreateCalcConsumingStaminaService(
 		infrastructures.userSkill,
 		infrastructures.exploreMaster,
-		infrastructures.reductionSkill)
+		infrastructures.reductionSkill,
+	)
 	getCommonService := stage.CreateCommonGetActionDetail(
 		calcStaminaService.Calc,
 		infrastructures.itemStorage,
@@ -131,7 +181,8 @@ func CreateGetStageActionDetailHandler(
 	)
 	getActionDetailService := stage.CreateGetStageActionDetailService(
 		getCommonService.GetAction,
-		infrastructures.stageMaster)
+		infrastructures.stageMaster,
+	)
 	getStageActionDetail := endpoint.CreateGetStageActionDetail(getActionDetailService.GetAction)
 
 	getStageActionDetailHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -243,6 +294,8 @@ func createPostHandler(
 		diContainer.StaminaReduction,
 		infrastructures.updateStorage.Update,
 		infrastructures.updateSkill.Update,
+		nil,
+		nil,
 		random,
 		stage.PostAction,
 	)
@@ -306,7 +359,8 @@ func main() {
 		endpoint.CreateGetStageList,
 		stage.CreateMakeUserExploreFunc,
 		stage.CreateFetchStageData,
-		stage.GetStageList)
+		stage.GetStageList,
+	)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)

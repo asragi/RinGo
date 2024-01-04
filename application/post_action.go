@@ -24,6 +24,8 @@ func CompensatePostActionFunctions(
 	staminaReductionFunc stage.StaminaReductionFunc,
 	updateItemStorage stage.UpdateItemStorageFunc,
 	updateSkill stage.SkillGrowthPostFunc,
+	updateStamina stage.UpdateStaminaFunc,
+	updateFund stage.UpdateFundFunc,
 	random core.IRandom,
 	postAction stage.PostActionFunc,
 ) postFunc {
@@ -41,6 +43,8 @@ func CompensatePostActionFunctions(
 			calcTotalItem,
 			updateItemStorage,
 			updateSkill,
+			updateStamina,
+			updateFund,
 			staminaReductionFunc,
 			random,
 			currentTime,
