@@ -1,91 +1,20 @@
 package stage
 
 import (
-	"time"
-
 	"github.com/asragi/RinGo/core"
 )
 
 var (
-	itemMasterRepo           = CreateMockItemMasterRepo()
-	itemStorageRepo          = CreateMockItemStorageRepo()
-	itemStorageUpdateRepo    = createMockItemStorageUpdateRepo()
-	userExploreRepo          = createMockUserExploreRepo()
-	exploreMasterRepo        = createMockExploreMasterRepo()
-	stageExploreRelationRepo = createMockStageExploreRelationRepo()
-	itemExploreRelationRepo  = createMockItemExploreRelationRepo()
-	skillMasterRepo          = createMockSkillMasterRepo()
-	userSkillRepo            = createMockUserSkillRepo()
-	skillGrowthUpdateRepo    = createMockSkillUpdateRepo()
-	userStageRepo            = createMockUserStageRepo()
-	stageMasterRepo          = createMockStageMasterRepo()
-	skillGrowthDataRepo      = createMockSkillGrowthDataRepo()
-	earningItemRepo          = createMockEarningItemRepo()
-	consumingItemRepo        = createMockConsumingItemRepo()
-	requiredSkillRepo        = createMockRequiredSkillRepo()
-	reductionSkillRepo       = createMockReductionStaminaSkillRepo()
+	itemStorageRepo         = CreateMockItemStorageRepo()
+	exploreMasterRepo       = createMockExploreMasterRepo()
+	itemExploreRelationRepo = createMockItemExploreRelationRepo()
+	skillMasterRepo         = createMockSkillMasterRepo()
+	userSkillRepo           = createMockUserSkillRepo()
+	earningItemRepo         = createMockEarningItemRepo()
+	consumingItemRepo       = createMockConsumingItemRepo()
+	requiredSkillRepo       = createMockRequiredSkillRepo()
+	reductionSkillRepo      = createMockReductionStaminaSkillRepo()
 )
-
-type MockUserResourceRepo struct {
-}
-
-func (m *MockUserResourceRepo) GetResource(userId core.UserId, _ core.AccessToken) (GetResourceRes, error) {
-	return GetResourceRes{
-		UserId:             userId,
-		MaxStamina:         6000,
-		StaminaRecoverTime: core.StaminaRecoverTime(time.Unix(1560000000, 0)),
-		Fund:               1000000,
-	}, nil
-}
-
-func (m *MockUserResourceRepo) UpdateStamina(_ core.UserId, _ core.AccessToken, _ core.Stamina) error {
-	return nil
-}
-
-type MockItemMaster struct {
-	ItemId      core.ItemId
-	Price       core.Price
-	DisplayName core.DisplayName
-	Description core.Description
-	MaxStock    core.MaxStock
-	CreatedAt   core.CreatedAt
-	UpdatedAt   core.UpdatedAt
-	Explores    []ExploreId
-}
-
-type MockItemMasterRepo struct {
-	Items map[core.ItemId]MockItemMaster
-}
-
-func (m *MockItemMasterRepo) Add(i core.ItemId, master MockItemMaster) {
-	m.Items[i] = master
-}
-
-func (m *MockItemMasterRepo) Get(itemId core.ItemId) (GetItemMasterRes, error) {
-	item := m.Items[itemId]
-	return GetItemMasterRes{
-		ItemId:      itemId,
-		Price:       item.Price,
-		DisplayName: item.DisplayName,
-		Description: item.Description,
-		MaxStock:    item.MaxStock,
-	}, nil
-}
-
-func (m *MockItemMasterRepo) BatchGet(ids []core.ItemId) ([]GetItemMasterRes, error) {
-	result := make([]GetItemMasterRes, len(ids))
-	for i, v := range ids {
-		result[i], _ = m.Get(v)
-	}
-	return result, nil
-}
-
-func CreateMockItemMasterRepo() *MockItemMasterRepo {
-	itemMasterRepo := MockItemMasterRepo{}
-	items := make(map[core.ItemId]MockItemMaster)
-	itemMasterRepo.Items = items
-	return &itemMasterRepo
-}
 
 type MockItemStorageMaster struct {
 	UserId  core.UserId
@@ -135,6 +64,7 @@ func (m *MockItemStorageRepo) Add(userId core.UserId, items []MockItemStorageMas
 	m.Data[userId] = itemMap
 }
 
+// Deprecated: ID should be prepared for each test.
 var MockUserId = core.UserId("User")
 
 func CreateMockItemStorageRepo() *MockItemStorageRepo {
@@ -142,31 +72,6 @@ func CreateMockItemStorageRepo() *MockItemStorageRepo {
 	data := make(map[core.UserId]map[core.ItemId]MockItemStorageMaster)
 	itemStorageRepo.Data = data
 	return &itemStorageRepo
-}
-
-type MockUserExploreRepo struct {
-	Data map[core.UserId]map[ExploreId]ExploreUserData
-}
-
-func (m *MockUserExploreRepo) GetActions(userId core.UserId, exploreIds []ExploreId, token core.AccessToken) (GetActionsRes, error) {
-	result := make([]ExploreUserData, len(exploreIds))
-	for i, v := range exploreIds {
-		d := m.Data[userId][v]
-		result[i] = d
-	}
-	return GetActionsRes{Explores: result, UserId: userId}, nil
-}
-
-func (m *MockUserExploreRepo) Add(userId core.UserId, exploreId ExploreId, exploreData ExploreUserData) {
-	if _, ok := m.Data[userId]; !ok {
-		m.Data[userId] = make(map[ExploreId]ExploreUserData)
-	}
-	m.Data[userId][exploreId] = exploreData
-}
-
-func createMockUserExploreRepo() *MockUserExploreRepo {
-	repo := MockUserExploreRepo{Data: map[core.UserId]map[ExploreId]ExploreUserData{}}
-	return &repo
 }
 
 type MockExploreMasterRepo struct {
@@ -187,29 +92,6 @@ func (m *MockExploreMasterRepo) Get(e ExploreId) (GetExploreMasterRes, error) {
 
 func (m *MockExploreMasterRepo) Add(e ExploreId, master GetExploreMasterRes) {
 	m.Data[e] = master
-}
-
-type MockStageExploreRelationRepo struct {
-	Data map[StageId][]ExploreId
-}
-
-func (m *MockStageExploreRelationRepo) AddStage(stageId StageId, e []ExploreId) {
-	m.Data[stageId] = e
-}
-
-func (m *MockStageExploreRelationRepo) BatchGet(stageIds []StageId) ([]StageExploreIdPair, error) {
-	result := make([]StageExploreIdPair, len(stageIds))
-	for i, v := range stageIds {
-		result[i] = StageExploreIdPair{
-			StageId:    v,
-			ExploreIds: m.Data[v],
-		}
-	}
-	return result, nil
-}
-
-func createMockStageExploreRelationRepo() *MockStageExploreRelationRepo {
-	return &MockStageExploreRelationRepo{Data: map[StageId][]ExploreId{}}
 }
 
 type MockItemExploreRelationRepo struct {
@@ -287,72 +169,6 @@ func (m *MockUserSkillRepo) Add(userId core.UserId, skills []UserSkillRes) {
 
 func createMockUserSkillRepo() *MockUserSkillRepo {
 	return &MockUserSkillRepo{Data: map[core.UserId]map[core.SkillId]UserSkillRes{}}
-}
-
-type mockUserStageRepo struct {
-	Data map[core.UserId]map[StageId]UserStage
-}
-
-func (m *mockUserStageRepo) Add(userId core.UserId, stageId StageId, userData UserStage) {
-	if _, ok := m.Data[userId]; !ok {
-		m.Data[userId] = map[StageId]UserStage{}
-	}
-	m.Data[userId][stageId] = userData
-}
-
-func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []StageId) (GetAllUserStagesRes, error) {
-	result := []UserStage{}
-	for _, v := range ids {
-		result = append(result, m.Data[userId][v])
-	}
-	return GetAllUserStagesRes{result}, nil
-}
-
-func createMockUserStageRepo() *mockUserStageRepo {
-	repo := mockUserStageRepo{Data: make(map[core.UserId]map[StageId]UserStage)}
-	return &repo
-}
-
-type mockStageMasterRepo struct {
-	Data map[StageId]StageMaster
-}
-
-func (m *mockStageMasterRepo) Add(id StageId, master StageMaster) {
-	m.Data[id] = master
-}
-
-func (m *mockStageMasterRepo) Get(stageId StageId) (StageMaster, error) {
-	return m.Data[stageId], nil
-}
-
-func (m *mockStageMasterRepo) GetAllStages() (GetAllStagesRes, error) {
-	result := []StageMaster{}
-	for _, v := range m.Data {
-		result = append(result, v)
-	}
-	return GetAllStagesRes{Stages: result}, nil
-}
-
-func createMockStageMasterRepo() *mockStageMasterRepo {
-	repo := mockStageMasterRepo{Data: map[StageId]StageMaster{}}
-	return &repo
-}
-
-type MockSkillGrowthDataRepo struct {
-	Data map[ExploreId][]SkillGrowthData
-}
-
-func (m *MockSkillGrowthDataRepo) BatchGet(exploreId ExploreId) []SkillGrowthData {
-	return m.Data[exploreId]
-}
-
-func (m *MockSkillGrowthDataRepo) Add(e ExploreId, skills []SkillGrowthData) {
-	m.Data[e] = skills
-}
-
-func createMockSkillGrowthDataRepo() *MockSkillGrowthDataRepo {
-	repo := MockSkillGrowthDataRepo{Data: map[ExploreId][]SkillGrowthData{}}
-	return &repo
 }
 
 type mockEarningItemRepo struct {
@@ -443,10 +259,6 @@ func (m *mockItemStorageUpdateRepo) Get(userId core.UserId) []ItemStock {
 	return m.Data[userId]
 }
 
-func createMockItemStorageUpdateRepo() *mockItemStorageUpdateRepo {
-	return &mockItemStorageUpdateRepo{}
-}
-
 type mockSkillUpdateRepo struct {
 	Data map[core.UserId][]SkillGrowthPostRow
 }
@@ -459,10 +271,6 @@ func (m *mockSkillUpdateRepo) Update(req SkillGrowthPost) error {
 
 func (m *mockSkillUpdateRepo) Get(userId core.UserId) []SkillGrowthPostRow {
 	return m.Data[userId]
-}
-
-func createMockSkillUpdateRepo() *mockSkillUpdateRepo {
-	return &mockSkillUpdateRepo{}
 }
 
 type mockReductionStaminaSkillRepo struct {
