@@ -76,10 +76,6 @@ type ItemStock struct {
 
 type UpdateItemStorageFunc func(core.UserId, []ItemStock, core.AccessToken) error
 
-type ItemStorageUpdateRepo interface {
-	Update(core.UserId, []ItemStock, core.AccessToken) error
-}
-
 // Skill
 type SkillMaster struct {
 	SkillId     core.SkillId
@@ -90,6 +86,9 @@ type BatchGetSkillMasterRes struct {
 	Skills []SkillMaster
 }
 
+type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
+
+// Deprecated: use FetchSkillMasterFunc
 type SkillMasterRepo interface {
 	BatchGet([]core.SkillId) (BatchGetSkillMasterRes, error)
 }
@@ -107,6 +106,7 @@ type BatchGetUserSkillRes struct {
 
 type BatchGetUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
+// Deprecated: use BatchGetUserSkillFunc
 type UserSkillRepo interface {
 	BatchGet(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 }
@@ -135,11 +135,6 @@ type SkillGrowthPost struct {
 
 type SkillGrowthPostFunc func(SkillGrowthPost) error
 
-// Skill Growth User
-type SkillGrowthPostRepo interface {
-	Update(SkillGrowthPost) error
-}
-
 // Explore
 type GetExploreMasterRes struct {
 	ExploreId            ExploreId
@@ -157,19 +152,9 @@ type StageExploreIdPair struct {
 
 type GetItemExploreRelationFunc func(core.ItemId) ([]ExploreId, error)
 
-// Deprecated: Replace with GetItemExploreRelationFunc
-type ItemExploreRelationRepo interface {
-	Get(core.ItemId) ([]ExploreId, error)
-}
-
 type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
 
-// Deprecated: use fetchStageExploreRelation
-type StageExploreRelationRepo interface {
-	BatchGet([]StageId) ([]StageExploreIdPair, error)
-}
-
-type fetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
+type FetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
 
 // Deprecated: use fetchExploreMasterFunc
 type ExploreMasterRepo interface {
@@ -189,22 +174,19 @@ type GetActionsRes struct {
 	Explores []ExploreUserData
 }
 
-type UserExploreRepo interface {
-	GetActions(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
-}
-
 type RequiredSkill struct {
 	SkillId    core.SkillId
 	RequiredLv core.SkillLv
 }
 
-type GetRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
+type FetchRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
 
 type RequiredSkillRow struct {
 	ExploreId      ExploreId
 	RequiredSkills []RequiredSkill
 }
 
+// Deprecated: use FetchRequiredSkillsFunc
 type RequiredSkillRepo interface {
 	Get(ExploreId) ([]RequiredSkill, error)
 	BatchGet([]ExploreId) ([]RequiredSkillRow, error)
@@ -220,12 +202,8 @@ type GetAllStagesRes struct {
 	Stages []StageMaster
 }
 
-type fetchAllStageFunc func() (GetAllStagesRes, error)
-
-type StageMasterRepo interface {
-	GetAllStages() (GetAllStagesRes, error)
-	Get(StageId) (StageMaster, error)
-}
+type FetchStageMasterFunc func(StageId) (StageMaster, error)
+type FetchAllStageFunc func() (GetAllStagesRes, error)
 
 type FetchUserStageFunc func(core.UserId, []StageId) (GetAllUserStagesRes, error)
 
@@ -238,17 +216,15 @@ type GetAllUserStagesRes struct {
 	UserStage []UserStage
 }
 
-// Deprecated: use fetchUserStageFunc
-type UserStageRepo interface {
-	GetAllUserStages(core.UserId, []StageId) (GetAllUserStagesRes, error)
-}
-
 type EarningItem struct {
 	ItemId   core.ItemId
 	MinCount core.Count
 	MaxCount core.Count
 }
 
+type FetchEarningItemFunc func(ExploreId) ([]EarningItem, error)
+
+// Deprecated: Replace with FetchEarningItemFunc
 type EarningItemRepo interface {
 	BatchGet(ExploreId) []EarningItem
 }
@@ -266,6 +242,7 @@ type BatchGetConsumingItemRes struct {
 
 type GetConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
 
+// Deprecated: use GetConsumingItemFunc
 type ConsumingItemRepo interface {
 	BatchGet(ExploreId) ([]ConsumingItem, error)
 	AllGet([]ExploreId) ([]BatchGetConsumingItemRes, error)
@@ -276,7 +253,4 @@ type BatchGetReductionStaminaSkill struct {
 	Skills    []core.SkillId
 }
 
-type ReductionStaminaSkillRepo interface {
-	Get(ExploreId) ([]core.SkillId, error)
-	BatchGet([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
-}
+type FetchReductionStaminaSkillFunc func([]ExploreId) ([]BatchGetReductionStaminaSkill, error)

@@ -107,18 +107,18 @@ func compensateMakeUserExplore(
 }
 
 type fetchStageDataFunc func(core.UserId) (getAllStageArgs, error)
+type CreateFetchStageDataRepositories struct {
+	FetchAllStage             FetchAllStageFunc
+	FetchUserStageFunc        FetchUserStageFunc
+	FetchStageExploreRelation FetchStageExploreRelation
+	FetchExploreMaster        FetchExploreMasterFunc
+}
 type ICreateFetchStageData func(
-	fetchAllStageFunc,
-	FetchUserStageFunc,
-	FetchStageExploreRelation,
-	fetchExploreMasterFunc,
+	repositories CreateFetchStageDataRepositories,
 ) fetchStageDataFunc
 
 func CreateFetchStageData(
-	fetchAllStage fetchAllStageFunc,
-	fetchUserStageFunc FetchUserStageFunc,
-	fetchStageExploreRelation FetchStageExploreRelation,
-	fetchExploreMaster fetchExploreMasterFunc,
+	args CreateFetchStageDataRepositories,
 ) fetchStageDataFunc {
 	fetch := func(
 		userId core.UserId,
@@ -126,7 +126,7 @@ func CreateFetchStageData(
 		handleError := func(err error) (getAllStageArgs, error) {
 			return getAllStageArgs{}, fmt.Errorf("error on fetch stage data: %w", err)
 		}
-		allStageRes, err := fetchAllStage()
+		allStageRes, err := args.FetchAllStage()
 		if err != nil {
 			return handleError(err)
 		}
@@ -137,11 +137,11 @@ func CreateFetchStageData(
 			}
 			return result
 		}(allStageRes.Stages)
-		userStage, err := fetchUserStageFunc(userId, stageId)
+		userStage, err := args.FetchUserStageFunc(userId, stageId)
 		if err != nil {
 			return handleError(err)
 		}
-		stageExplorePair, err := fetchStageExploreRelation(stageId)
+		stageExplorePair, err := args.FetchStageExploreRelation(stageId)
 		exploreIds := func(stageExplore []StageExploreIdPair) []ExploreId {
 			result := []ExploreId{}
 			for _, v := range stageExplore {
@@ -149,7 +149,7 @@ func CreateFetchStageData(
 			}
 			return result
 		}(stageExplorePair)
-		exploreMaster, err := fetchExploreMaster(exploreIds)
+		exploreMaster, err := args.FetchExploreMaster(exploreIds)
 		if err != nil {
 			return handleError(err)
 		}

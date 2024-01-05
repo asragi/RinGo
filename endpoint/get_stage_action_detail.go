@@ -8,6 +8,7 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
+type CreateGetStageActionDetailFunc func(stage.GetStageActionDetailFunc) getStageActionEndpointRes
 type getStageActionEndpointRes func(*gateway.GetStageActionDetailRequest) (*gateway.GetStageActionDetailResponse, error)
 
 func CreateGetStageActionDetail(
@@ -19,7 +20,10 @@ func CreateGetStageActionDetail(
 		stageId := stage.StageId(req.StageId)
 		token := core.AccessToken(req.Token)
 		handleError := func(err error) (*gateway.GetStageActionDetailResponse, error) {
-			return &gateway.GetStageActionDetailResponse{}, fmt.Errorf("error on get stage action detail endpoint: %w", err)
+			return &gateway.GetStageActionDetailResponse{}, fmt.Errorf(
+				"error on get stage action detail endpoint: %w",
+				err,
+			)
 		}
 		res, err := createStageActionDetail(userId, stageId, exploreId, token)
 		if err != nil {

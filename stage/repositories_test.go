@@ -5,15 +5,14 @@ import (
 )
 
 var (
-	itemStorageRepo         = CreateMockItemStorageRepo()
-	exploreMasterRepo       = createMockExploreMasterRepo()
-	itemExploreRelationRepo = createMockItemExploreRelationRepo()
-	skillMasterRepo         = createMockSkillMasterRepo()
-	userSkillRepo           = createMockUserSkillRepo()
-	earningItemRepo         = createMockEarningItemRepo()
-	consumingItemRepo       = createMockConsumingItemRepo()
-	requiredSkillRepo       = createMockRequiredSkillRepo()
-	reductionSkillRepo      = createMockReductionStaminaSkillRepo()
+	itemStorageRepo    = CreateMockItemStorageRepo()
+	exploreMasterRepo  = createMockExploreMasterRepo()
+	skillMasterRepo    = createMockSkillMasterRepo()
+	userSkillRepo      = createMockUserSkillRepo()
+	earningItemRepo    = createMockEarningItemRepo()
+	consumingItemRepo  = createMockConsumingItemRepo()
+	requiredSkillRepo  = createMockRequiredSkillRepo()
+	reductionSkillRepo = createMockReductionStaminaSkillRepo()
 )
 
 type MockItemStorageMaster struct {
@@ -99,22 +98,6 @@ func (m *MockExploreMasterRepo) Get(e ExploreId) (GetExploreMasterRes, error) {
 
 func (m *MockExploreMasterRepo) Add(e ExploreId, master GetExploreMasterRes) {
 	m.Data[e] = master
-}
-
-type MockItemExploreRelationRepo struct {
-	Data map[core.ItemId][]ExploreId
-}
-
-func (m *MockItemExploreRelationRepo) Get(id core.ItemId) ([]ExploreId, error) {
-	return m.Data[id], nil
-}
-
-func (m *MockItemExploreRelationRepo) AddItem(itemId core.ItemId, e []ExploreId) {
-	m.Data[itemId] = e
-}
-
-func createMockItemExploreRelationRepo() *MockItemExploreRelationRepo {
-	return &MockItemExploreRelationRepo{Data: map[core.ItemId][]ExploreId{}}
 }
 
 func createMockExploreMasterRepo() *MockExploreMasterRepo {

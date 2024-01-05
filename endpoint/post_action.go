@@ -9,9 +9,8 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type postActionEndpoint struct {
-	Post func(*gateway.PostActionRequest) (*gateway.PostActionResponse, error)
-}
+type CreatePostActionEndpoint func(application.CreatePostActionRes) postActionEndpoint
+type postActionEndpoint func(*gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
 	postAction application.CreatePostActionRes,
@@ -79,7 +78,5 @@ func CreatePostAction(
 		}, nil
 	}
 
-	return postActionEndpoint{
-		Post: post,
-	}
+	return post
 }

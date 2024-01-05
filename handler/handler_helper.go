@@ -10,6 +10,11 @@ import (
 type Handler func(http.ResponseWriter, *http.Request)
 type writeLogger func(int, error)
 
+func setHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+}
+
 func errorOnDecode(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
 }
@@ -39,8 +44,7 @@ func createHandler[T any, S any](
 			errorOnGenerateResponse(w, err)
 			return
 		}
-		// setHeader(w)
-		w.WriteHeader(http.StatusOK)
+		setHeader(w)
 		logger(w.Write(resJson))
 	}
 

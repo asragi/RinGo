@@ -38,136 +38,43 @@ type earningItemRes struct {
 
 type commonGetActionFunc func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
 
-type createCommonGetActionDetailRes struct {
-	GetAction commonGetActionFunc
+type CreateCommonGetActionDetailRepositories struct {
+	FetchItemStorage        BatchGetStorageFunc
+	FetchExploreMaster      FetchExploreMasterFunc
+	FetchEarningItem        FetchEarningItemFunc
+	FetchConsumingItem      GetConsumingItemFunc
+	FetchSkillMaster        FetchSkillMasterFunc
+	FetchUserSkill          BatchGetUserSkillFunc
+	FetchRequiredSkillsFunc FetchRequiredSkillsFunc
 }
 
-func getCommonActionDetail(
-	userId core.UserId,
-	exploreMasterRes GetExploreMasterRes,
-	consumingItems []ConsumingItem,
-	consumingItemStorage []ItemData,
-	earningItems []EarningItem,
-	requiredSkills []RequiredSkill,
-	requiredSkillMasters []SkillMaster,
-	requiredUserSkills []UserSkillRes,
-	calcConsumingStamina StaminaReductionFunc,
-) commonGetActionRes {
-	consumingItemMap := func(itemStorage []ItemData) map[core.ItemId]ItemData {
-		result := make(map[core.ItemId]ItemData)
-		for _, v := range itemStorage {
-			result[v.ItemId] = v
-		}
-		return result
-	}(consumingItemStorage)
-	requiredItems := func(consuming []ConsumingItem) []requiredItemsRes {
-		result := make([]requiredItemsRes, len(consuming))
-		for i, v := range consuming {
-			userData := consumingItemMap[v.ItemId]
-			result[i] = requiredItemsRes{
-				ItemId:   v.ItemId,
-				MaxCount: v.MaxCount,
-				Stock:    userData.Stock,
-				IsKnown:  userData.IsKnown,
-			}
-		}
-		return result
-	}(consumingItems)
-	requiredStamina := calcConsumingStamina(
-		exploreMasterRes.ConsumingStamina,
-		exploreMasterRes.StaminaReducibleRate,
-		requiredUserSkills,
-	)
-
-	earningItemsRes := func(items []EarningItem) []earningItemRes {
-		result := make([]earningItemRes, len(items))
-		for i, v := range items {
-			result[i] = earningItemRes{
-				ItemId: v.ItemId,
-				// TODO: change display depends on user data
-				IsKnown: true,
-			}
-		}
-		return result
-	}(earningItems)
-
-	requiredSkillsRes := func(
-		requiredSkills []RequiredSkill,
-		requiredSkillMasters []SkillMaster,
-		requiredUserSkills []UserSkillRes,
-	) []requiredSkillsRes {
-		skillMasterMap := func(skills []SkillMaster) map[core.SkillId]SkillMaster {
-			result := make(map[core.SkillId]SkillMaster)
-			for _, v := range skills {
-				result[v.SkillId] = v
-			}
-			return result
-		}(requiredSkillMasters)
-
-		userSkillMap := func(userSkill []UserSkillRes) map[core.SkillId]UserSkillRes {
-			result := make(map[core.SkillId]UserSkillRes)
-			for _, v := range userSkill {
-				result[v.SkillId] = v
-			}
-			return result
-		}(requiredUserSkills)
-
-		result := make([]requiredSkillsRes, len(requiredSkills))
-		for i, v := range requiredSkills {
-			master := skillMasterMap[v.SkillId]
-			userSkill := userSkillMap[v.SkillId]
-			skill := requiredSkillsRes{
-				SkillId:     v.SkillId,
-				RequiredLv:  v.RequiredLv,
-				DisplayName: master.DisplayName,
-				SkillLv:     userSkill.SkillExp.CalcLv(),
-			}
-			result[i] = skill
-		}
-		return result
-	}(
-		requiredSkills,
-		requiredSkillMasters,
-		requiredUserSkills,
-	)
-
-	return commonGetActionRes{
-		UserId:            userId,
-		ActionDisplayName: exploreMasterRes.DisplayName,
-		RequiredPayment:   exploreMasterRes.RequiredPayment,
-		RequiredStamina:   requiredStamina,
-		RequiredItems:     requiredItems,
-		EarningItems:      earningItemsRes,
-		RequiredSkills:    requiredSkillsRes,
-	}
-}
+type CreateCommonGetActionDetailFunc func(
+	CalcBatchConsumingStaminaFunc,
+	CreateCommonGetActionDetailRepositories,
+) commonGetActionFunc
 
 func CreateCommonGetActionDetail(
-	calcConsumingStamina calcConsumingStaminaFunc,
-	itemStorageRepo ItemStorageRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	earningItemRepo EarningItemRepo,
-	consumingItemRepo ConsumingItemRepo,
-	skillMasterRepo SkillMasterRepo,
-	userSkillRepo UserSkillRepo,
-	requiredSkillRepo RequiredSkillRepo,
-) createCommonGetActionDetailRes {
+	calcConsumingStamina CalcBatchConsumingStaminaFunc,
+	args CreateCommonGetActionDetailRepositories,
+) commonGetActionFunc {
 	getActionDetail := func(
 		userId core.UserId,
 		exploreId ExploreId,
 		token core.AccessToken,
 	) (commonGetActionRes, error) {
 		handleError := func(err error) (commonGetActionRes, error) {
-			return commonGetActionRes{}, fmt.Errorf("Error on GetActionDetail: %w", err)
+			return commonGetActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
 		}
-		exploreMasterRes, err := exploreMasterRepo.Get(exploreId)
+		exploreMasterRes, err := args.FetchExploreMaster([]ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItems, err := consumingItemRepo.BatchGet(exploreId)
+		exploreMaster := exploreMasterRes[0]
+		consumingItemsRes, err := args.FetchConsumingItem([]ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
+		consumingItems := consumingItemsRes[0].ConsumingItems
 		consumingItemIds := func(consuming []ConsumingItem) []core.ItemId {
 			result := make([]core.ItemId, len(consuming))
 			for i, v := range consuming {
@@ -175,7 +82,7 @@ func CreateCommonGetActionDetail(
 			}
 			return result
 		}(consumingItems)
-		consumingItemStorage, err := itemStorageRepo.BatchGet(userId, consumingItemIds, token)
+		consumingItemStorage, err := args.FetchItemStorage(userId, consumingItemIds, token)
 		if err != nil {
 			return handleError(err)
 		}
@@ -200,14 +107,21 @@ func CreateCommonGetActionDetail(
 			return result
 		}(consumingItems)
 		requiredStamina, err := func(baseStamina core.Stamina) (core.Stamina, error) {
-			reducedStamina, err := calcConsumingStamina(userId, token, exploreId)
-			return reducedStamina, err
-		}(exploreMasterRes.ConsumingStamina)
+			reducedStamina, err := calcConsumingStamina(userId, token, []ExploreId{exploreId})
+			if err != nil {
+				return 0, err
+			}
+			stamina := reducedStamina[0].ReducedStamina
+			return stamina, err
+		}(exploreMaster.ConsumingStamina)
 		if err != nil {
 			return handleError(err)
 		}
-		earningItems := func(exploreId ExploreId) []earningItemRes {
-			items := earningItemRepo.BatchGet(exploreId)
+		items, err := args.FetchEarningItem(exploreId)
+		if err != nil {
+			return handleError(err)
+		}
+		earningItems := func(items []EarningItem) []earningItemRes {
 			result := make([]earningItemRes, len(items))
 			for i, v := range items {
 				result[i] = earningItemRes{
@@ -217,26 +131,27 @@ func CreateCommonGetActionDetail(
 				}
 			}
 			return result
-		}(exploreId)
+		}(items)
 		requiredSkills, err := func(exploreId ExploreId) ([]requiredSkillsRes, error) {
-			res, err := requiredSkillRepo.Get(exploreId)
+			res, err := args.FetchRequiredSkillsFunc([]ExploreId{exploreId})
 			if err != nil {
 				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
+			requiredSkill := res[0].RequiredSkills
 			skillIds := func(skills []RequiredSkill) []core.SkillId {
 				result := make([]core.SkillId, len(skills))
 				for i, v := range skills {
 					result[i] = v.SkillId
 				}
 				return result
-			}(res)
+			}(requiredSkill)
 			skillMasterMap, err := func(skillId []core.SkillId) (map[core.SkillId]SkillMaster, error) {
-				res, err := skillMasterRepo.BatchGet(skillId)
+				res, err := args.FetchSkillMaster(skillId)
 				if err != nil {
 					return nil, fmt.Errorf("error on getting skill master: %w", err)
 				}
 				result := make(map[core.SkillId]SkillMaster)
-				for _, v := range res.Skills {
+				for _, v := range res {
 					result[v.SkillId] = v
 				}
 				return result, nil
@@ -244,7 +159,7 @@ func CreateCommonGetActionDetail(
 			if err != nil {
 				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
-			userSkillRes, err := userSkillRepo.BatchGet(userId, skillIds, token)
+			userSkillRes, err := args.FetchUserSkill(userId, skillIds, token)
 			if err != nil {
 				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
@@ -257,8 +172,8 @@ func CreateCommonGetActionDetail(
 				return result
 			}(userSkillRes)
 
-			result := make([]requiredSkillsRes, len(res))
-			for i, v := range res {
+			result := make([]requiredSkillsRes, len(requiredSkill))
+			for i, v := range requiredSkill {
 				master := skillMasterMap[v.SkillId]
 				userSkill := userSkillMap[v.SkillId]
 				skill := requiredSkillsRes{
@@ -276,26 +191,30 @@ func CreateCommonGetActionDetail(
 		}
 		return commonGetActionRes{
 			UserId:            userId,
-			ActionDisplayName: exploreMasterRes.DisplayName,
-			RequiredPayment:   exploreMasterRes.RequiredPayment,
+			ActionDisplayName: exploreMaster.DisplayName,
+			RequiredPayment:   exploreMaster.RequiredPayment,
 			RequiredStamina:   requiredStamina,
 			RequiredItems:     requiredItems,
 			EarningItems:      earningItems,
 			RequiredSkills:    requiredSkills,
 		}, nil
 	}
-	return createCommonGetActionDetailRes{getActionDetail}
+	return getActionDetail
 }
 
-type GetStageActionDetailFunc func(core.UserId, StageId, ExploreId, core.AccessToken) (gateway.GetStageActionDetailResponse, error)
-type createGetStageActionDetailRes struct {
-	GetAction GetStageActionDetailFunc
-}
+type GetStageActionDetailFunc func(
+	core.UserId,
+	StageId,
+	ExploreId,
+	core.AccessToken,
+) (gateway.GetStageActionDetailResponse, error)
+
+type CreateGetStageActionDetailFunc func(commonGetActionFunc, FetchStageMasterFunc) GetStageActionDetailFunc
 
 func CreateGetStageActionDetailService(
 	getCommonAction commonGetActionFunc,
-	stageMasterRepo StageMasterRepo,
-) createGetStageActionDetailRes {
+	fetchStageMaster FetchStageMasterFunc,
+) GetStageActionDetailFunc {
 	getActionDetail := func(
 		userId core.UserId,
 		stageId StageId,
@@ -343,7 +262,7 @@ func CreateGetStageActionDetailService(
 			return result
 		}(getCommonActionRes.RequiredSkills)
 
-		stageMaster, err := stageMasterRepo.Get(stageId)
+		stageMaster, err := fetchStageMaster(stageId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -361,7 +280,5 @@ func CreateGetStageActionDetailService(
 		}, nil
 	}
 
-	return createGetStageActionDetailRes{
-		GetAction: getActionDetail,
-	}
+	return getActionDetail
 }

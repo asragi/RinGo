@@ -29,22 +29,21 @@ type fetchMakeUserExploreArgs func(
 	[]ExploreId,
 ) (compensatedMakeUserExploreArgs, error)
 
+type CreateMakeUserExploreRepositories struct {
+	GetResource       GetResourceFunc
+	GetAction         GetActionsFunc
+	GetRequiredSkills FetchRequiredSkillsFunc
+	GetConsumingItems GetConsumingItemFunc
+	GetStorage        BatchGetStorageFunc
+	GetUserSkill      BatchGetUserSkillFunc
+}
+
 type ICreateMakeUserExploreFunc func(
-	GetResourceFunc,
-	GetActionsFunc,
-	GetRequiredSkillsFunc,
-	GetConsumingItemFunc,
-	BatchGetStorageFunc,
-	BatchGetUserSkillFunc,
+	repositories CreateMakeUserExploreRepositories,
 ) fetchMakeUserExploreArgs
 
 func CreateMakeUserExploreFunc(
-	getResource GetResourceFunc,
-	getAction GetActionsFunc,
-	getRequiredSkills GetRequiredSkillsFunc,
-	getConsumingItems GetConsumingItemFunc,
-	getStorage BatchGetStorageFunc,
-	getUserSkill BatchGetUserSkillFunc,
+	repositories CreateMakeUserExploreRepositories,
 ) fetchMakeUserExploreArgs {
 	makeUserExplores := func(
 		userId core.UserId,
@@ -54,27 +53,27 @@ func CreateMakeUserExploreFunc(
 		handleError := func(err error) (compensatedMakeUserExploreArgs, error) {
 			return compensatedMakeUserExploreArgs{}, fmt.Errorf("error on create make user explore args: %w", err)
 		}
-		resourceRes, err := getResource(userId, token)
+		resourceRes, err := repositories.GetResource(userId, token)
 		if err != nil {
 			return handleError(err)
 		}
-		actionRes, err := getAction(userId, nil, token)
+		actionRes, err := repositories.GetAction(userId, nil, token)
 		if err != nil {
 			return handleError(err)
 		}
-		requiredSkillsRes, err := getRequiredSkills(exploreIds)
+		requiredSkillsResponse, err := repositories.GetRequiredSkills(exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItemRes, err := getConsumingItems(exploreIds)
+		consumingItemRes, err := repositories.GetConsumingItems(exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
-		storage, err := getStorage(userId, nil, token)
+		storage, err := repositories.GetStorage(userId, nil, token)
 		if err != nil {
 			return handleError(err)
 		}
-		skills, err := getUserSkill(userId, nil, token)
+		skills, err := repositories.GetUserSkill(userId, nil, token)
 		if err != nil {
 			return handleError(err)
 		}
@@ -82,7 +81,7 @@ func CreateMakeUserExploreFunc(
 		return compensatedMakeUserExploreArgs{
 			resourceRes:      resourceRes,
 			actionsRes:       actionRes,
-			requiredSkillRes: requiredSkillsRes,
+			requiredSkillRes: requiredSkillsResponse,
 			consumingItemRes: consumingItemRes,
 			itemData:         storage.ItemData,
 			batchGetSkillRes: skills,

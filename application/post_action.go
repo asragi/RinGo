@@ -14,18 +14,24 @@ type CreatePostActionRes struct {
 
 type postFunc func(stage.PostActionArgs, time.Time) (stage.PostActionResult, error)
 
+type CompensatePostActionFunc func(CompensatePostActionArgs, core.IRandom, stage.PostActionFunc) postFunc
+
+type CompensatePostActionArgs struct {
+	ValidateAction       stage.ValidateActionFunc
+	CalcSkillGrowth      stage.CalcSkillGrowthFunc
+	CalcGrowthApply      stage.GrowthApplyFunc
+	CalcEarnedItem       stage.CalcEarnedItemFunc
+	CalcConsumedItem     stage.CalcConsumedItemFunc
+	CalcTotalItem        stage.CalcTotalItemFunc
+	StaminaReductionFunc stage.StaminaReductionFunc
+	UpdateItemStorage    stage.UpdateItemStorageFunc
+	UpdateSkill          stage.SkillGrowthPostFunc
+	UpdateStamina        stage.UpdateStaminaFunc
+	UpdateFund           stage.UpdateFundFunc
+}
+
 func CompensatePostActionFunctions(
-	validateAction stage.ValidateActionFunc,
-	calcSkillGrowth stage.CalcSkillGrowthFunc,
-	calcGrowthApply stage.GrowthApplyFunc,
-	calcEarnedItem stage.CalcEarnedItemFunc,
-	calcConsumedItem stage.CalcConsumedItemFunc,
-	calcTotalItem stage.CalcTotalItemFunc,
-	staminaReductionFunc stage.StaminaReductionFunc,
-	updateItemStorage stage.UpdateItemStorageFunc,
-	updateSkill stage.SkillGrowthPostFunc,
-	updateStamina stage.UpdateStaminaFunc,
-	updateFund stage.UpdateFundFunc,
+	f CompensatePostActionArgs,
 	random core.IRandom,
 	postAction stage.PostActionFunc,
 ) postFunc {
@@ -35,17 +41,17 @@ func CompensatePostActionFunctions(
 	) (stage.PostActionResult, error) {
 		return postAction(
 			args,
-			validateAction,
-			calcSkillGrowth,
-			calcGrowthApply,
-			calcEarnedItem,
-			calcConsumedItem,
-			calcTotalItem,
-			updateItemStorage,
-			updateSkill,
-			updateStamina,
-			updateFund,
-			staminaReductionFunc,
+			f.ValidateAction,
+			f.CalcSkillGrowth,
+			f.CalcGrowthApply,
+			f.CalcEarnedItem,
+			f.CalcConsumedItem,
+			f.CalcTotalItem,
+			f.UpdateItemStorage,
+			f.UpdateSkill,
+			f.UpdateStamina,
+			f.UpdateFund,
+			f.StaminaReductionFunc,
 			random,
 			currentTime,
 		)
@@ -54,17 +60,26 @@ func CompensatePostActionFunctions(
 
 type emitPostActionArgsFunc func(core.UserId, core.AccessToken, stage.ExploreId, int) (stage.PostActionArgs, error)
 
-func EmitPostActionArgsFunc(
-	userResourceRepo stage.UserResourceRepo,
-	exploreMasterRepo stage.ExploreMasterRepo,
-	skillGrowthDataRepo stage.SkillGrowthDataRepo,
-	skillMasterRepo stage.SkillMasterRepo,
-	userSkillRepo stage.UserSkillRepo,
-	earningItemRepo stage.EarningItemRepo,
-	consumingItemRepo stage.ConsumingItemRepo,
-	requiredSkillRepo stage.RequiredSkillRepo,
-	storageRepo stage.ItemStorageRepo,
-	itemMasterRepo stage.ItemMasterRepo,
+type EmitPostActionAppArgs struct {
+	UserResourceRepo    stage.UserResourceRepo
+	ExploreMasterRepo   stage.ExploreMasterRepo
+	SkillGrowthDataRepo stage.SkillGrowthDataRepo
+	SkillMasterRepo     stage.SkillMasterRepo
+	UserSkillRepo       stage.UserSkillRepo
+	EarningItemRepo     stage.EarningItemRepo
+	ConsumingItemRepo   stage.ConsumingItemRepo
+	RequiredSkillRepo   stage.RequiredSkillRepo
+	StorageRepo         stage.ItemStorageRepo
+	ItemMasterRepo      stage.ItemMasterRepo
+}
+
+type EmitPostActionArgsFunc func(
+	args EmitPostActionAppArgs,
+	argsFunc stage.GetPostActionArgsFunc,
+) emitPostActionArgsFunc
+
+func EmitPostActionArgs(
+	args EmitPostActionAppArgs,
 	getPostActionArgsFunc stage.GetPostActionArgsFunc,
 ) emitPostActionArgsFunc {
 	return func(
@@ -78,19 +93,25 @@ func EmitPostActionArgsFunc(
 			token,
 			execCount,
 			exploreId,
-			userResourceRepo,
-			exploreMasterRepo,
-			skillMasterRepo,
-			skillGrowthDataRepo,
-			userSkillRepo,
-			earningItemRepo,
-			consumingItemRepo,
-			requiredSkillRepo,
-			storageRepo,
-			itemMasterRepo,
+			args.UserResourceRepo,
+			args.ExploreMasterRepo,
+			args.SkillMasterRepo,
+			args.SkillGrowthDataRepo,
+			args.UserSkillRepo,
+			args.EarningItemRepo,
+			args.ConsumingItemRepo,
+			args.RequiredSkillRepo,
+			args.StorageRepo,
+			args.ItemMasterRepo,
 		)
 	}
 }
+
+type CreatePostActionServiceFunc func(
+	core.ICurrentTime,
+	postFunc,
+	emitPostActionArgsFunc,
+) CreatePostActionRes
 
 func CreatePostActionService(
 	currentTimeEmitter core.ICurrentTime,

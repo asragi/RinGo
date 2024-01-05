@@ -71,9 +71,9 @@ type ICreateGetItemDetailArgs func(GetUserItemDetailReq) (getItemDetailArgs, err
 func createArgs(
 	getItemMaster GetItemMasterFunc,
 	getItemStorage GetItemStorageFunc,
-	getExploreMaster fetchExploreMasterFunc,
+	getExploreMaster FetchExploreMasterFunc,
 	getItemExploreRelation GetItemExploreRelationFunc,
-	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
+	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,
 	createArgs ICreateFetchItemDetailArgs,
 ) ICreateGetItemDetailArgs {
 	return func(
@@ -94,18 +94,18 @@ type ICreateFetchItemDetailArgs func(
 	GetUserItemDetailReq,
 	GetItemMasterFunc,
 	GetItemStorageFunc,
-	fetchExploreMasterFunc,
+	FetchExploreMasterFunc,
 	GetItemExploreRelationFunc,
-	calcBatchConsumingStaminaFunc,
+	CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error)
 
 func createGetItemDetailArgs(
 	req GetUserItemDetailReq,
 	getItemMaster GetItemMasterFunc,
 	getItemStorage GetItemStorageFunc,
-	getExploreMaster fetchExploreMasterFunc,
+	getExploreMaster FetchExploreMasterFunc,
 	getItemExploreRelation GetItemExploreRelationFunc,
-	calcBatchConsumingStaminaFunc calcBatchConsumingStaminaFunc,
+	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error) {
 	handleError := func(err error) (getItemDetailArgs, error) {
 		return getItemDetailArgs{}, fmt.Errorf("error on create get item detail args: %w", err)

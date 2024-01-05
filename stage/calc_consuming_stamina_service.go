@@ -11,7 +11,8 @@ type StaminaReductionFunc func(core.Stamina, StaminaReducibleRate, []UserSkillRe
 func calcStaminaReduction(
 	baseStamina core.Stamina,
 	reducibleRate StaminaReducibleRate,
-	reductionSkills []UserSkillRes) core.Stamina {
+	reductionSkills []UserSkillRes,
+) core.Stamina {
 	skillLvs := func(skills []UserSkillRes) []core.SkillLv {
 		result := make([]core.SkillLv, len(skills))
 		for i, v := range skills {
@@ -35,45 +36,36 @@ type ExploreStaminaPair struct {
 	ReducedStamina core.Stamina
 }
 
-type calcConsumingStaminaFunc func(core.UserId, core.AccessToken, ExploreId) (core.Stamina, error)
-type calcBatchConsumingStaminaFunc func(core.UserId, core.AccessToken, []GetExploreMasterRes) ([]ExploreStaminaPair, error)
+type CalcBatchConsumingStaminaFunc func(
+	core.UserId,
+	core.AccessToken,
+	[]ExploreId,
+) (
+	[]ExploreStaminaPair,
+	error,
+)
 
-type createCalcConsumingStaminaServiceRes struct {
-	// Deprecated: Replace with BatchCalc()
-	Calc      calcConsumingStaminaFunc
-	BatchCalc calcBatchConsumingStaminaFunc
-}
+type CreateCalcConsumingStaminaServiceFunc func(
+	fetchUserSkills BatchGetUserSkillFunc,
+	fetchExploreMaster FetchExploreMasterFunc,
+	fetchReductionSkills FetchReductionStaminaSkillFunc,
+) CalcBatchConsumingStaminaFunc
 
 func CreateCalcConsumingStaminaService(
-	userSkillRepo UserSkillRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	reductionSkillRepo ReductionStaminaSkillRepo,
-) createCalcConsumingStaminaServiceRes {
-	calc := func(userId core.UserId, token core.AccessToken, exploreId ExploreId) (core.Stamina, error) {
-		handleError := func(err error) (core.Stamina, error) {
-			return 0, fmt.Errorf("error on calculating stamina: %w", err)
-		}
-		explore, err := exploreMasterRepo.Get(exploreId)
-		if err != nil {
-			return handleError(err)
-		}
-		baseStamina := explore.ConsumingStamina
-		reducibleRate := explore.StaminaReducibleRate
-		reductionSkills, err := reductionSkillRepo.Get(exploreId)
-		if err != nil {
-			return handleError(err)
-		}
-		userSkillsRes, err := userSkillRepo.BatchGet(userId, reductionSkills, token)
-		if err != nil {
-			return handleError(err)
-		}
-		stamina := calcStaminaReduction(baseStamina, reducibleRate, userSkillsRes.Skills)
-		return stamina, nil
-	}
-
-	batchCalc := func(userId core.UserId, token core.AccessToken, explores []GetExploreMasterRes) ([]ExploreStaminaPair, error) {
+	fetchUserSkills BatchGetUserSkillFunc,
+	fetchExploreMaster FetchExploreMasterFunc,
+	fetchReductionSkills FetchReductionStaminaSkillFunc,
+) CalcBatchConsumingStaminaFunc {
+	batchCalc := func(userId core.UserId, token core.AccessToken, exploreIds []ExploreId) (
+		[]ExploreStaminaPair,
+		error,
+	) {
 		handleError := func(err error) ([]ExploreStaminaPair, error) {
 			return nil, fmt.Errorf("error on batch calc stamina: %w", err)
+		}
+		explores, err := fetchExploreMaster(exploreIds)
+		if err != nil {
+			return handleError(err)
 		}
 		exploreMap := func(explores []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
 			result := map[ExploreId]GetExploreMasterRes{}
@@ -82,14 +74,7 @@ func CreateCalcConsumingStaminaService(
 			}
 			return result
 		}(explores)
-		exploreIds := func(objects []GetExploreMasterRes) []ExploreId {
-			result := make([]ExploreId, len(objects))
-			for i, v := range objects {
-				result[i] = v.ExploreId
-			}
-			return result
-		}(explores)
-		reductionStaminaSkills, err := reductionSkillRepo.BatchGet(exploreIds)
+		reductionStaminaSkills, err := fetchReductionSkills(exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -116,7 +101,7 @@ func CreateCalcConsumingStaminaService(
 			return result
 		}(reductionStaminaSkills)
 
-		allSkills, err := userSkillRepo.BatchGet(userId, allRequiredSkill, token)
+		allSkills, err := fetchUserSkills(userId, allRequiredSkill, token)
 		if err != nil {
 			return handleError(err)
 		}
@@ -167,8 +152,5 @@ func CreateCalcConsumingStaminaService(
 		return result, nil
 	}
 
-	return createCalcConsumingStaminaServiceRes{
-		Calc:      calc,
-		BatchCalc: batchCalc,
-	}
+	return batchCalc
 }
