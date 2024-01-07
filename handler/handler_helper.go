@@ -29,7 +29,9 @@ func createHandler[T any, S any](
 ) Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		var req T
-		err := json.NewDecoder(r.Body).Decode(&req)
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields()
+		err := decoder.Decode(&req)
 		if err != nil {
 			errorOnDecode(w, err)
 			return
