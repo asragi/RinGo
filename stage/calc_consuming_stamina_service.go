@@ -61,7 +61,7 @@ func CreateCalcConsumingStaminaService(
 		error,
 	) {
 		handleError := func(err error) ([]ExploreStaminaPair, error) {
-			return nil, fmt.Errorf("error on batch calc stamina: %w", err)
+			return nil, fmt.Errorf("error on batch calc mockReducedStamina: %w", err)
 		}
 		explores, err := fetchExploreMaster(exploreIds)
 		if err != nil {

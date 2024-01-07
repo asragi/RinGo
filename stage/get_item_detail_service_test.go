@@ -71,7 +71,10 @@ func TestCreateGetItemDetailArgs(t *testing.T) {
 	}
 	getStorageRes := GetItemStorageRes{}
 	var mockStorageArg core.ItemId
-	mockGetItemStorage := func(userId core.UserId, itemId core.ItemId, token core.AccessToken) (GetItemStorageRes, error) {
+	mockGetItemStorage := func(userId core.UserId, itemId core.ItemId, token core.AccessToken) (
+		GetItemStorageRes,
+		error,
+	) {
 		mockStorageArg = itemId
 		return getStorageRes, nil
 	}
@@ -87,10 +90,14 @@ func TestCreateGetItemDetailArgs(t *testing.T) {
 		mockItemRelationArg = itemId
 		return itemExploreRelation, nil
 	}
-	var mockStaminaArgs []GetExploreMasterRes
-	exploreStamina := []ExploreStaminaPair{}
-	consumingStamina := func(userId core.UserId, token core.AccessToken, masters []GetExploreMasterRes) ([]ExploreStaminaPair, error) {
-		mockStaminaArgs = masters
+	var mockStaminaArgs []ExploreId
+	var exploreStamina []ExploreStaminaPair
+	consumingStamina := func(
+		userId core.UserId,
+		token core.AccessToken,
+		ids []ExploreId,
+	) ([]ExploreStaminaPair, error) {
+		mockStaminaArgs = ids
 		return exploreStamina, nil
 	}
 	testCases := []testCase{}
@@ -122,7 +129,11 @@ func TestCreateGetItemDetailArgs(t *testing.T) {
 			t.Errorf("expect: %s, got: %s", req.ItemId, mockItemRelationArg)
 		}
 		if !reflect.DeepEqual(mockStaminaArgs, getExploreMasterRes) {
-			t.Errorf("stamina args and explore res not matched: mock args: %+v, res: %+v", mockStaminaArgs, getExploreMasterRes)
+			t.Errorf(
+				"mockReducedStamina args and explore res not matched: mock args: %+v, res: %+v",
+				mockStaminaArgs,
+				getExploreMasterRes,
+			)
 		}
 		if !reflect.DeepEqual(v.expect, res) {
 			t.Errorf("expect and actual are not matched:%+v, %+v", res, v.expect)

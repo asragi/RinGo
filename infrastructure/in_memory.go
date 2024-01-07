@@ -21,7 +21,10 @@ func (m *InMemoryUserRepo) GetResource(userId core.UserId, token core.AccessToke
 	}, nil
 }
 
-func (m *InMemoryUserRepo) UpdateStamina(userId core.UserId, token core.AccessToken, stamina core.StaminaRecoverTime) error {
+func (m *InMemoryUserRepo) UpdateStamina(
+	userId core.UserId,
+	stamina core.StaminaRecoverTime,
+) error {
 	m.StaminaTime = stamina
 	return nil
 }
@@ -77,11 +80,19 @@ type IItemStorageDataLoader interface {
 	Load() (ItemStorageData, error)
 }
 
-func (m *InMemoryItemStorageRepo) Get(userId core.UserId, itemId core.ItemId, token core.AccessToken) (stage.GetItemStorageRes, error) {
+func (m *InMemoryItemStorageRepo) Get(
+	userId core.UserId,
+	itemId core.ItemId,
+	token core.AccessToken,
+) (stage.GetItemStorageRes, error) {
 	return stage.GetItemStorageRes{UserId: userId, Stock: m.GetStock(userId, itemId)}, nil
 }
 
-func (m *InMemoryItemStorageRepo) BatchGet(userId core.UserId, itemId []core.ItemId, token core.AccessToken) (stage.BatchGetStorageRes, error) {
+func (m *InMemoryItemStorageRepo) BatchGet(
+	userId core.UserId,
+	itemId []core.ItemId,
+	token core.AccessToken,
+) (stage.BatchGetStorageRes, error) {
 	result := make([]stage.ItemData, len(itemId))
 	for i, v := range itemId {
 		itemData := stage.ItemData{
@@ -131,7 +142,11 @@ type InMemoryUserExploreRepo struct {
 	Data map[core.UserId]map[stage.ExploreId]stage.ExploreUserData
 }
 
-func (m *InMemoryUserExploreRepo) GetActions(userId core.UserId, exploreIds []stage.ExploreId, token core.AccessToken) (stage.GetActionsRes, error) {
+func (m *InMemoryUserExploreRepo) GetActions(
+	userId core.UserId,
+	exploreIds []stage.ExploreId,
+	token core.AccessToken,
+) (stage.GetActionsRes, error) {
 	result := make([]stage.ExploreUserData, len(exploreIds))
 	for i, v := range exploreIds {
 		d := m.Data[userId][v]
@@ -196,14 +211,12 @@ type ISkillMasterLoader interface {
 	Load() (SkillMasterData, error)
 }
 
-func (m *InMemorySkillMasterRepo) BatchGet(skills []core.SkillId) (stage.BatchGetSkillMasterRes, error) {
+func (m *InMemorySkillMasterRepo) BatchGet(skills []core.SkillId) ([]stage.SkillMaster, error) {
 	result := make([]stage.SkillMaster, len(skills))
 	for i, id := range skills {
 		result[i] = m.Skills[id]
 	}
-	return stage.BatchGetSkillMasterRes{
-		Skills: result,
-	}, nil
+	return result, nil
 }
 
 func CreateInMemorySkillMasterRepo(loader ISkillMasterLoader) (*InMemorySkillMasterRepo, error) {
@@ -224,7 +237,11 @@ type IUserSkillLoader interface {
 	Load() (UserSkillData, error)
 }
 
-func (m *InMemoryUserSkillRepo) BatchGet(userId core.UserId, skillIds []core.SkillId, token core.AccessToken) (stage.BatchGetUserSkillRes, error) {
+func (m *InMemoryUserSkillRepo) BatchGet(
+	userId core.UserId,
+	skillIds []core.SkillId,
+	token core.AccessToken,
+) (stage.BatchGetUserSkillRes, error) {
 	list := m.Data[userId]
 	result := make([]stage.UserSkillRes, len(skillIds))
 	for i, v := range skillIds {
@@ -283,7 +300,10 @@ func (m *mockUserStageRepo) Add(userId core.UserId, stageId stage.StageId, userD
 	m.Data[userId][stageId] = userData
 }
 
-func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []stage.StageId) (stage.GetAllUserStagesRes, error) {
+func (m *mockUserStageRepo) GetAllUserStages(userId core.UserId, ids []stage.StageId) (
+	stage.GetAllUserStagesRes,
+	error,
+) {
 	result := []stage.UserStage{}
 	for _, v := range ids {
 		result = append(result, m.Data[userId][v])
@@ -364,8 +384,8 @@ type IEarningItemLoader interface {
 	Load() (EarningItemData, error)
 }
 
-func (m *InMemoryEarningItemRepo) BatchGet(exploreId stage.ExploreId) []stage.EarningItem {
-	return m.Data[exploreId]
+func (m *InMemoryEarningItemRepo) BatchGet(exploreId stage.ExploreId) ([]stage.EarningItem, error) {
+	return m.Data[exploreId], nil
 }
 
 func CreateInMemoryEarningItemRepo(loader IEarningItemLoader) (*InMemoryEarningItemRepo, error) {
@@ -382,7 +402,7 @@ type InMemoryConsumingItemRepo struct {
 	Data ConsumingItemData
 }
 
-func (m *InMemoryConsumingItemRepo) BatchGet(exploreId stage.ExploreId) ([]stage.ConsumingItem, error) {
+func (m *InMemoryConsumingItemRepo) Get(exploreId stage.ExploreId) ([]stage.ConsumingItem, error) {
 	data, ok := m.Data[exploreId]
 	if !ok {
 		return []stage.ConsumingItem{}, nil
@@ -390,7 +410,7 @@ func (m *InMemoryConsumingItemRepo) BatchGet(exploreId stage.ExploreId) ([]stage
 	return data, nil
 }
 
-func (m *InMemoryConsumingItemRepo) AllGet(exploreId []stage.ExploreId) ([]stage.BatchGetConsumingItemRes, error) {
+func (m *InMemoryConsumingItemRepo) BatchGet(exploreId []stage.ExploreId) ([]stage.BatchGetConsumingItemRes, error) {
 	result := make([]stage.BatchGetConsumingItemRes, len(exploreId))
 	for i, v := range exploreId {
 		result[i] = stage.BatchGetConsumingItemRes{
@@ -500,7 +520,10 @@ func (m *InMemoryReductionStaminaSkillRepo) Get(exploreId stage.ExploreId) ([]co
 	return m.Data[exploreId], nil
 }
 
-func (m *InMemoryReductionStaminaSkillRepo) BatchGet(exploreIds []stage.ExploreId) ([]stage.BatchGetReductionStaminaSkill, error) {
+func (m *InMemoryReductionStaminaSkillRepo) BatchGet(exploreIds []stage.ExploreId) (
+	[]stage.BatchGetReductionStaminaSkill,
+	error,
+) {
 	result := make([]stage.BatchGetReductionStaminaSkill, len(exploreIds))
 	for i, v := range exploreIds {
 		result[i] = stage.BatchGetReductionStaminaSkill{
@@ -511,7 +534,10 @@ func (m *InMemoryReductionStaminaSkillRepo) BatchGet(exploreIds []stage.ExploreI
 	return result, nil
 }
 
-func CreateInMemoryReductionStaminaSkillRepo(loader IReductionStaminaSkillLoader) (*InMemoryReductionStaminaSkillRepo, error) {
+func CreateInMemoryReductionStaminaSkillRepo(loader IReductionStaminaSkillLoader) (
+	*InMemoryReductionStaminaSkillRepo,
+	error,
+) {
 	data, err := loader.Load()
 	if err != nil {
 		return nil, fmt.Errorf("error on create reduction skill repo: %w", err)

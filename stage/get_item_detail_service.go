@@ -122,7 +122,7 @@ func createGetItemDetailArgs(
 	if err != nil {
 		return handleError(err)
 	}
-	staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, req.AccessToken, explores)
+	staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, req.AccessToken, itemExploreIds)
 	if err != nil {
 		return handleError(err)
 	}

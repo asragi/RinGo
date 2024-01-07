@@ -61,25 +61,25 @@ func CompensatePostActionFunctions(
 type emitPostActionArgsFunc func(core.UserId, core.AccessToken, stage.ExploreId, int) (stage.PostActionArgs, error)
 
 type EmitPostActionAppArgs struct {
-	UserResourceRepo    stage.UserResourceRepo
-	ExploreMasterRepo   stage.ExploreMasterRepo
-	SkillGrowthDataRepo stage.SkillGrowthDataRepo
-	SkillMasterRepo     stage.SkillMasterRepo
-	UserSkillRepo       stage.UserSkillRepo
-	EarningItemRepo     stage.EarningItemRepo
-	ConsumingItemRepo   stage.ConsumingItemRepo
-	RequiredSkillRepo   stage.RequiredSkillRepo
-	StorageRepo         stage.ItemStorageRepo
-	ItemMasterRepo      stage.ItemMasterRepo
+	UserResourceRepo    stage.GetResourceFunc
+	ExploreMasterRepo   stage.FetchExploreMasterFunc
+	SkillGrowthDataRepo stage.FetchSkillGrowthData
+	SkillMasterRepo     stage.FetchSkillMasterFunc
+	UserSkillRepo       stage.BatchGetUserSkillFunc
+	EarningItemRepo     stage.FetchEarningItemFunc
+	ConsumingItemRepo   stage.GetConsumingItemFunc
+	RequiredSkillRepo   stage.FetchRequiredSkillsFunc
+	StorageRepo         stage.BatchGetStorageFunc
+	ItemMasterRepo      stage.BatchGetItemMasterFunc
 }
 
 type EmitPostActionArgsFunc func(
-	args EmitPostActionAppArgs,
+	args stage.GetPostActionRepositories,
 	argsFunc stage.GetPostActionArgsFunc,
 ) emitPostActionArgsFunc
 
 func EmitPostActionArgs(
-	args EmitPostActionAppArgs,
+	args stage.GetPostActionRepositories,
 	getPostActionArgsFunc stage.GetPostActionArgsFunc,
 ) emitPostActionArgsFunc {
 	return func(
@@ -93,16 +93,7 @@ func EmitPostActionArgs(
 			token,
 			execCount,
 			exploreId,
-			args.UserResourceRepo,
-			args.ExploreMasterRepo,
-			args.SkillMasterRepo,
-			args.SkillGrowthDataRepo,
-			args.UserSkillRepo,
-			args.EarningItemRepo,
-			args.ConsumingItemRepo,
-			args.RequiredSkillRepo,
-			args.StorageRepo,
-			args.ItemMasterRepo,
+			args,
 		)
 	}
 }

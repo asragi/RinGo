@@ -7,7 +7,7 @@ import (
 )
 
 func TestCreateTotalItemService(t *testing.T) {
-	userId := MockUserId
+	userId := core.UserId("passedId")
 	itemId := []core.ItemId{
 		"A", "B", "C",
 	}

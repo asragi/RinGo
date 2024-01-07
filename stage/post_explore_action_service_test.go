@@ -35,7 +35,7 @@ func TestPostAction(t *testing.T) {
 		expectedUpdatedSkillGrowth SkillGrowthPost
 	}
 
-	userId := core.UserId("userId")
+	userId := core.UserId("passedId")
 	exploreId := ExploreId("explore")
 	token := core.AccessToken("token")
 

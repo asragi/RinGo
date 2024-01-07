@@ -29,21 +29,25 @@ type PostActionArgs struct {
 	allItemMasterRes  []GetItemMasterRes
 }
 
+type GetPostActionRepositories struct {
+	FetchResource        GetResourceFunc
+	FetchExploreMaster   FetchExploreMasterFunc
+	FetchSkillMaster     FetchSkillMasterFunc
+	FetchSkillGrowthData FetchSkillGrowthData
+	FetchUserSkill       BatchGetUserSkillFunc
+	FetchEarningItem     FetchEarningItemFunc
+	FetchConsumingItem   GetConsumingItemFunc
+	FetchRequiredSkill   FetchRequiredSkillsFunc
+	FetchStorage         BatchGetStorageFunc
+	FetchItemMaster      BatchGetItemMasterFunc
+}
+
 type GetPostActionArgsFunc func(
-	userId core.UserId,
-	token core.AccessToken,
-	execCount int,
-	exploreId ExploreId,
-	userResourceRepo UserResourceRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	skillMasterRepo SkillMasterRepo,
-	skillGrowthDataRepo SkillGrowthDataRepo,
-	userSkillRepo UserSkillRepo,
-	earningItemRepo EarningItemRepo,
-	consumingItemRepo ConsumingItemRepo,
-	requiredSkillRepo RequiredSkillRepo,
-	storageRepo ItemStorageRepo,
-	itemMasterRepo ItemMasterRepo,
+	core.UserId,
+	core.AccessToken,
+	int,
+	ExploreId,
+	GetPostActionRepositories,
 ) (PostActionArgs, error)
 
 func GetPostActionArgs(
@@ -51,27 +55,18 @@ func GetPostActionArgs(
 	token core.AccessToken,
 	execCount int,
 	exploreId ExploreId,
-	userResourceRepo UserResourceRepo,
-	exploreMasterRepo ExploreMasterRepo,
-	skillMasterRepo SkillMasterRepo,
-	skillGrowthDataRepo SkillGrowthDataRepo,
-	userSkillRepo UserSkillRepo,
-	earningItemRepo EarningItemRepo,
-	consumingItemRepo ConsumingItemRepo,
-	requiredSkillRepo RequiredSkillRepo,
-	storageRepo ItemStorageRepo,
-	itemMasterRepo ItemMasterRepo,
+	args GetPostActionRepositories,
 ) (PostActionArgs, error) {
 	handleError := func(err error) (PostActionArgs, error) {
 		return PostActionArgs{}, fmt.Errorf("error on creating post action args: %w", err)
 	}
-	userResources, err := userResourceRepo.GetResource(userId, token)
+	userResources, err := args.FetchResource(userId, token)
 	if err != nil {
 		return handleError(err)
 	}
 
-	exploreMasters, err := exploreMasterRepo.BatchGet([]ExploreId{exploreId})
-	skillGrowthList := skillGrowthDataRepo.BatchGet(exploreId)
+	exploreMasters, err := args.FetchExploreMaster([]ExploreId{exploreId})
+	skillGrowthList := args.FetchSkillGrowthData(exploreId)
 	skillIds := func(data []SkillGrowthData) []core.SkillId {
 		result := make([]core.SkillId, len(data))
 		for i, v := range data {
@@ -79,12 +74,16 @@ func GetPostActionArgs(
 		}
 		return result
 	}(skillGrowthList)
-	skillsRes, err := userSkillRepo.BatchGet(userId, skillIds, token)
+	skillsRes, err := args.FetchUserSkill(userId, skillIds, token)
 	if err != nil {
 		return handleError(err)
 	}
-	earningItemData := earningItemRepo.BatchGet(exploreId)
-	consumingItemData, err := consumingItemRepo.BatchGet(exploreId)
+	earningItemData, err := args.FetchEarningItem(exploreId)
+	if err != nil {
+		return handleError(err)
+	}
+	consumingItemRes, err := args.FetchConsumingItem([]ExploreId{exploreId})
+	consumingItemData := consumingItemRes[0].ConsumingItems
 	if err != nil {
 		return handleError(err)
 	}
@@ -108,23 +107,26 @@ func GetPostActionArgs(
 		}
 		return result
 	}(earningItemData, consumingItemData)
-	storage, err := storageRepo.BatchGet(userId, itemIds, token)
+	storage, err := args.FetchStorage(userId, itemIds, token)
 	if err != nil {
 		return handleError(err)
 	}
 
-	itemMaster, err := itemMasterRepo.BatchGet(itemIds)
+	itemMaster, err := args.FetchItemMaster(itemIds)
 	if err != nil {
 		return handleError(err)
 	}
 
-	requiredSkillsRow, err := requiredSkillRepo.BatchGet([]ExploreId{exploreId})
+	requiredSkillsRow, err := args.FetchRequiredSkill([]ExploreId{exploreId})
 	if err != nil {
 		return handleError(err)
 	}
 	requiredSkills := requiredSkillsRow[0].RequiredSkills
 
-	skillMaster, err := skillMasterRepo.BatchGet(skillIds)
+	skillMaster, err := args.FetchSkillMaster(skillIds)
+	if err != nil {
+		return handleError(err)
+	}
 	return PostActionArgs{
 		userId:            userId,
 		token:             token,
@@ -133,7 +135,7 @@ func GetPostActionArgs(
 		exploreMaster:     exploreMasters[0],
 		skillGrowthList:   skillGrowthList,
 		skillsRes:         skillsRes,
-		skillMaster:       skillMaster.Skills,
+		skillMaster:       skillMaster,
 		earningItemData:   earningItemData,
 		consumingItemData: consumingItemData,
 		requiredSkills:    requiredSkills,

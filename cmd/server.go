@@ -1,43 +1,41 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/handler"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/stage"
-	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type handlerFunc func(http.ResponseWriter, *http.Request)
-
 type infrastructuresStruct struct {
-	userResource              stage.UserResourceRepo
-	itemMaster                stage.ItemMasterRepo
-	itemStorage               stage.ItemStorageRepo
-	userSkill                 stage.UserSkillRepo
-	stageMaster               stage.StageMasterRepo
-	exploreMaster             stage.ExploreMasterRepo
-	skillMaster               stage.SkillMasterRepo
-	earningItem               stage.EarningItemRepo
-	consumingItem             stage.ConsumingItemRepo
-	requiredSkill             stage.RequiredSkillRepo
-	skillGrowth               stage.SkillGrowthDataRepo
-	reductionSkill            stage.ReductionStaminaSkillRepo
-	updateStorage             stage.ItemStorageUpdateRepo
-	updateSkill               stage.SkillGrowthPostRepo
+	getResource               stage.GetResourceFunc
+	fetchItemMaster           stage.BatchGetItemMasterFunc
+	fetchStorage              stage.BatchGetStorageFunc
+	userSkill                 stage.BatchGetUserSkillFunc
+	stageMaster               stage.FetchStageMasterFunc
+	fetchAllStage             stage.FetchAllStageFunc
+	exploreMaster             stage.FetchExploreMasterFunc
+	skillMaster               stage.FetchSkillMasterFunc
+	earningItem               stage.FetchEarningItemFunc
+	consumingItem             stage.GetConsumingItemFunc
+	fetchRequiredSkill        stage.FetchRequiredSkillsFunc
+	skillGrowth               stage.FetchSkillGrowthData
+	updateStorage             stage.UpdateItemStorageFunc
+	updateSkill               stage.SkillGrowthPostFunc
 	getAction                 stage.GetActionsFunc
 	fetchStageExploreRelation stage.FetchStageExploreRelation
 	fetchUserStage            stage.FetchUserStageFunc
-	getResource               stage.GetResourceFunc
+	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
 	validateToken             core.ValidateTokenRepoFunc
+	updateStamina             stage.UpdateStaminaFunc
+	updateFund                stage.UpdateFundFunc
 }
 
 func createInfrastructures() (*infrastructuresStruct, error) {
@@ -138,207 +136,28 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		return handleError(err)
 	}
 	return &infrastructuresStruct{
-		userResource:   userResource,
-		itemMaster:     itemMaster,
-		itemStorage:    itemStorage,
-		userSkill:      userSkill,
-		skillMaster:    skillMaster,
-		stageMaster:    stageMaster,
-		earningItem:    earningItem,
-		consumingItem:  consumingItem,
-		exploreMaster:  exploreMaster,
-		requiredSkill:  requiredSkill,
-		skillGrowth:    skillGrowth,
-		reductionSkill: reductionSkill,
-		updateStorage:  itemStorage,
-		updateSkill:    userSkill,
-		getAction:      nil,
-		getResource:    userResource.GetResource,
-		validateToken:  nil,
+		getResource:               userResource.GetResource,
+		fetchItemMaster:           itemMaster.BatchGet,
+		fetchStorage:              itemStorage.BatchGet,
+		userSkill:                 userSkill.BatchGet,
+		stageMaster:               stageMaster.Get,
+		fetchAllStage:             stageMaster.GetAllStages,
+		exploreMaster:             exploreMaster.BatchGet,
+		skillMaster:               skillMaster.BatchGet,
+		earningItem:               earningItem.BatchGet,
+		consumingItem:             consumingItem.BatchGet,
+		fetchRequiredSkill:        requiredSkill.BatchGet,
+		skillGrowth:               skillGrowth.BatchGet,
+		updateStorage:             itemStorage.Update,
+		updateSkill:               userSkill.Update,
+		getAction:                 nil,
+		fetchStageExploreRelation: nil,
+		fetchUserStage:            nil,
+		fetchReductionSkill:       reductionSkill.BatchGet,
+		validateToken:             nil,
+		updateStamina:             userResource.UpdateStamina,
+		updateFund:                nil,
 	}, nil
-}
-
-func errorOnDecode(w http.ResponseWriter, err error) {
-	http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
-}
-
-func errorOnGenerateResponse(w http.ResponseWriter, err error) {
-	http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
-}
-
-func createGetStageActionDetailHandler(
-	infrastructures infrastructuresStruct,
-) handlerFunc {
-	calcStaminaService := stage.CreateCalcConsumingStaminaService(
-		infrastructures.userSkill,
-		infrastructures.exploreMaster,
-		infrastructures.reductionSkill,
-	)
-	getCommonService := stage.CreateCommonGetActionDetail(
-		calcStaminaService.Calc,
-		infrastructures.itemStorage,
-		infrastructures.exploreMaster,
-		infrastructures.earningItem,
-		infrastructures.consumingItem,
-		infrastructures.skillMaster,
-		infrastructures.userSkill,
-		infrastructures.requiredSkill,
-	)
-	getActionDetailService := stage.CreateGetStageActionDetailService(
-		getCommonService.GetAction,
-		infrastructures.stageMaster,
-	)
-	getStageActionDetail := endpoint.CreateGetStageActionDetail(getActionDetailService.GetAction)
-
-	getStageActionDetailHandler := func(w http.ResponseWriter, r *http.Request) {
-		var req gateway.GetStageActionDetailRequest
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
-			return
-		}
-		res, err := getStageActionDetail(&req)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
-			return
-		}
-
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(resJson)
-	}
-	return getStageActionDetailHandler
-}
-
-func createGetStageListHandler(
-	infrastructures infrastructuresStruct,
-	diContainer stage.DependencyInjectionContainer,
-	timer core.ICurrentTime,
-	getStageListEndpoint endpoint.GetStageListEndpoint,
-	createMakeUserExplores stage.ICreateMakeUserExploreFunc,
-	createFetchStageData stage.ICreateFetchStageData,
-	getStageList stage.IGetStageList,
-) handlerFunc {
-	fetchArgs := createMakeUserExplores(
-		infrastructures.userResource.GetResource,
-		infrastructures.getAction,
-		infrastructures.requiredSkill.BatchGet,
-		infrastructures.consumingItem.AllGet,
-		infrastructures.itemStorage.BatchGet,
-		infrastructures.userSkill.BatchGet,
-	)
-	fetchStageData := createFetchStageData(
-		infrastructures.stageMaster.GetAllStages,
-		infrastructures.fetchUserStage,
-		infrastructures.fetchStageExploreRelation,
-		infrastructures.exploreMaster.BatchGet,
-	)
-	get := getStageList(
-		diContainer.MakeStageUserExplore,
-		fetchArgs,
-		diContainer.MakeUserExplore,
-		diContainer.GetAllStage,
-		fetchStageData,
-	)
-	endpoint := getStageListEndpoint(get, timer)
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		var req gateway.GetStageListRequest
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			errorOnDecode(w, err)
-			return
-		}
-		res, err := endpoint(&req)
-		if err != nil {
-			errorOnGenerateResponse(w, err)
-			return
-		}
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			errorOnGenerateResponse(w, err)
-			return
-		}
-		setHeader(w)
-		w.WriteHeader(http.StatusOK)
-		w.Write(resJson)
-	}
-
-	return handler
-}
-
-func createPostHandler(
-	infrastructures infrastructuresStruct,
-	diContainer stage.DependencyInjectionContainer,
-	random core.IRandom,
-	currentTime core.ICurrentTime,
-) handlerFunc {
-	createArgs := application.EmitPostActionArgsFunc(
-		infrastructures.userResource,
-		infrastructures.exploreMaster,
-		infrastructures.skillGrowth,
-		infrastructures.skillMaster,
-		infrastructures.userSkill,
-		infrastructures.earningItem,
-		infrastructures.consumingItem,
-		infrastructures.requiredSkill,
-		infrastructures.itemStorage,
-		infrastructures.itemMaster,
-		diContainer.GetPostActionArgs,
-	)
-	postFunc := application.CompensatePostActionFunctions(
-		diContainer.ValidateAction,
-		diContainer.CalcSkillGrowth,
-		diContainer.CalcGrowthApply,
-		diContainer.CalcEarnedItem,
-		diContainer.CalcConsumedItem,
-		diContainer.CalcTotalItem,
-		diContainer.StaminaReduction,
-		infrastructures.updateStorage.Update,
-		infrastructures.updateSkill.Update,
-		nil,
-		nil,
-		random,
-		stage.PostAction,
-	)
-	postActionApp := application.CreatePostActionService(
-		currentTime,
-		postFunc,
-		createArgs,
-	)
-	postAction := endpoint.CreatePostAction(postActionApp)
-
-	postActionHandler := func(w http.ResponseWriter, r *http.Request) {
-		var req gateway.PostActionRequest
-		err := json.NewDecoder(r.Body).Decode(&req)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
-			return
-		}
-		res, err := postAction.Post(&req)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
-			return
-		}
-
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
-			return
-		}
-		setHeader(w)
-		w.WriteHeader(http.StatusOK)
-		w.Write(resJson)
-	}
-	return postActionHandler
-}
-
-func setHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
@@ -357,16 +176,84 @@ func main() {
 	currentTimeEmitter := core.CurrentTimeEmitter{}
 	random := core.RandomEmitter{}
 
-	postActionHandler := createPostHandler(*infrastructures, diContainer, &random, &currentTimeEmitter)
-	getStageActionDetailHandler := createGetStageActionDetailHandler(*infrastructures)
-	getStageListHandler := createGetStageListHandler(
-		*infrastructures,
+	postActionHandler := handler.CreatePostActionHandler(
+		stage.GetPostActionRepositories{
+			FetchResource:        infrastructures.getResource,
+			FetchExploreMaster:   infrastructures.exploreMaster,
+			FetchSkillMaster:     infrastructures.skillMaster,
+			FetchSkillGrowthData: infrastructures.skillGrowth,
+			FetchUserSkill:       infrastructures.userSkill,
+			FetchEarningItem:     infrastructures.earningItem,
+			FetchConsumingItem:   infrastructures.consumingItem,
+			FetchRequiredSkill:   infrastructures.fetchRequiredSkill,
+			FetchStorage:         infrastructures.fetchStorage,
+			FetchItemMaster:      infrastructures.fetchItemMaster,
+		},
+		stage.GetPostActionArgs,
+		application.EmitPostActionArgs,
+		application.CompensatePostActionArgs{
+			ValidateAction:       diContainer.ValidateAction,
+			CalcSkillGrowth:      diContainer.CalcSkillGrowth,
+			CalcGrowthApply:      diContainer.CalcGrowthApply,
+			CalcEarnedItem:       diContainer.CalcEarnedItem,
+			CalcConsumedItem:     diContainer.CalcConsumedItem,
+			CalcTotalItem:        diContainer.CalcTotalItem,
+			StaminaReductionFunc: diContainer.StaminaReduction,
+			UpdateItemStorage:    infrastructures.updateStorage,
+			UpdateSkill:          infrastructures.updateSkill,
+			UpdateStamina:        infrastructures.updateStamina,
+			UpdateFund:           infrastructures.updateFund,
+		},
+		application.CompensatePostActionFunctions,
+		stage.PostAction,
+		application.CreatePostActionService,
+		&random,
+		&currentTimeEmitter,
+		endpoint.CreatePostAction,
+		writeLogger,
+	)
+	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
+		infrastructures.userSkill,
+		infrastructures.exploreMaster,
+		infrastructures.fetchReductionSkill,
+		nil,
+		stage.CreateCommonGetActionDetailRepositories{
+			FetchItemStorage:        infrastructures.fetchStorage,
+			FetchExploreMaster:      infrastructures.exploreMaster,
+			FetchEarningItem:        infrastructures.earningItem,
+			FetchConsumingItem:      infrastructures.consumingItem,
+			FetchSkillMaster:        infrastructures.skillMaster,
+			FetchUserSkill:          infrastructures.userSkill,
+			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
+		},
+		nil,
+		infrastructures.stageMaster,
+		nil,
+		nil,
+		writeLogger,
+	)
+	getStageListHandler := handler.CreateGetStageListHandler(
 		diContainer,
 		&currentTimeEmitter,
 		endpoint.CreateGetStageList,
+		stage.CreateMakeUserExploreRepositories{
+			GetResource:       infrastructures.getResource,
+			GetAction:         infrastructures.getAction,
+			GetRequiredSkills: infrastructures.fetchRequiredSkill,
+			GetConsumingItems: infrastructures.consumingItem,
+			GetStorage:        infrastructures.fetchStorage,
+			GetUserSkill:      infrastructures.userSkill,
+		},
 		stage.CreateMakeUserExploreFunc,
+		stage.CreateFetchStageDataRepositories{
+			FetchAllStage:             infrastructures.fetchAllStage,
+			FetchUserStageFunc:        infrastructures.fetchUserStage,
+			FetchStageExploreRelation: infrastructures.fetchStageExploreRelation,
+			FetchExploreMaster:        infrastructures.exploreMaster,
+		},
 		stage.CreateFetchStageData,
 		stage.GetStageList,
+		writeLogger,
 	)
 	getResource := handler.CreateGetResourceHandler(
 		validateToken,
@@ -385,6 +272,6 @@ func main() {
 	}
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
+func hello(w http.ResponseWriter, _ *http.Request) {
 	_, _ = fmt.Fprintln(w, "Hello, Kisaragi!")
 }

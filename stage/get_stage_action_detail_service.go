@@ -137,6 +137,9 @@ func CreateCommonGetActionDetail(
 			if err != nil {
 				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
+			if len(res) <= 0 {
+				return []requiredSkillsRes{}, nil
+			}
 			requiredSkill := res[0].RequiredSkills
 			skillIds := func(skills []RequiredSkill) []core.SkillId {
 				result := make([]core.SkillId, len(skills))

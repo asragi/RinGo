@@ -7,7 +7,7 @@ import (
 )
 
 func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
-	userId := core.UserId("userId")
+	userId := core.UserId("passedId")
 	type testCase struct {
 		request []ExploreId
 		expect  []ExploreStaminaPair

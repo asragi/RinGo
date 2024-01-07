@@ -8,7 +8,7 @@ import (
 )
 
 func CreatePostActionHandler(
-	repoArgs application.EmitPostActionAppArgs,
+	repoArgs stage.GetPostActionRepositories,
 	argsFunc stage.GetPostActionArgsFunc,
 	emitPostActionArgs application.EmitPostActionArgsFunc,
 	funcArgs application.CompensatePostActionArgs,

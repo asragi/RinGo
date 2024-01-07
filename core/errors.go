@@ -15,5 +15,5 @@ type TokenIsInvalidError struct {
 }
 
 func (e TokenIsInvalidError) Error() string {
-	return fmt.Sprintf("Token is invalid: %s", e)
+	return fmt.Sprintf("token is invalid: %s", e.token)
 }

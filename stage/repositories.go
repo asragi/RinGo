@@ -17,12 +17,6 @@ type UpdateFundFunc func(core.UserId, core.Fund) error
 
 type UpdateStaminaFunc func(core.UserId, core.StaminaRecoverTime) error
 
-// Deprecated: use GetResourceFunc or UpdateStaminaFunc
-type UserResourceRepo interface {
-	GetResource(core.UserId, core.AccessToken) (GetResourceRes, error)
-	UpdateStamina(core.UserId, core.AccessToken, core.StaminaRecoverTime) error
-}
-
 type GetItemMasterRes struct {
 	ItemId      core.ItemId
 	Price       core.Price
@@ -34,11 +28,6 @@ type GetItemMasterRes struct {
 // Deprecated: use BatchGetItemMasterFunc
 type GetItemMasterFunc func(core.ItemId) (GetItemMasterRes, error)
 type BatchGetItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
-
-type ItemMasterRepo interface {
-	Get(core.ItemId) (GetItemMasterRes, error)
-	BatchGet([]core.ItemId) ([]GetItemMasterRes, error)
-}
 
 type GetItemStorageRes struct {
 	UserId core.UserId
@@ -64,11 +53,6 @@ type BatchGetStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (Bat
 
 type GetAllStorageFunc func(core.UserId) ([]ItemData, error)
 
-type ItemStorageRepo interface {
-	Get(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
-	BatchGet(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
-}
-
 type ItemStock struct {
 	ItemId     core.ItemId
 	AfterStock core.Stock
@@ -88,11 +72,6 @@ type BatchGetSkillMasterRes struct {
 
 type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
 
-// Deprecated: use FetchSkillMasterFunc
-type SkillMasterRepo interface {
-	BatchGet([]core.SkillId) (BatchGetSkillMasterRes, error)
-}
-
 type UserSkillRes struct {
 	UserId   core.UserId
 	SkillId  core.SkillId
@@ -106,11 +85,6 @@ type BatchGetUserSkillRes struct {
 
 type BatchGetUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
-// Deprecated: use BatchGetUserSkillFunc
-type UserSkillRepo interface {
-	BatchGet(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
-}
-
 // Skill Growth
 type SkillGrowthData struct {
 	ExploreId    ExploreId
@@ -118,9 +92,7 @@ type SkillGrowthData struct {
 	GainingPoint GainingPoint
 }
 
-type SkillGrowthDataRepo interface {
-	BatchGet(ExploreId) []SkillGrowthData
-}
+type FetchSkillGrowthData func(ExploreId) []SkillGrowthData
 
 type SkillGrowthPostRow struct {
 	SkillId  core.SkillId
@@ -156,12 +128,6 @@ type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
 
 type FetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
 
-// Deprecated: use fetchExploreMasterFunc
-type ExploreMasterRepo interface {
-	Get(ExploreId) (GetExploreMasterRes, error)
-	BatchGet([]ExploreId) ([]GetExploreMasterRes, error)
-}
-
 type ExploreUserData struct {
 	ExploreId ExploreId
 	IsKnown   core.IsKnown
@@ -184,12 +150,6 @@ type FetchRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
 type RequiredSkillRow struct {
 	ExploreId      ExploreId
 	RequiredSkills []RequiredSkill
-}
-
-// Deprecated: use FetchRequiredSkillsFunc
-type RequiredSkillRepo interface {
-	Get(ExploreId) ([]RequiredSkill, error)
-	BatchGet([]ExploreId) ([]RequiredSkillRow, error)
 }
 
 type StageMaster struct {
@@ -224,11 +184,6 @@ type EarningItem struct {
 
 type FetchEarningItemFunc func(ExploreId) ([]EarningItem, error)
 
-// Deprecated: Replace with FetchEarningItemFunc
-type EarningItemRepo interface {
-	BatchGet(ExploreId) []EarningItem
-}
-
 type ConsumingItem struct {
 	ItemId          core.ItemId
 	MaxCount        core.Count
@@ -241,12 +196,6 @@ type BatchGetConsumingItemRes struct {
 }
 
 type GetConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
-
-// Deprecated: use GetConsumingItemFunc
-type ConsumingItemRepo interface {
-	BatchGet(ExploreId) ([]ConsumingItem, error)
-	AllGet([]ExploreId) ([]BatchGetConsumingItemRes, error)
-}
 
 type BatchGetReductionStaminaSkill struct {
 	ExploreId ExploreId

@@ -25,7 +25,7 @@ func TestGetStageList(t *testing.T) {
 	}
 
 	for _, v := range testCases {
-		userId := core.UserId("userId")
+		userId := core.UserId("passedId")
 
 		createCompensatedMakeUserExplore := func(
 			_ compensatedMakeUserExploreArgs,
@@ -39,7 +39,10 @@ func TestGetStageList(t *testing.T) {
 
 			return f
 		}
-		fetchMakeUserExploreArgs := func(core.UserId, core.AccessToken, []ExploreId) (compensatedMakeUserExploreArgs, error) {
+		fetchMakeUserExploreArgs := func(core.UserId, core.AccessToken, []ExploreId) (
+			compensatedMakeUserExploreArgs,
+			error,
+		) {
 			return compensatedMakeUserExploreArgs{}, nil
 		}
 		makeUserExploreFunc := func(makeUserExploreArrayArgs) []UserExplore {

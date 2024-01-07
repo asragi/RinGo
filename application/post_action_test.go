@@ -19,6 +19,8 @@ func testCompensatePostFunction(t *testing.T) {
 		calcTotalItem stage.CalcTotalItemFunc,
 		updateItemStorage stage.UpdateItemStorageFunc,
 		updateSkill stage.SkillGrowthPostFunc,
+		updateStamina stage.UpdateStaminaFunc,
+		updateFund stage.UpdateFundFunc,
 		staminaReductionFunc stage.StaminaReductionFunc,
 		random core.IRandom,
 		currentTime time.Time,
@@ -26,16 +28,22 @@ func testCompensatePostFunction(t *testing.T) {
 		return stage.PostActionResult{}, nil
 	}
 
+	compensateRepo := CompensatePostActionArgs{
+		ValidateAction:       nil,
+		CalcSkillGrowth:      nil,
+		CalcGrowthApply:      nil,
+		CalcEarnedItem:       nil,
+		CalcConsumedItem:     nil,
+		CalcTotalItem:        nil,
+		StaminaReductionFunc: nil,
+		UpdateItemStorage:    nil,
+		UpdateSkill:          nil,
+		UpdateStamina:        nil,
+		UpdateFund:           nil,
+	}
+
 	compensatedPostFunc := CompensatePostActionFunctions(
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+		compensateRepo,
 		nil,
 		postActionFunc,
 	)
