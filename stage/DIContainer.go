@@ -9,8 +9,8 @@ type DependencyInjectionContainer struct {
 	CalcTotalItem                    CalcTotalItemFunc
 	StaminaReduction                 StaminaReductionFunc
 	GetPostActionArgs                GetPostActionArgsFunc
-	MakeStageUserExplore             createCompensateMakeUserExploreFunc
-	MakeUserExplore                  makeUserExploreArrayFunc
+	MakeStageUserExplore             CreateCompensateMakeUserExploreFunc
+	MakeUserExplore                  MakeUserExploreArrayFunc
 	GetAllStage                      getAllStageFunc
 	CreateGetUserResourceServiceFunc CreateGetUserResourceServiceFunc
 }
@@ -29,5 +29,6 @@ func CreateDIContainer() DependencyInjectionContainer {
 		MakeUserExplore:                  makeUserExplore,
 		GetAllStage:                      getAllStage,
 		CreateGetUserResourceServiceFunc: CreateGetUserResourceService,
+		MakeStageUserExplore:             compensateMakeUserExplore,
 	}
 }
