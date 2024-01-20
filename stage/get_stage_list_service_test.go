@@ -28,10 +28,10 @@ func TestGetStageList(t *testing.T) {
 		userId := core.UserId("passedId")
 
 		createCompensatedMakeUserExplore := func(
-			_ compensatedMakeUserExploreArgs,
+			_ CompensatedMakeUserExploreArgs,
 			_ core.ICurrentTime,
 			_ int,
-			makeUserExplore makeUserExploreArrayFunc,
+			makeUserExplore MakeUserExploreArrayFunc,
 		) compensatedMakeUserExploreFunc {
 			f := func(makeUserExploreArgs) []UserExplore {
 				return makeUserExplore(makeUserExploreArrayArgs{})
@@ -40,10 +40,10 @@ func TestGetStageList(t *testing.T) {
 			return f
 		}
 		fetchMakeUserExploreArgs := func(core.UserId, core.AccessToken, []ExploreId) (
-			compensatedMakeUserExploreArgs,
+			CompensatedMakeUserExploreArgs,
 			error,
 		) {
-			return compensatedMakeUserExploreArgs{}, nil
+			return CompensatedMakeUserExploreArgs{}, nil
 		}
 		makeUserExploreFunc := func(makeUserExploreArrayArgs) []UserExplore {
 			return v.mockExplore

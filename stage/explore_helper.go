@@ -6,13 +6,6 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type UserExplore struct {
-	ExploreId   ExploreId
-	DisplayName core.DisplayName
-	IsKnown     core.IsKnown
-	IsPossible  core.IsPossible
-}
-
 type CheckIsPossibleArgs struct {
 	requiredStamina core.Stamina
 	requiredPrice   core.Price
@@ -113,92 +106,4 @@ func checkIsExplorePossible(
 		core.PossibleTypeItem:    isItemEnough,
 		core.PossibleTypeFund:    isFundEnough,
 	}
-}
-
-func makeExploreIdMap(explores []ExploreUserData) map[ExploreId]ExploreUserData {
-	result := make(map[ExploreId]ExploreUserData)
-	for _, v := range explores {
-		result[v.ExploreId] = v
-	}
-	return result
-}
-
-type makeUserExploreArrayArgs struct {
-	resourceRes       GetResourceRes
-	currentTimer      core.ICurrentTime
-	actionsRes        GetActionsRes
-	requiredSkillRes  []RequiredSkillRow
-	consumingItemRes  []BatchGetConsumingItemRes
-	itemData          []ItemData
-	batchGetSkillRes  BatchGetUserSkillRes
-	exploreIds        []ExploreId
-	calculatedStamina map[ExploreId]core.Stamina
-	exploreMasterMap  map[ExploreId]GetExploreMasterRes
-	execNum           int
-}
-
-type makeUserExploreArrayFunc func(
-	makeUserExploreArrayArgs,
-) []UserExplore
-
-func makeUserExplore(
-	args makeUserExploreArrayArgs,
-) []UserExplore {
-	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
-		recoverTime := resource.StaminaRecoverTime
-		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
-	}(args.resourceRes, args.currentTimer)
-	currentFund := args.resourceRes.Fund
-	exploreMap := makeExploreIdMap(args.actionsRes.Explores)
-	itemDataToStockMap := func(arr []ItemData) map[core.ItemId]core.Stock {
-		result := make(map[core.ItemId]core.Stock)
-		for _, v := range arr {
-			result[v.ItemId] = v.Stock
-		}
-		return result
-	}
-
-	skillDataToLvMap := func(arr []UserSkillRes) map[core.SkillId]core.SkillLv {
-		result := make(map[core.SkillId]core.SkillLv)
-		for _, v := range arr {
-			result[v.SkillId] = v.SkillExp.CalcLv()
-		}
-		return result
-	}
-
-	requiredSkillMap := func(rows []RequiredSkillRow) map[ExploreId][]RequiredSkill {
-		result := make(map[ExploreId][]RequiredSkill)
-		for _, v := range rows {
-			result[v.ExploreId] = v.RequiredSkills
-		}
-		return result
-	}(args.requiredSkillRes)
-
-	consumingItemMap := func(consuming []BatchGetConsumingItemRes) map[ExploreId][]ConsumingItem {
-		result := make(map[ExploreId][]ConsumingItem)
-		for _, v := range consuming {
-			result[v.ExploreId] = v.ConsumingItems
-		}
-		return result
-	}(args.consumingItemRes)
-
-	itemStockList := itemDataToStockMap(args.itemData)
-
-	skillLvList := skillDataToLvMap(args.batchGetSkillRes.Skills)
-
-	result := make([]UserExplore, len(args.exploreIds))
-	for i, v := range args.exploreIds {
-		requiredPrice := args.exploreMasterMap[v].RequiredPayment
-		stamina := args.calculatedStamina[v]
-		isPossibleList := checkIsExplorePossible(CheckIsPossibleArgs{stamina, requiredPrice, consumingItemMap[v], requiredSkillMap[v], currentStamina, currentFund, itemStockList, skillLvList, args.execNum})
-		isPossible := isPossibleList[core.PossibleTypeAll]
-		isKnown := exploreMap[v].IsKnown
-		result[i] = UserExplore{
-			ExploreId:   v,
-			IsPossible:  isPossible,
-			IsKnown:     isKnown,
-			DisplayName: args.exploreMasterMap[v].DisplayName,
-		}
-	}
-	return result
 }

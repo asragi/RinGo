@@ -21,17 +21,17 @@ type GetStageListFunc func(
 ) ([]StageInformation, error)
 
 type IGetStageList func(
-	createCompensateMakeUserExploreFunc,
+	CreateCompensateMakeUserExploreFunc,
 	fetchMakeUserExploreArgs,
-	makeUserExploreArrayFunc,
+	MakeUserExploreArrayFunc,
 	getAllStageFunc,
 	fetchStageDataFunc,
 ) GetStageListFunc
 
 func GetStageList(
-	createCompensateMakeUserExploreFunc createCompensateMakeUserExploreFunc,
+	createCompensateMakeUserExploreFunc CreateCompensateMakeUserExploreFunc,
 	fetchMakeUserExploreArgsFunc fetchMakeUserExploreArgs,
-	makeUserExploreFunc makeUserExploreArrayFunc,
+	makeUserExploreFunc MakeUserExploreArrayFunc,
 	getAllStage getAllStageFunc,
 	fetchStageData fetchStageDataFunc,
 ) GetStageListFunc {
@@ -71,18 +71,18 @@ func GetStageList(
 	return getStageListFunc
 }
 
-type createCompensateMakeUserExploreFunc func(
-	compensatedMakeUserExploreArgs,
+type CreateCompensateMakeUserExploreFunc func(
+	CompensatedMakeUserExploreArgs,
 	core.ICurrentTime,
 	int,
-	makeUserExploreArrayFunc,
+	MakeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc
 
 func compensateMakeUserExplore(
-	repoArgs compensatedMakeUserExploreArgs,
+	repoArgs CompensatedMakeUserExploreArgs,
 	currentTimer core.ICurrentTime,
 	execNum int,
-	makeUserExplore makeUserExploreArrayFunc,
+	makeUserExplore MakeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc {
 	exploreFunc := func(
 		args makeUserExploreArgs,

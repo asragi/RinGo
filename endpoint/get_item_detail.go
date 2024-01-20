@@ -9,6 +9,7 @@ import (
 )
 
 type getItemDetailEndpointRes func(*gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error)
+type GetItemDetailEndpoint func(detailFunc stage.GetItemDetailFunc) getItemDetailEndpointRes
 
 func CreateGetItemDetail(
 	getItemDetail stage.GetItemDetailFunc,
@@ -20,11 +21,13 @@ func CreateGetItemDetail(
 		handleError := func(err error) (*gateway.GetItemDetailResponse, error) {
 			return &gateway.GetItemDetailResponse{}, fmt.Errorf("error on get item detail endpoint: %w", err)
 		}
-		res, err := getItemDetail(stage.GetUserItemDetailReq{
-			UserId:      userId,
-			ItemId:      itemId,
-			AccessToken: token,
-		})
+		res, err := getItemDetail(
+			stage.GetUserItemDetailReq{
+				UserId:      userId,
+				ItemId:      itemId,
+				AccessToken: token,
+			},
+		)
 		if err != nil {
 			return handleError(err)
 		}

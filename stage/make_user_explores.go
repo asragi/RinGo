@@ -6,13 +6,22 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
+type UserExplore struct {
+	ExploreId   ExploreId
+	DisplayName core.DisplayName
+	IsKnown     core.IsKnown
+	IsPossible  core.IsPossible
+}
+
 type makeUserExploreArgs struct {
 	exploreIds        []ExploreId
 	calculatedStamina map[ExploreId]core.Stamina
 	exploreMasterMap  map[ExploreId]GetExploreMasterRes
 }
 
-type compensatedMakeUserExploreArgs struct {
+type compensatedMakeUserExploreFunc func(makeUserExploreArgs) []UserExplore
+
+type CompensatedMakeUserExploreArgs struct {
 	resourceRes      GetResourceRes
 	actionsRes       GetActionsRes
 	requiredSkillRes []RequiredSkillRow
@@ -21,13 +30,11 @@ type compensatedMakeUserExploreArgs struct {
 	batchGetSkillRes BatchGetUserSkillRes
 }
 
-type compensatedMakeUserExploreFunc func(makeUserExploreArgs) []UserExplore
-
 type fetchMakeUserExploreArgs func(
 	core.UserId,
 	core.AccessToken,
 	[]ExploreId,
-) (compensatedMakeUserExploreArgs, error)
+) (CompensatedMakeUserExploreArgs, error)
 
 type CreateMakeUserExploreRepositories struct {
 	GetResource       GetResourceFunc
@@ -49,9 +56,9 @@ func CreateMakeUserExploreFunc(
 		userId core.UserId,
 		token core.AccessToken,
 		exploreIds []ExploreId,
-	) (compensatedMakeUserExploreArgs, error) {
-		handleError := func(err error) (compensatedMakeUserExploreArgs, error) {
-			return compensatedMakeUserExploreArgs{}, fmt.Errorf("error on create make user explore args: %w", err)
+	) (CompensatedMakeUserExploreArgs, error) {
+		handleError := func(err error) (CompensatedMakeUserExploreArgs, error) {
+			return CompensatedMakeUserExploreArgs{}, fmt.Errorf("error on create make user explore args: %w", err)
 		}
 		resourceRes, err := repositories.GetResource(userId, token)
 		if err != nil {
@@ -78,7 +85,7 @@ func CreateMakeUserExploreFunc(
 			return handleError(err)
 		}
 
-		return compensatedMakeUserExploreArgs{
+		return CompensatedMakeUserExploreArgs{
 			resourceRes:      resourceRes,
 			actionsRes:       actionRes,
 			requiredSkillRes: requiredSkillsResponse,
@@ -89,4 +96,102 @@ func CreateMakeUserExploreFunc(
 
 	}
 	return makeUserExplores
+}
+
+type makeUserExploreArrayArgs struct {
+	resourceRes       GetResourceRes
+	currentTimer      core.ICurrentTime
+	actionsRes        GetActionsRes
+	requiredSkillRes  []RequiredSkillRow
+	consumingItemRes  []BatchGetConsumingItemRes
+	itemData          []ItemData
+	batchGetSkillRes  BatchGetUserSkillRes
+	exploreIds        []ExploreId
+	calculatedStamina map[ExploreId]core.Stamina
+	exploreMasterMap  map[ExploreId]GetExploreMasterRes
+	execNum           int
+}
+
+type MakeUserExploreArrayFunc func(
+	makeUserExploreArrayArgs,
+) []UserExplore
+
+func makeUserExplore(
+	args makeUserExploreArrayArgs,
+) []UserExplore {
+	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
+		recoverTime := resource.StaminaRecoverTime
+		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
+	}(args.resourceRes, args.currentTimer)
+	currentFund := args.resourceRes.Fund
+	exploreMap := func(explores []ExploreUserData) map[ExploreId]ExploreUserData {
+		result := make(map[ExploreId]ExploreUserData)
+		for _, v := range explores {
+			result[v.ExploreId] = v
+		}
+		return result
+	}(args.actionsRes.Explores)
+	itemDataToStockMap := func(arr []ItemData) map[core.ItemId]core.Stock {
+		result := make(map[core.ItemId]core.Stock)
+		for _, v := range arr {
+			result[v.ItemId] = v.Stock
+		}
+		return result
+	}
+
+	skillDataToLvMap := func(arr []UserSkillRes) map[core.SkillId]core.SkillLv {
+		result := make(map[core.SkillId]core.SkillLv)
+		for _, v := range arr {
+			result[v.SkillId] = v.SkillExp.CalcLv()
+		}
+		return result
+	}
+
+	requiredSkillMap := func(rows []RequiredSkillRow) map[ExploreId][]RequiredSkill {
+		result := make(map[ExploreId][]RequiredSkill)
+		for _, v := range rows {
+			result[v.ExploreId] = v.RequiredSkills
+		}
+		return result
+	}(args.requiredSkillRes)
+
+	consumingItemMap := func(consuming []BatchGetConsumingItemRes) map[ExploreId][]ConsumingItem {
+		result := make(map[ExploreId][]ConsumingItem)
+		for _, v := range consuming {
+			result[v.ExploreId] = v.ConsumingItems
+		}
+		return result
+	}(args.consumingItemRes)
+
+	itemStockList := itemDataToStockMap(args.itemData)
+
+	skillLvList := skillDataToLvMap(args.batchGetSkillRes.Skills)
+
+	result := make([]UserExplore, len(args.exploreIds))
+	for i, v := range args.exploreIds {
+		requiredPrice := args.exploreMasterMap[v].RequiredPayment
+		stamina := args.calculatedStamina[v]
+		isPossibleList := checkIsExplorePossible(
+			CheckIsPossibleArgs{
+				stamina,
+				requiredPrice,
+				consumingItemMap[v],
+				requiredSkillMap[v],
+				currentStamina,
+				currentFund,
+				itemStockList,
+				skillLvList,
+				args.execNum,
+			},
+		)
+		isPossible := isPossibleList[core.PossibleTypeAll]
+		isKnown := exploreMap[v].IsKnown
+		result[i] = UserExplore{
+			ExploreId:   v,
+			IsPossible:  isPossible,
+			IsKnown:     isKnown,
+			DisplayName: args.exploreMasterMap[v].DisplayName,
+		}
+	}
+	return result
 }
