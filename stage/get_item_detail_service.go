@@ -2,7 +2,6 @@ package stage
 
 import (
 	"fmt"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -98,8 +97,8 @@ func CreateGetItemDetailService(
 
 type ICreateGetItemDetailArgs func(GetUserItemDetailReq) (getItemDetailArgs, error)
 type CreateGetItemDetailRepositories struct {
-	GetItemMaster                 GetItemMasterFunc
-	GetItemStorage                GetItemStorageFunc
+	GetItemMaster                 BatchGetItemMasterFunc
+	GetItemStorage                BatchGetStorageFunc
 	GetExploreMaster              FetchExploreMasterFunc
 	GetItemExploreRelation        GetItemExploreRelationFunc
 	CalcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc
@@ -128,17 +127,17 @@ func CreateGetItemDetailArgs(
 
 type ICreateFetchItemDetailArgs func(
 	GetUserItemDetailReq,
-	GetItemMasterFunc,
-	GetItemStorageFunc,
+	BatchGetItemMasterFunc,
+	BatchGetStorageFunc,
 	FetchExploreMasterFunc,
 	GetItemExploreRelationFunc,
 	CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error)
 
-func createGetItemDetailArgs(
+func FetchGetItemDetailArgs(
 	req GetUserItemDetailReq,
-	getItemMaster GetItemMasterFunc,
-	getItemStorage GetItemStorageFunc,
+	getItemMaster BatchGetItemMasterFunc,
+	getItemStorage BatchGetStorageFunc,
 	getExploreMaster FetchExploreMasterFunc,
 	getItemExploreRelation GetItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,
@@ -146,10 +145,12 @@ func createGetItemDetailArgs(
 	handleError := func(err error) (getItemDetailArgs, error) {
 		return getItemDetailArgs{}, fmt.Errorf("error on create get item detail args: %w", err)
 	}
-	itemMasterRes, err := getItemMaster(req.ItemId)
+	itemIdReq := []core.ItemId{req.ItemId}
+	itemMasterRes, err := getItemMaster(itemIdReq)
 	if err != nil {
 		return handleError(err)
 	}
+	itemMaster := itemMasterRes[0]
 	itemExploreIds, err := getItemExploreRelation(req.ItemId)
 	if err != nil {
 		return handleError(err)
@@ -162,16 +163,20 @@ func createGetItemDetailArgs(
 	if err != nil {
 		return handleError(err)
 	}
-	storageRes, err := getItemStorage(req.UserId, req.ItemId, req.AccessToken)
+	storageRes, err := getItemStorage(req.UserId, itemIdReq, req.AccessToken)
 	if err != nil {
 		return handleError(err)
 	}
+	storage := GetItemStorageRes{
+		UserId: storageRes.ItemData[0].UserId,
+		Stock:  storageRes.ItemData[0].Stock,
+	}
 
 	return getItemDetailArgs{
-		masterRes:          itemMasterRes,
+		masterRes:          itemMaster,
 		explores:           explores,
 		exploreStaminaPair: staminaRes,
-		storageRes:         storageRes,
+		storageRes:         storage,
 	}, nil
 }
 

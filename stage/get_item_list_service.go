@@ -16,6 +16,8 @@ type ItemListRow struct {
 	Price       core.Price
 }
 
+type CreateGetItemListFunc func(GetAllStorageFunc, BatchGetItemMasterFunc) GetItemListFunc
+
 func CreateGetItemListService(
 	getAllStorage GetAllStorageFunc,
 	getItemMaster BatchGetItemMasterFunc,

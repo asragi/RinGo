@@ -104,7 +104,7 @@ func TestCreateGetItemDetailArgs(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		res, err := createGetItemDetailArgs(
+		res, err := FetchGetItemDetailArgs(
 			v.request,
 			mockGetItemMaster,
 			mockGetItemStorage,

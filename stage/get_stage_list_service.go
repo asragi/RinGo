@@ -78,7 +78,7 @@ type CreateCompensateMakeUserExploreFunc func(
 	MakeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc
 
-func compensateMakeUserExplore(
+func CompensateMakeUserExplore(
 	repoArgs CompensatedMakeUserExploreArgs,
 	currentTimer core.ICurrentTime,
 	execNum int,

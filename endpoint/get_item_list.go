@@ -8,11 +8,13 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type getItemEndpoint func(*gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
+type CreateGetItemListEndpoint func(stage.GetItemListFunc) GetItemEndpoint
+
+type GetItemEndpoint func(*gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
 
 func CreateGetItemService(
 	getItem stage.GetItemListFunc,
-) getItemEndpoint {
+) GetItemEndpoint {
 	get := func(req *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error) {
 		userId := core.UserId(req.UserId)
 		res, err := getItem(userId)

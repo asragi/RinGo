@@ -116,7 +116,7 @@ type MakeUserExploreArrayFunc func(
 	makeUserExploreArrayArgs,
 ) []UserExplore
 
-func makeUserExplore(
+func MakeUserExplore(
 	args makeUserExploreArrayArgs,
 ) []UserExplore {
 	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
