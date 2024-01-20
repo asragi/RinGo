@@ -18,6 +18,7 @@ type infrastructuresStruct struct {
 	getResource               stage.GetResourceFunc
 	fetchItemMaster           stage.BatchGetItemMasterFunc
 	fetchStorage              stage.BatchGetStorageFunc
+	getAllStorage             stage.GetAllStorageFunc
 	userSkill                 stage.BatchGetUserSkillFunc
 	stageMaster               stage.FetchStageMasterFunc
 	fetchAllStage             stage.FetchAllStageFunc
@@ -31,6 +32,7 @@ type infrastructuresStruct struct {
 	updateSkill               stage.SkillGrowthPostFunc
 	getAction                 stage.GetActionsFunc
 	fetchStageExploreRelation stage.FetchStageExploreRelation
+	fetchItemExploreRelation  stage.GetItemExploreRelationFunc
 	fetchUserStage            stage.FetchUserStageFunc
 	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
 	validateToken             core.ValidateTokenRepoFunc
@@ -261,10 +263,46 @@ func main() {
 		diContainer.CreateGetUserResourceServiceFunc,
 		writeLogger,
 	)
+	getItemDetail := handler.CreateGetItemDetailHandler(
+		&currentTimeEmitter,
+		stage.CreateMakeUserExploreRepositories{
+			GetResource:       infrastructures.getResource,
+			GetAction:         infrastructures.getAction,
+			GetRequiredSkills: infrastructures.fetchRequiredSkill,
+			GetConsumingItems: infrastructures.consumingItem,
+			GetStorage:        infrastructures.fetchStorage,
+			GetUserSkill:      infrastructures.userSkill,
+		},
+		stage.CreateMakeUserExploreFunc,
+		stage.MakeUserExplore,
+		stage.CompensateMakeUserExplore,
+		stage.GetAllItemAction,
+		stage.CreateGetItemDetailRepositories{
+			GetItemMaster:                 infrastructures.fetchItemMaster,
+			GetItemStorage:                infrastructures.fetchStorage,
+			GetExploreMaster:              infrastructures.exploreMaster,
+			GetItemExploreRelation:        infrastructures.fetchItemExploreRelation,
+			CalcBatchConsumingStaminaFunc: nil,
+			CreateArgs:                    stage.FetchGetItemDetailArgs,
+		},
+		stage.CreateGetItemDetailArgs,
+		stage.CreateGetItemDetailService,
+		endpoint.CreateGetItemDetail,
+		writeLogger,
+	)
+	getItemList := handler.CreateGetItemListHandler(
+		infrastructures.getAllStorage,
+		infrastructures.fetchItemMaster,
+		nil,
+		nil,
+		writeLogger,
+	)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)
 	http.HandleFunc("/users", getResource)
+	http.HandleFunc("/items", getItemDetail)
+	http.HandleFunc("/warehouse", getItemList)
 	http.HandleFunc("/", hello)
 	err = http.ListenAndServe(":4444", nil)
 	if err != nil {
