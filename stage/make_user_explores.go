@@ -100,7 +100,7 @@ func CreateMakeUserExploreFunc(
 
 type makeUserExploreArrayArgs struct {
 	resourceRes       GetResourceRes
-	currentTimer      core.ICurrentTime
+	currentTimer      core.GetCurrentTimeFunc
 	actionsRes        GetActionsRes
 	requiredSkillRes  []RequiredSkillRow
 	consumingItemRes  []BatchGetConsumingItemRes
@@ -119,9 +119,9 @@ type MakeUserExploreArrayFunc func(
 func MakeUserExplore(
 	args makeUserExploreArrayArgs,
 ) []UserExplore {
-	currentStamina := func(resource GetResourceRes, currentTime core.ICurrentTime) core.Stamina {
+	currentStamina := func(resource GetResourceRes, currentTime core.GetCurrentTimeFunc) core.Stamina {
 		recoverTime := resource.StaminaRecoverTime
-		return recoverTime.CalcStamina(currentTime.Get(), resource.MaxStamina)
+		return recoverTime.CalcStamina(currentTime(), resource.MaxStamina)
 	}(args.resourceRes, args.currentTimer)
 	currentFund := args.resourceRes.Fund
 	exploreMap := func(explores []ExploreUserData) map[ExploreId]ExploreUserData {

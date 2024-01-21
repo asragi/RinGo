@@ -17,7 +17,7 @@ type StageInformation struct {
 type GetStageListFunc func(
 	core.UserId,
 	core.AccessToken,
-	core.ICurrentTime,
+	core.GetCurrentTimeFunc,
 ) ([]StageInformation, error)
 
 type IGetStageList func(
@@ -38,7 +38,7 @@ func GetStageList(
 	getStageListFunc := func(
 		userId core.UserId,
 		token core.AccessToken,
-		currentTime core.ICurrentTime,
+		currentTime core.GetCurrentTimeFunc,
 	) ([]StageInformation, error) {
 		handleError := func(err error) ([]StageInformation, error) {
 			return nil, fmt.Errorf("error on get stage list: %w", err)
@@ -73,14 +73,14 @@ func GetStageList(
 
 type CreateCompensateMakeUserExploreFunc func(
 	CompensatedMakeUserExploreArgs,
-	core.ICurrentTime,
+	core.GetCurrentTimeFunc,
 	int,
 	MakeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc
 
 func CompensateMakeUserExplore(
 	repoArgs CompensatedMakeUserExploreArgs,
-	currentTimer core.ICurrentTime,
+	currentTimer core.GetCurrentTimeFunc,
 	execNum int,
 	makeUserExplore MakeUserExploreArrayFunc,
 ) compensatedMakeUserExploreFunc {

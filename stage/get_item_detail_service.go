@@ -30,7 +30,7 @@ type getItemDetailArgs struct {
 }
 
 type CreateGetItemDetailServiceFunc func(
-	timer core.ICurrentTime,
+	timer core.GetCurrentTimeFunc,
 	createArgs ICreateGetItemDetailArgs,
 	getAllAction IGetAllItemAction,
 	makeUserExploreArray MakeUserExploreArrayFunc,
@@ -40,7 +40,7 @@ type CreateGetItemDetailServiceFunc func(
 type GetItemDetailFunc func(GetUserItemDetailReq) (getUserItemDetailRes, error)
 
 func CreateGetItemDetailService(
-	timer core.ICurrentTime,
+	timer core.GetCurrentTimeFunc,
 	createArgs ICreateGetItemDetailArgs,
 	getAllAction IGetAllItemAction,
 	makeUserExploreArray MakeUserExploreArrayFunc,
