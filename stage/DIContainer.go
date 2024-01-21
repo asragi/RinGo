@@ -1,5 +1,6 @@
 package stage
 
+// Deprecated: avoid using DependencyInjectionContainer
 type DependencyInjectionContainer struct {
 	ValidateAction                   ValidateActionFunc
 	CalcSkillGrowth                  CalcSkillGrowthFunc
@@ -26,9 +27,9 @@ func CreateDIContainer() DependencyInjectionContainer {
 		CalcTotalItem:                    calcTotalItem,
 		StaminaReduction:                 calcStaminaReduction,
 		GetPostActionArgs:                GetPostActionArgs,
-		MakeUserExplore:                  makeUserExplore,
+		MakeUserExplore:                  MakeUserExplore,
 		GetAllStage:                      getAllStage,
 		CreateGetUserResourceServiceFunc: CreateGetUserResourceService,
-		MakeStageUserExplore:             compensateMakeUserExplore,
+		MakeStageUserExplore:             CompensateMakeUserExplore,
 	}
 }
