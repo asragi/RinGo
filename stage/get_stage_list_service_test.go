@@ -29,7 +29,7 @@ func TestGetStageList(t *testing.T) {
 
 		createCompensatedMakeUserExplore := func(
 			_ CompensatedMakeUserExploreArgs,
-			_ core.ICurrentTime,
+			_ core.GetCurrentTimeFunc,
 			_ int,
 			makeUserExplore MakeUserExploreArrayFunc,
 		) compensatedMakeUserExploreFunc {

@@ -85,7 +85,22 @@ func CreateGetItemDetailService(
 			compensatedMakeUserExplore,
 		)
 
-		return getItemDetail(
+		return func(
+			masterRes GetItemMasterRes,
+			storageRes GetItemStorageRes,
+			explores []UserExplore,
+		) getUserItemDetailRes {
+			return getUserItemDetailRes{
+				UserId:       storageRes.UserId,
+				ItemId:       masterRes.ItemId,
+				Price:        masterRes.Price,
+				DisplayName:  masterRes.DisplayName,
+				Description:  masterRes.Description,
+				MaxStock:     masterRes.MaxStock,
+				Stock:        storageRes.Stock,
+				UserExplores: explores,
+			}
+		}(
 			args.masterRes,
 			args.storageRes,
 			userExplores,
@@ -178,23 +193,6 @@ func FetchGetItemDetailArgs(
 		exploreStaminaPair: staminaRes,
 		storageRes:         storage,
 	}, nil
-}
-
-func getItemDetail(
-	masterRes GetItemMasterRes,
-	storageRes GetItemStorageRes,
-	explores []UserExplore,
-) getUserItemDetailRes {
-	return getUserItemDetailRes{
-		UserId:       storageRes.UserId,
-		ItemId:       masterRes.ItemId,
-		Price:        masterRes.Price,
-		DisplayName:  masterRes.DisplayName,
-		Description:  masterRes.Description,
-		MaxStock:     masterRes.MaxStock,
-		Stock:        storageRes.Stock,
-		UserExplores: explores,
-	}
 }
 
 type IGetAllItemAction func(

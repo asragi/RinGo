@@ -1,6 +1,9 @@
 package test
 
-import "time"
+import (
+	"reflect"
+	"time"
+)
 
 type TestRandom struct {
 	Value float32
@@ -20,4 +23,8 @@ func (m *MockTimer) Get() time.Time {
 
 func createMockTimer(constDate time.Time) *MockTimer {
 	return &MockTimer{Date: constDate}
+}
+
+func DeepEqual(a any, b any) bool {
+	return reflect.DeepEqual(a, b)
 }
