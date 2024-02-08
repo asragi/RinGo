@@ -165,6 +165,9 @@ func FetchGetItemDetailArgs(
 	if err != nil {
 		return handleError(err)
 	}
+	if len(itemMasterRes) <= 0 {
+		return handleError(&InvalidResponseFromInfrastructureError{Message: "item master response"})
+	}
 	itemMaster := itemMasterRes[0]
 	itemExploreIds, err := getItemExploreRelation(req.ItemId)
 	if err != nil {
@@ -182,9 +185,13 @@ func FetchGetItemDetailArgs(
 	if err != nil {
 		return handleError(err)
 	}
+	itemData := storageRes.ItemData
+	if len(itemData) <= 0 {
+		return handleError(&InvalidResponseFromInfrastructureError{Message: "Item Storage Data"})
+	}
 	storage := GetItemStorageRes{
-		UserId: storageRes.ItemData[0].UserId,
-		Stock:  storageRes.ItemData[0].Stock,
+		UserId: itemData[0].UserId,
+		Stock:  itemData[0].Stock,
 	}
 
 	return getItemDetailArgs{

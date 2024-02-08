@@ -100,22 +100,58 @@ func TestCreateGetItemDetailService(t *testing.T) {
 func TestFetchGetItemDetailArgs(t *testing.T) {
 	type testCase struct {
 		request                GetUserItemDetailReq
-		expect                 getItemDetailArgs
 		expectedError          error
-		mockGetItemMasterRes   []GetItemMasterRes
-		mockGetItemStorageRes  []ItemData
+		mockGetItemMasterRes   GetItemMasterRes
+		mockGetItemStorageRes  ItemData
 		mockGetExploreRes      []GetExploreMasterRes
 		mockItemExplore        []ExploreId
 		mockExploreStaminaPair []ExploreStaminaPair
 	}
 
-	testCases := []testCase{}
+	userId := core.UserId("user")
+	itemId := core.ItemId("item")
+
+	testCases := []testCase{
+		{
+			request: GetUserItemDetailReq{
+				UserId:      userId,
+				ItemId:      itemId,
+				AccessToken: "token",
+			},
+			expectedError: nil,
+			mockGetItemMasterRes: GetItemMasterRes{
+				ItemId:      itemId,
+				Price:       300,
+				DisplayName: "TestItem",
+				Description: "TestDesc",
+				MaxStock:    100,
+			},
+			mockGetItemStorageRes: ItemData{
+				UserId:  userId,
+				ItemId:  itemId,
+				Stock:   50,
+				IsKnown: true,
+			},
+			mockGetExploreRes:      nil,
+			mockItemExplore:        nil,
+			mockExploreStaminaPair: nil,
+		},
+	}
 
 	for i, v := range testCases {
+		expectedRes := getItemDetailArgs{
+			masterRes: v.mockGetItemMasterRes,
+			storageRes: GetItemStorageRes{
+				UserId: userId,
+				Stock:  v.mockGetItemStorageRes.Stock,
+			},
+			exploreStaminaPair: v.mockExploreStaminaPair,
+			explores:           v.mockGetExploreRes,
+		}
 		var mockGetItemArgs core.ItemId
 		mockGetItemMaster := func(itemId []core.ItemId) ([]GetItemMasterRes, error) {
 			mockGetItemArgs = itemId[0]
-			return v.mockGetItemMasterRes, nil
+			return []GetItemMasterRes{v.mockGetItemMasterRes}, nil
 		}
 
 		var passedStorageArg core.ItemId
@@ -126,7 +162,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 			passedStorageArg = itemId[0]
 			return BatchGetStorageRes{
 				UserId:   userId,
-				ItemData: v.mockGetItemStorageRes,
+				ItemData: []ItemData{v.mockGetItemStorageRes},
 			}, nil
 		}
 		var passedExploreArgs []ExploreId
@@ -158,7 +194,12 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 			consumingStamina,
 		)
 		if !errors.Is(err, v.expectedError) {
-			t.Fatalf("case: %d, expect error is: %s, got: %s", i, v.expectedError.Error(), err.Error())
+			t.Fatalf(
+				"case: %d, expect error is: %s, got: %s",
+				i,
+				test.ErrorToString(v.expectedError),
+				test.ErrorToString(err),
+			)
 		}
 		if mockGetItemArgs != req.ItemId {
 			t.Errorf("expect: %s, got: %s", req.ItemId, mockGetItemArgs)
@@ -179,8 +220,8 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 				passedStaminaArgs,
 			)
 		}
-		if !reflect.DeepEqual(v.expect, res) {
-			t.Errorf("expect and actual are not matched:%+v, %+v", res, v.expect)
+		if !reflect.DeepEqual(expectedRes, res) {
+			t.Errorf("expect:%+v, got:%+v", expectedRes, res)
 		}
 	}
 }

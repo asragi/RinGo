@@ -28,3 +28,10 @@ func createMockTimer(constDate time.Time) *MockTimer {
 func DeepEqual(a any, b any) bool {
 	return reflect.DeepEqual(a, b)
 }
+
+func ErrorToString(err error) string {
+	if err == nil {
+		return "{nil}"
+	}
+	return err.Error()
+}
