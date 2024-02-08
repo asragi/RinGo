@@ -40,9 +40,9 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			ActionDisplayName: v.mockExplore.DisplayName,
 			RequiredPayment:   v.mockExplore.RequiredPayment,
 			RequiredStamina:   v.mockReducedStamina,
-			RequiredItems:     []requiredItemsRes{},
-			EarningItems:      []earningItemRes{},
-			RequiredSkills:    []requiredSkillsRes{},
+			RequiredItems:     []RequiredItemsRes{},
+			EarningItems:      []EarningItemRes{},
+			RequiredSkills:    []RequiredSkillsRes{},
 		}
 
 		calcConsumingStamina := func(_ core.UserId, _ core.AccessToken, exploreIds []ExploreId) (

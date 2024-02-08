@@ -218,7 +218,7 @@ func main() {
 		infrastructures.userSkill,
 		infrastructures.exploreMaster,
 		infrastructures.fetchReductionSkill,
-		nil,
+		stage.CreateCalcConsumingStaminaService,
 		stage.CreateCommonGetActionDetailRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
@@ -228,10 +228,10 @@ func main() {
 			FetchUserSkill:          infrastructures.userSkill,
 			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
 		},
-		nil,
+		stage.CreateCommonGetActionDetail,
 		infrastructures.stageMaster,
-		nil,
-		nil,
+		stage.CreateGetStageActionDetailService,
+		endpoint.CreateGetStageActionDetail,
 		writeLogger,
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(

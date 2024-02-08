@@ -2,19 +2,20 @@ package stage
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/endpoint"
 
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type requiredItemsRes struct {
+type RequiredItemsRes struct {
 	ItemId   core.ItemId
 	IsKnown  core.IsKnown
 	Stock    core.Stock
 	MaxCount core.Count
 }
 
-type requiredSkillsRes struct {
+type RequiredSkillsRes struct {
 	SkillId     core.SkillId
 	RequiredLv  core.SkillLv
 	DisplayName core.DisplayName
@@ -26,12 +27,12 @@ type commonGetActionRes struct {
 	ActionDisplayName core.DisplayName
 	RequiredPayment   core.Price
 	RequiredStamina   core.Stamina
-	RequiredItems     []requiredItemsRes
-	EarningItems      []earningItemRes
-	RequiredSkills    []requiredSkillsRes
+	RequiredItems     []RequiredItemsRes
+	EarningItems      []EarningItemRes
+	RequiredSkills    []RequiredSkillsRes
 }
 
-type earningItemRes struct {
+type EarningItemRes struct {
 	ItemId  core.ItemId
 	IsKnown core.IsKnown
 }
@@ -93,11 +94,11 @@ func CreateCommonGetActionDetail(
 			}
 			return result
 		}(consumingItemStorage.ItemData)
-		requiredItems := func(consuming []ConsumingItem) []requiredItemsRes {
-			result := make([]requiredItemsRes, len(consuming))
+		requiredItems := func(consuming []ConsumingItem) []RequiredItemsRes {
+			result := make([]RequiredItemsRes, len(consuming))
 			for i, v := range consuming {
 				userData := consumingItemMap[v.ItemId]
-				result[i] = requiredItemsRes{
+				result[i] = RequiredItemsRes{
 					ItemId:   v.ItemId,
 					MaxCount: v.MaxCount,
 					Stock:    userData.Stock,
@@ -121,10 +122,10 @@ func CreateCommonGetActionDetail(
 		if err != nil {
 			return handleError(err)
 		}
-		earningItems := func(items []EarningItem) []earningItemRes {
-			result := make([]earningItemRes, len(items))
+		earningItems := func(items []EarningItem) []EarningItemRes {
+			result := make([]EarningItemRes, len(items))
 			for i, v := range items {
-				result[i] = earningItemRes{
+				result[i] = EarningItemRes{
 					ItemId: v.ItemId,
 					// TODO: change display depends on user data
 					IsKnown: true,
@@ -132,13 +133,13 @@ func CreateCommonGetActionDetail(
 			}
 			return result
 		}(items)
-		requiredSkills, err := func(exploreId ExploreId) ([]requiredSkillsRes, error) {
+		requiredSkills, err := func(exploreId ExploreId) ([]RequiredSkillsRes, error) {
 			res, err := args.FetchRequiredSkillsFunc([]ExploreId{exploreId})
 			if err != nil {
-				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
+				return []RequiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
 			if len(res) <= 0 {
-				return []requiredSkillsRes{}, nil
+				return []RequiredSkillsRes{}, nil
 			}
 			requiredSkill := res[0].RequiredSkills
 			skillIds := func(skills []RequiredSkill) []core.SkillId {
@@ -160,11 +161,11 @@ func CreateCommonGetActionDetail(
 				return result, nil
 			}(skillIds)
 			if err != nil {
-				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
+				return []RequiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
 			userSkillRes, err := args.FetchUserSkill(userId, skillIds, token)
 			if err != nil {
-				return []requiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
+				return []RequiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
 			userSkillMap := func(userSkill BatchGetUserSkillRes) map[core.SkillId]UserSkillRes {
 				skills := userSkill.Skills
@@ -175,11 +176,11 @@ func CreateCommonGetActionDetail(
 				return result
 			}(userSkillRes)
 
-			result := make([]requiredSkillsRes, len(requiredSkill))
+			result := make([]RequiredSkillsRes, len(requiredSkill))
 			for i, v := range requiredSkill {
 				master := skillMasterMap[v.SkillId]
 				userSkill := userSkillMap[v.SkillId]
-				skill := requiredSkillsRes{
+				skill := RequiredSkillsRes{
 					SkillId:     v.SkillId,
 					RequiredLv:  v.RequiredLv,
 					DisplayName: master.DisplayName,
@@ -231,39 +232,10 @@ func CreateGetStageActionDetailService(
 		if err != nil {
 			return handleError(err)
 		}
-		requiredItems := func(requiredItems []requiredItemsRes) []*gateway.RequiredItem {
-			result := make([]*gateway.RequiredItem, len(requiredItems))
-			for i, v := range requiredItems {
-				item := gateway.RequiredItem{
-					ItemId:  string(v.ItemId),
-					IsKnown: bool(v.IsKnown),
-				}
-				result[i] = &item
-			}
-			return result
-		}(getCommonActionRes.RequiredItems)
-		earningItems := func(earningItems []earningItemRes) []*gateway.EarningItem {
-			result := make([]*gateway.EarningItem, len(earningItems))
-			for i, v := range earningItems {
-				result[i] = &gateway.EarningItem{
-					ItemId:  string(v.ItemId),
-					IsKnown: bool(v.IsKnown),
-				}
-			}
-			return result
-		}(getCommonActionRes.EarningItems)
-		requiredSkills := func(requiredSkills []requiredSkillsRes) []*gateway.RequiredSkill {
-			result := make([]*gateway.RequiredSkill, len(earningItems))
-			for i, v := range requiredSkills {
-				result[i] = &gateway.RequiredSkill{
-					SkillId:     string(v.SkillId),
-					DisplayName: string(v.DisplayName),
-					RequiredLv:  int32(v.RequiredLv),
-					SkillLv:     int32(v.SkillLv),
-				}
-			}
-			return result
-		}(getCommonActionRes.RequiredSkills)
+		// TODO: stage package should not depend on endpoint package
+		requiredItems := endpoint.RequiredItemsToGateway(getCommonActionRes.RequiredItems)
+		earningItems := endpoint.EarningItemsToGateway(getCommonActionRes.EarningItems)
+		requiredSkills := endpoint.RequiredSkillsToGateway(getCommonActionRes.RequiredSkills)
 
 		stageMaster, err := fetchStageMaster(stageId)
 		if err != nil {
