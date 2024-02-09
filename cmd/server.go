@@ -264,7 +264,7 @@ func main() {
 		writeLogger,
 	)
 	getItemDetail := handler.CreateGetItemDetailHandler(
-		&currentTimeEmitter,
+		currentTimeEmitter.Get,
 		stage.CreateMakeUserExploreRepositories{
 			GetResource:       infrastructures.getResource,
 			GetAction:         infrastructures.getAction,
@@ -293,8 +293,30 @@ func main() {
 	getItemList := handler.CreateGetItemListHandler(
 		infrastructures.getAllStorage,
 		infrastructures.fetchItemMaster,
-		nil,
-		nil,
+		stage.CreateGetItemListService,
+		endpoint.CreateGetItemService,
+		writeLogger,
+	)
+	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
+		infrastructures.userSkill,
+		infrastructures.exploreMaster,
+		infrastructures.fetchReductionSkill,
+		stage.CreateCalcConsumingStaminaService,
+		stage.CreateCommonGetActionDetailRepositories{
+			FetchItemStorage:        infrastructures.fetchStorage,
+			FetchExploreMaster:      infrastructures.exploreMaster,
+			FetchEarningItem:        infrastructures.earningItem,
+			FetchConsumingItem:      infrastructures.consumingItem,
+			FetchSkillMaster:        infrastructures.skillMaster,
+			FetchUserSkill:          infrastructures.userSkill,
+			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
+		},
+		stage.CreateCommonGetActionDetail,
+		infrastructures.fetchItemMaster,
+		infrastructures.validateToken,
+		core.CreateValidateTokenService,
+		stage.CreateGetItemActionDetailService,
+		endpoint.CreateGetItemActionDetailEndpoint,
 		writeLogger,
 	)
 	http.HandleFunc("/action", postActionHandler)
@@ -303,6 +325,7 @@ func main() {
 	http.HandleFunc("/users", getResource)
 	http.HandleFunc("/items", getItemDetail)
 	http.HandleFunc("/warehouse", getItemList)
+	http.HandleFunc("/item-action", getItemActionDetail)
 	http.HandleFunc("/", hello)
 	err = http.ListenAndServe(":4444", nil)
 	if err != nil {

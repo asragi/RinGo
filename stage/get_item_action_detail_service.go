@@ -20,6 +20,12 @@ type GetItemActionDetailResponse struct {
 	RequiredSkills    []RequiredSkillsRes
 }
 
+type CreateGetItemActionDetailServiceFunc func(
+	commonGetActionFunc,
+	BatchGetItemMasterFunc,
+	core.ValidateTokenFunc,
+) GetItemActionDetailFunc
+
 func CreateGetItemActionDetailService(
 	getCommonAction commonGetActionFunc,
 	fetchItemMaster BatchGetItemMasterFunc,

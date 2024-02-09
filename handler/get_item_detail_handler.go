@@ -7,7 +7,7 @@ import (
 )
 
 func CreateGetItemDetailHandler(
-	timer core.ICurrentTime,
+	timer core.GetCurrentTimeFunc,
 	makeUserExploreRepo stage.CreateMakeUserExploreRepositories,
 	createMakeUserExploreFunc stage.ICreateMakeUserExploreFunc,
 	makeUserExplore stage.MakeUserExploreArrayFunc,

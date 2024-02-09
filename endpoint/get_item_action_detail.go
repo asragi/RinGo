@@ -9,6 +9,8 @@ import (
 
 type GetItemActionDetailEndpoint func(*gateway.GetItemActionDetailRequest) (*gateway.GetItemActionDetailResponse, error)
 
+type CreateGetItemActionDetailEndpointFunc func(detailFunc stage.GetItemActionDetailFunc) GetItemActionDetailEndpoint
+
 func CreateGetItemActionDetailEndpoint(
 	getItemActionFunc stage.GetItemActionDetailFunc,
 ) GetItemActionDetailEndpoint {

@@ -2,6 +2,8 @@ package core
 
 type ValidateTokenFunc func(UserId, AccessToken) error
 
+type ValidateTokenServiceFunc func(ValidateTokenRepoFunc) ValidateTokenFunc
+
 func CreateValidateTokenService(
 	validateRepoFunc ValidateTokenRepoFunc,
 ) ValidateTokenFunc {
