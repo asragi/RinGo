@@ -8,7 +8,7 @@ import (
 
 func CreateGetStageListHandler(
 	diContainer stage.DependencyInjectionContainer,
-	timer core.ICurrentTime,
+	timer core.GetCurrentTimeFunc,
 	getStageListEndpoint endpoint.GetStageListEndpoint,
 	repoArgs stage.CreateMakeUserExploreRepositories,
 	createMakeUserExplores stage.ICreateMakeUserExploreFunc,

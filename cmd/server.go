@@ -142,6 +142,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		getResource:               userResource.GetResource,
 		fetchItemMaster:           itemMaster.BatchGet,
 		fetchStorage:              itemStorage.BatchGet,
+		getAllStorage:             nil,
 		userSkill:                 userSkill.BatchGet,
 		stageMaster:               stageMaster.Get,
 		fetchAllStage:             stageMaster.GetAllStages,
@@ -237,7 +238,7 @@ func main() {
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
 		diContainer,
-		&currentTimeEmitter,
+		currentTimeEmitter.Get,
 		endpoint.CreateGetStageList,
 		stage.CreateMakeUserExploreRepositories{
 			GetResource:       infrastructures.getResource,
@@ -332,7 +333,8 @@ func main() {
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)
 	http.HandleFunc("/users", getResource)
-	http.HandleFunc("/items", itemsRouteHandler)
+	http.HandleFunc("/items/", itemsRouteHandler)
+	http.HandleFunc("/items", getItemList)
 	http.HandleFunc("/", hello)
 	err = http.ListenAndServe(":4444", nil)
 	if err != nil {

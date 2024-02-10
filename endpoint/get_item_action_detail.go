@@ -26,9 +26,9 @@ func CreateGetItemActionDetailEndpoint(
 		if err != nil {
 			return handleError(err)
 		}
-		requiredSkills := RequiredSkillsToGateway(res.RequiredSkills)
-		requiredItems := RequiredItemsToGateway(res.RequiredItems)
-		earningItems := EarningItemsToGateway(res.EarningItems)
+		requiredSkills := stage.RequiredSkillsToGateway(res.RequiredSkills)
+		requiredItems := stage.RequiredItemsToGateway(res.RequiredItems)
+		earningItems := stage.EarningItemsToGateway(res.EarningItems)
 
 		return &gateway.GetItemActionDetailResponse{
 			UserId:            string(res.UserId),

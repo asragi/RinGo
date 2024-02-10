@@ -10,7 +10,7 @@ import (
 
 type GetStageListEndpoint func(
 	stage.GetStageListFunc,
-	core.ICurrentTime,
+	core.GetCurrentTimeFunc,
 ) getStageListRes
 
 type getStageListRes func(

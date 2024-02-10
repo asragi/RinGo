@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/asragi/RinGo/handler"
 	"net/http"
 	"strings"
@@ -16,8 +17,12 @@ func CreateItemsRouteHandler(
 ) handler.Handler {
 	routeName := "items"
 	actionPathName := "actions"
-	internalServerWrapper := func(w http.ResponseWriter) {
-		errorOnInternalError(w, handler.InternalServerError{Message: "given path is invalid"})
+	internalServerWrapper := func(w http.ResponseWriter, path string) {
+		errorOnInternalError(
+			w, handler.InternalServerError{
+				Message: fmt.Sprintf("given path is invalid: %s", path),
+			},
+		)
 	}
 	h := func(w http.ResponseWriter, r *http.Request) {
 		method := r.Method
@@ -28,27 +33,27 @@ func CreateItemsRouteHandler(
 		path := r.URL.Path
 		pathSplit := strings.Split(path, "/")
 		pathSplitLength := len(pathSplit)
-		if pathSplitLength <= 0 {
-			internalServerWrapper(w)
+		if pathSplitLength <= 1 {
+			internalServerWrapper(w, path)
 			return
 		}
-		if pathSplit[0] != routeName {
-			internalServerWrapper(w)
+		if pathSplit[1] != routeName {
+			internalServerWrapper(w, path)
 			return
 		}
-		if pathSplitLength == 4 {
-			if pathSplit[2] == actionPathName {
+		if pathSplitLength == 5 {
+			if pathSplit[3] == actionPathName {
 				getItemActionDetail(w, r)
 				return
 			}
-			internalServerWrapper(w)
+			internalServerWrapper(w, path)
 			return
 		}
-		if pathSplitLength == 2 {
+		if pathSplitLength == 3 {
 			getItemDetail(w, r)
 			return
 		}
-		if pathSplitLength == 1 {
+		if pathSplitLength == 2 {
 			getItemList(w, r)
 			return
 		}

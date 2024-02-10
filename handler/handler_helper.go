@@ -36,11 +36,20 @@ func ErrorOnMethodNotAllowed(w http.ResponseWriter, err error) {
 }
 
 func ErrorOnPageNotFound(w http.ResponseWriter, err error) {
-
+	http.Error(w, fmt.Errorf("not found: %w", err).Error(), http.StatusNotFound)
 }
 
 type RequestBody io.ReadCloser
 type QueryParameter url.Values
+
+func (q *QueryParameter) GetFirstQuery(name string) (string, error) {
+	arr := (*q)[name]
+	if len(arr) <= 0 {
+		return "", NoQueryProvidedError{Message: name}
+	}
+	return arr[0], nil
+}
+
 type PathString string
 
 func DecodeBody[T any](body io.ReadCloser) (*T, error) {

@@ -2,8 +2,6 @@ package stage
 
 import (
 	"fmt"
-	"github.com/asragi/RinGo/endpoint"
-
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -232,10 +230,9 @@ func CreateGetStageActionDetailService(
 		if err != nil {
 			return handleError(err)
 		}
-		// TODO: stage package should not depend on endpoint package
-		requiredItems := endpoint.RequiredItemsToGateway(getCommonActionRes.RequiredItems)
-		earningItems := endpoint.EarningItemsToGateway(getCommonActionRes.EarningItems)
-		requiredSkills := endpoint.RequiredSkillsToGateway(getCommonActionRes.RequiredSkills)
+		requiredItems := RequiredItemsToGateway(getCommonActionRes.RequiredItems)
+		earningItems := EarningItemsToGateway(getCommonActionRes.EarningItems)
+		requiredSkills := RequiredSkillsToGateway(getCommonActionRes.RequiredSkills)
 
 		stageMaster, err := fetchStageMaster(stageId)
 		if err != nil {
@@ -256,4 +253,41 @@ func CreateGetStageActionDetailService(
 	}
 
 	return getActionDetail
+}
+
+// TODO: RequiredItemsToGateway should not be in stage package
+func RequiredItemsToGateway(requiredItems []RequiredItemsRes) []*gateway.RequiredItem {
+	result := make([]*gateway.RequiredItem, len(requiredItems))
+	for i, v := range requiredItems {
+		item := gateway.RequiredItem{
+			ItemId:  string(v.ItemId),
+			IsKnown: bool(v.IsKnown),
+		}
+		result[i] = &item
+	}
+	return result
+}
+
+func EarningItemsToGateway(earningItems []EarningItemRes) []*gateway.EarningItem {
+	result := make([]*gateway.EarningItem, len(earningItems))
+	for i, v := range earningItems {
+		result[i] = &gateway.EarningItem{
+			ItemId:  string(v.ItemId),
+			IsKnown: bool(v.IsKnown),
+		}
+	}
+	return result
+}
+
+func RequiredSkillsToGateway(requiredSkills []RequiredSkillsRes) []*gateway.RequiredSkill {
+	result := make([]*gateway.RequiredSkill, len(requiredSkills))
+	for i, v := range requiredSkills {
+		result[i] = &gateway.RequiredSkill{
+			SkillId:     string(v.SkillId),
+			DisplayName: string(v.DisplayName),
+			RequiredLv:  int32(v.RequiredLv),
+			SkillLv:     int32(v.SkillLv),
+		}
+	}
+	return result
 }

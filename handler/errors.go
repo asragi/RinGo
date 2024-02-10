@@ -25,3 +25,11 @@ type PageNotFoundError struct {
 func (e PageNotFoundError) Error() string {
 	return fmt.Sprintf("page not found: %s", e.Message)
 }
+
+type NoQueryProvidedError struct {
+	Message string
+}
+
+func (e NoQueryProvidedError) Error() string {
+	return fmt.Sprintf("no query provided: %s", e.Message)
+}

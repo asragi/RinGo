@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"fmt"
-
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
