@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/handler"
+	"github.com/asragi/RinGo/router"
 	"log"
 	"net/http"
 	"os"
@@ -319,13 +320,19 @@ func main() {
 		endpoint.CreateGetItemActionDetailEndpoint,
 		writeLogger,
 	)
+	itemsRouteHandler := router.CreateItemsRouteHandler(
+		getItemList,
+		getItemDetail,
+		getItemActionDetail,
+		handler.ErrorOnMethodNotAllowed,
+		handler.ErrorOnInternalError,
+		handler.ErrorOnPageNotFound,
+	)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)
 	http.HandleFunc("/users", getResource)
-	http.HandleFunc("/items", getItemDetail)
-	http.HandleFunc("/warehouse", getItemList)
-	http.HandleFunc("/item-action", getItemActionDetail)
+	http.HandleFunc("/items", itemsRouteHandler)
 	http.HandleFunc("/", hello)
 	err = http.ListenAndServe(":4444", nil)
 	if err != nil {

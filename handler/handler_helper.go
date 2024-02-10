@@ -3,8 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 type Handler func(http.ResponseWriter, *http.Request)
@@ -15,14 +17,72 @@ func setHeader(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func errorOnDecode(w http.ResponseWriter, err error) {
+type ReturnResponseOnErrorFunc func(http.ResponseWriter, error)
+
+func ErrorOnDecode(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on decode request: %w", err).Error(), http.StatusBadRequest)
 }
 
-func errorOnGenerateResponse(w http.ResponseWriter, err error) {
+func ErrorOnGenerateResponse(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 }
 
+func ErrorOnInternalError(w http.ResponseWriter, err error) {
+	http.Error(w, fmt.Errorf("internal server error: %w", err).Error(), http.StatusInternalServerError)
+}
+
+func ErrorOnMethodNotAllowed(w http.ResponseWriter, err error) {
+
+}
+
+func ErrorOnPageNotFound(w http.ResponseWriter, err error) {
+
+}
+
+type RequestBody io.ReadCloser
+type QueryParameter url.Values
+type PathString string
+
+func DecodeBody[T any](body io.ReadCloser) (*T, error) {
+	var req T
+	decoder := json.NewDecoder(body)
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&req)
+
+	return &req, err
+}
+
+func createHandlerWithParameter[T any, S any](
+	endpointFunc func(*T) (S, error),
+	selectParam func(RequestBody, QueryParameter, PathString) (*T, error),
+	logger writeLogger,
+) Handler {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		passedUrl := r.URL
+		query := passedUrl.Query()
+		req, err := selectParam(r.Body, QueryParameter(query), PathString(passedUrl.Path))
+		if err != nil {
+			ErrorOnDecode(w, err)
+			return
+		}
+		res, err := endpointFunc(req)
+		if err != nil {
+			ErrorOnGenerateResponse(w, err)
+			return
+		}
+		resJson, err := json.Marshal(res)
+		if err != nil {
+			ErrorOnGenerateResponse(w, err)
+			return
+		}
+		setHeader(w)
+		logger(w.Write(resJson))
+	}
+
+	return h
+}
+
+// Deprecated: use createHandlerWithParameter
 func createHandler[T any, S any](
 	endpointFunc func(*T) (S, error),
 	logger writeLogger,
@@ -33,17 +93,17 @@ func createHandler[T any, S any](
 		decoder.DisallowUnknownFields()
 		err := decoder.Decode(&req)
 		if err != nil {
-			errorOnDecode(w, err)
+			ErrorOnDecode(w, err)
 			return
 		}
 		res, err := endpointFunc(&req)
 		if err != nil {
-			errorOnGenerateResponse(w, err)
+			ErrorOnGenerateResponse(w, err)
 			return
 		}
 		resJson, err := json.Marshal(res)
 		if err != nil {
-			errorOnGenerateResponse(w, err)
+			ErrorOnGenerateResponse(w, err)
 			return
 		}
 		setHeader(w)

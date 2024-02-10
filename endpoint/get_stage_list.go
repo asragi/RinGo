@@ -19,7 +19,7 @@ type getStageListRes func(
 
 func CreateGetStageList(
 	getStageList stage.GetStageListFunc,
-	timer core.ICurrentTime,
+	timer core.GetCurrentTimeFunc,
 ) getStageListRes {
 	get := func(
 		req *gateway.GetStageListRequest,
