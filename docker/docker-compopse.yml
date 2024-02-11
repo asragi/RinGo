@@ -1,0 +1,10 @@
+# versionは3系が最新版で、versionによって書き方が異なる
+version: "3"
+services:
+  mysql:
+    build: ./mysql #Dockerfileからビルドすることを示す
+    volumes:
+      - ./mysql/init:/docker-entrypoint-initdb.d  #初期データをマウントする場所
+    image: ringo_mysql_local
+    environment:
+      - MYSQL_ROOT_PASSWORD=ringo

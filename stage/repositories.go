@@ -25,8 +25,6 @@ type GetItemMasterRes struct {
 	MaxStock    core.MaxStock
 }
 
-// Deprecated: use BatchGetItemMasterFunc
-type GetItemMasterFunc func(core.ItemId) (GetItemMasterRes, error)
 type BatchGetItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
 
 type GetItemStorageRes struct {
@@ -46,9 +44,6 @@ type BatchGetStorageRes struct {
 	ItemData []ItemData
 }
 
-// Deprecated: user BatchGetStorageFunc
-type GetItemStorageFunc func(core.UserId, core.ItemId, core.AccessToken) (GetItemStorageRes, error)
-
 type BatchGetStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
 
 type GetAllStorageFunc func(core.UserId) ([]ItemData, error)
@@ -60,14 +55,9 @@ type ItemStock struct {
 
 type UpdateItemStorageFunc func(core.UserId, []ItemStock, core.AccessToken) error
 
-// Skill
 type SkillMaster struct {
 	SkillId     core.SkillId
 	DisplayName core.DisplayName
-}
-
-type BatchGetSkillMasterRes struct {
-	Skills []SkillMaster
 }
 
 type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
@@ -85,7 +75,6 @@ type BatchGetUserSkillRes struct {
 
 type BatchGetUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
-// Skill Growth
 type SkillGrowthData struct {
 	ExploreId    ExploreId
 	SkillId      core.SkillId
@@ -107,7 +96,6 @@ type SkillGrowthPost struct {
 
 type SkillGrowthPostFunc func(SkillGrowthPost) error
 
-// Explore
 type GetExploreMasterRes struct {
 	ExploreId            ExploreId
 	DisplayName          core.DisplayName
