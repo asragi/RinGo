@@ -1,0 +1,5 @@
+id,ExploreId,ItemId,MinCount,MaxCount
+1,1,1,50,100
+2,3,4,50,100
+3,4,2,50,100
+4,5,3,1,1
