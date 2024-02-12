@@ -18,11 +18,11 @@ type UpdateFundFunc func(core.UserId, core.Fund) error
 type UpdateStaminaFunc func(core.UserId, core.StaminaRecoverTime) error
 
 type GetItemMasterRes struct {
-	ItemId      core.ItemId
-	Price       core.Price
-	DisplayName core.DisplayName
-	Description core.Description
-	MaxStock    core.MaxStock
+	ItemId      core.ItemId      `json:"item_id"`
+	Price       core.Price       `json:"price"`
+	DisplayName core.DisplayName `json:"display_name"`
+	Description core.Description `json:"description"`
+	MaxStock    core.MaxStock    `json:"max_stock"`
 }
 
 type BatchGetItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)

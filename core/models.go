@@ -84,6 +84,11 @@ type Description string
 
 // item master
 type ItemId string
+
+func (id ItemId) ToString() string {
+	return string(id)
+}
+
 type Price int
 
 func (p Price) Multiply(value int) Price {
@@ -146,3 +151,7 @@ const (
 	PossibleTypeStamina IsPossibleType = "Stamina"
 	PossibleTypeFund    IsPossibleType = "Func"
 )
+
+type Stringer interface {
+	ToString() string
+}
