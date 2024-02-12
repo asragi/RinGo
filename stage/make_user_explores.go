@@ -38,7 +38,7 @@ type fetchMakeUserExploreArgs func(
 
 type CreateMakeUserExploreRepositories struct {
 	GetResource       GetResourceFunc
-	GetAction         GetActionsFunc
+	GetAction         GetUserExploreFunc
 	GetRequiredSkills FetchRequiredSkillsFunc
 	GetConsumingItems GetConsumingItemFunc
 	GetStorage        BatchGetStorageFunc

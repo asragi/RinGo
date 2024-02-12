@@ -112,6 +112,10 @@ func (s Stock) Multiply(value int) Stock {
 // skill master
 type SkillId string
 
+func (id SkillId) ToString() string {
+	return string(id)
+}
+
 // skill user
 type SkillLv int
 

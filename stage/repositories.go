@@ -121,7 +121,7 @@ type ExploreUserData struct {
 	IsKnown   core.IsKnown
 }
 
-type GetActionsFunc func(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
+type GetUserExploreFunc func(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
 
 type GetActionsRes struct {
 	UserId   core.UserId

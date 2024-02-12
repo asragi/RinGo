@@ -1,18 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/asragi/RinGo/application"
+	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
+	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/router"
+	"github.com/asragi/RinGo/stage"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/infrastructure"
-	"github.com/asragi/RinGo/stage"
 )
 
 type infrastructuresStruct struct {
@@ -31,7 +31,7 @@ type infrastructuresStruct struct {
 	skillGrowth               stage.FetchSkillGrowthData
 	updateStorage             stage.UpdateItemStorageFunc
 	updateSkill               stage.SkillGrowthPostFunc
-	getAction                 stage.GetActionsFunc
+	getUserExplore            stage.GetUserExploreFunc
 	fetchStageExploreRelation stage.FetchStageExploreRelation
 	fetchItemExploreRelation  stage.GetItemExploreRelationFunc
 	fetchUserStage            stage.FetchUserStageFunc
@@ -39,26 +39,40 @@ type infrastructuresStruct struct {
 	validateToken             core.ValidateTokenRepoFunc
 	updateStamina             stage.UpdateStaminaFunc
 	updateFund                stage.UpdateFundFunc
+	closeDB                   func() error
 }
 
 func createInfrastructures() (*infrastructuresStruct, error) {
 	handleError := func(err error) (*infrastructuresStruct, error) {
 		return nil, fmt.Errorf("error on create infrastructures: %w", err)
 	}
-	gwd, _ := os.Getwd()
-	dataDir := gwd + "/infrastructure/data/%s.csv"
-	userResource := infrastructure.CreateInMemoryUserResourceRepo()
-	itemMaster, err := infrastructure.CreateInMemoryItemMasterRepo(
-		&infrastructure.ItemMasterLoader{
-			Path: fmt.Sprintf(
-				dataDir,
-				"item-master",
-			),
-		},
-	)
+	dbSettings := &infrastructure.ConnectionSettings{
+		UserName: "root",
+		Password: "ringo",
+		Port:     "13306",
+		Protocol: "tcp",
+		Host:     "127.0.0.1",
+		Database: "ringo",
+	}
+	db, err := infrastructure.ConnectDB(dbSettings)
 	if err != nil {
 		return handleError(err)
 	}
+	closeDB := func() error {
+		return db.Close()
+	}
+	connect := func() (*sql.DB, error) {
+		return db, nil
+	}
+	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
+	getStageMaster := infrastructure.CreateGetStageMaster(connect)
+	getAllStage := infrastructure.CreateGetAllStageMaster(connect)
+	getExploreMaster := infrastructure.CreateGetExploreMasterMySQL(connect)
+	getSkillMaster := infrastructure.CreateGetSkillMaster(connect)
+
+	gwd, _ := os.Getwd()
+	dataDir := gwd + "/infrastructure/data/%s.csv"
+	userResource := infrastructure.CreateInMemoryUserResourceRepo()
 	itemStorage, err := infrastructure.CreateInMemoryItemStorageRepo(
 		&infrastructure.ItemStorageLoader{
 			Path: fmt.Sprintf(
@@ -71,25 +85,6 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		return handleError(err)
 	}
 	userSkill, err := infrastructure.CreateInMemoryUserSkillRepo(&infrastructure.UserSkillLoader{Path: "./infrastructure/data/user-skill.csv"})
-	if err != nil {
-		return handleError(err)
-	}
-	stageMaster, err := infrastructure.CreateInMemoryStageMasterRepo(
-		&infrastructure.StageMasterLoader{
-			Path: fmt.Sprintf(
-				dataDir,
-				"stage-master",
-			),
-		},
-	)
-	if err != nil {
-		return handleError(err)
-	}
-	skillMaster, err := infrastructure.CreateInMemorySkillMasterRepo(&infrastructure.SkillMasterLoader{Path: "./infrastructure/data/skill-master.csv"})
-	if err != nil {
-		return handleError(err)
-	}
-	exploreMaster, err := infrastructure.CreateInMemoryExploreMasterRepo(&infrastructure.ExploreMasterLoader{Path: "./infrastructure/data/explore-master.csv"})
 	if err != nil {
 		return handleError(err)
 	}
@@ -140,27 +135,28 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	}
 	return &infrastructuresStruct{
 		getResource:               userResource.GetResource,
-		fetchItemMaster:           itemMaster.BatchGet,
+		fetchItemMaster:           getItemMaster,
 		fetchStorage:              itemStorage.BatchGet,
 		getAllStorage:             nil,
 		userSkill:                 userSkill.BatchGet,
-		stageMaster:               stageMaster.Get,
-		fetchAllStage:             stageMaster.GetAllStages,
-		exploreMaster:             exploreMaster.BatchGet,
-		skillMaster:               skillMaster.BatchGet,
+		stageMaster:               getStageMaster,
+		fetchAllStage:             getAllStage,
+		exploreMaster:             getExploreMaster,
+		skillMaster:               getSkillMaster,
 		earningItem:               earningItem.BatchGet,
 		consumingItem:             consumingItem.BatchGet,
 		fetchRequiredSkill:        requiredSkill.BatchGet,
 		skillGrowth:               skillGrowth.BatchGet,
 		updateStorage:             itemStorage.Update,
 		updateSkill:               userSkill.Update,
-		getAction:                 nil,
+		getUserExplore:            nil,
 		fetchStageExploreRelation: nil,
 		fetchUserStage:            nil,
 		fetchReductionSkill:       reductionSkill.BatchGet,
 		validateToken:             nil,
 		updateStamina:             userResource.UpdateStamina,
 		updateFund:                nil,
+		closeDB:                   closeDB,
 	}, nil
 }
 
@@ -242,7 +238,7 @@ func main() {
 		endpoint.CreateGetStageList,
 		stage.CreateMakeUserExploreRepositories{
 			GetResource:       infrastructures.getResource,
-			GetAction:         infrastructures.getAction,
+			GetAction:         infrastructures.getUserExplore,
 			GetRequiredSkills: infrastructures.fetchRequiredSkill,
 			GetConsumingItems: infrastructures.consumingItem,
 			GetStorage:        infrastructures.fetchStorage,
@@ -269,7 +265,7 @@ func main() {
 		currentTimeEmitter.Get,
 		stage.CreateMakeUserExploreRepositories{
 			GetResource:       infrastructures.getResource,
-			GetAction:         infrastructures.getAction,
+			GetAction:         infrastructures.getUserExplore,
 			GetRequiredSkills: infrastructures.fetchRequiredSkill,
 			GetConsumingItems: infrastructures.consumingItem,
 			GetStorage:        infrastructures.fetchStorage,

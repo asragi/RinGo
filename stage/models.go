@@ -23,6 +23,11 @@ func (g GainingPoint) ApplyTo(exp core.SkillExp) core.SkillExp {
 
 // explore
 type ExploreId string
+
+func (id ExploreId) ToString() string {
+	return string(id)
+}
+
 type StaminaReducibleRate float64
 
 func ApplyReduction(s core.Stamina, reductionRate float64, reducibleRate StaminaReducibleRate) core.Stamina {
