@@ -8,3 +8,5 @@ services:
     image: ringo_mysql_local
     environment:
       - MYSQL_ROOT_PASSWORD=ringo
+    ports:
+      - "13306:3306"
