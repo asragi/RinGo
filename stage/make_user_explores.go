@@ -40,9 +40,9 @@ type CreateMakeUserExploreRepositories struct {
 	GetResource       GetResourceFunc
 	GetAction         GetUserExploreFunc
 	GetRequiredSkills FetchRequiredSkillsFunc
-	GetConsumingItems GetConsumingItemFunc
-	GetStorage        BatchGetStorageFunc
-	GetUserSkill      BatchGetUserSkillFunc
+	GetConsumingItems FetchConsumingItemFunc
+	GetStorage        FetchStorageFunc
+	GetUserSkill      FetchUserSkillFunc
 }
 
 type ICreateMakeUserExploreFunc func(
@@ -84,6 +84,16 @@ func CreateMakeUserExploreFunc(
 		if err != nil {
 			return handleError(err)
 		}
+		/*
+			consumingItem := func(res []*BatchGetConsumingItemRes) []BatchGetConsumingItemRes {
+				result := make([]BatchGetConsumingItemRes, len(res))
+				for i, v := range res {
+					result[i] = *v
+				}
+				return result
+			}(consumingItemRes)
+
+		*/
 
 		return CompensatedMakeUserExploreArgs{
 			resourceRes:      resourceRes,

@@ -22,13 +22,13 @@ type GetItemActionDetailResponse struct {
 
 type CreateGetItemActionDetailServiceFunc func(
 	commonGetActionFunc,
-	BatchGetItemMasterFunc,
+	FetchItemMasterFunc,
 	core.ValidateTokenFunc,
 ) GetItemActionDetailFunc
 
 func CreateGetItemActionDetailService(
 	getCommonAction commonGetActionFunc,
-	fetchItemMaster BatchGetItemMasterFunc,
+	fetchItemMaster FetchItemMasterFunc,
 	validateToken core.ValidateTokenFunc,
 ) GetItemActionDetailFunc {
 	get := func(

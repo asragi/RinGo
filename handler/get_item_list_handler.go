@@ -8,8 +8,8 @@ import (
 )
 
 func CreateGetItemListHandler(
-	getAllStorage stage.GetAllStorageFunc,
-	getItemMaster stage.BatchGetItemMasterFunc,
+	getAllStorage stage.FetchAllStorageFunc,
+	getItemMaster stage.FetchItemMasterFunc,
 	createGetItemList stage.CreateGetItemListFunc,
 	createEndpoint endpoint.CreateGetItemListEndpoint,
 	logger writeLogger,

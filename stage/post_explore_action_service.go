@@ -34,12 +34,12 @@ type GetPostActionRepositories struct {
 	FetchExploreMaster   FetchExploreMasterFunc
 	FetchSkillMaster     FetchSkillMasterFunc
 	FetchSkillGrowthData FetchSkillGrowthData
-	FetchUserSkill       BatchGetUserSkillFunc
+	FetchUserSkill       FetchUserSkillFunc
 	FetchEarningItem     FetchEarningItemFunc
-	FetchConsumingItem   GetConsumingItemFunc
+	FetchConsumingItem   FetchConsumingItemFunc
 	FetchRequiredSkill   FetchRequiredSkillsFunc
-	FetchStorage         BatchGetStorageFunc
-	FetchItemMaster      BatchGetItemMasterFunc
+	FetchStorage         FetchStorageFunc
+	FetchItemMaster      FetchItemMasterFunc
 }
 
 type GetPostActionArgsFunc func(

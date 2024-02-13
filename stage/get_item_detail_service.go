@@ -112,8 +112,8 @@ func CreateGetItemDetailService(
 
 type ICreateGetItemDetailArgs func(GetUserItemDetailReq) (getItemDetailArgs, error)
 type CreateGetItemDetailRepositories struct {
-	GetItemMaster                 BatchGetItemMasterFunc
-	GetItemStorage                BatchGetStorageFunc
+	GetItemMaster                 FetchItemMasterFunc
+	GetItemStorage                FetchStorageFunc
 	GetExploreMaster              FetchExploreMasterFunc
 	GetItemExploreRelation        GetItemExploreRelationFunc
 	CalcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc
@@ -142,8 +142,8 @@ func CreateGetItemDetailArgs(
 
 type ICreateFetchItemDetailArgs func(
 	GetUserItemDetailReq,
-	BatchGetItemMasterFunc,
-	BatchGetStorageFunc,
+	FetchItemMasterFunc,
+	FetchStorageFunc,
 	FetchExploreMasterFunc,
 	GetItemExploreRelationFunc,
 	CalcBatchConsumingStaminaFunc,
@@ -151,8 +151,8 @@ type ICreateFetchItemDetailArgs func(
 
 func FetchGetItemDetailArgs(
 	req GetUserItemDetailReq,
-	getItemMaster BatchGetItemMasterFunc,
-	getItemStorage BatchGetStorageFunc,
+	getItemMaster FetchItemMasterFunc,
+	getItemStorage FetchStorageFunc,
 	getExploreMaster FetchExploreMasterFunc,
 	getItemExploreRelation GetItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,

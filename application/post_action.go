@@ -65,12 +65,12 @@ type EmitPostActionAppArgs struct {
 	ExploreMasterRepo   stage.FetchExploreMasterFunc
 	SkillGrowthDataRepo stage.FetchSkillGrowthData
 	SkillMasterRepo     stage.FetchSkillMasterFunc
-	UserSkillRepo       stage.BatchGetUserSkillFunc
+	UserSkillRepo       stage.FetchUserSkillFunc
 	EarningItemRepo     stage.FetchEarningItemFunc
-	ConsumingItemRepo   stage.GetConsumingItemFunc
+	ConsumingItemRepo   stage.FetchConsumingItemFunc
 	RequiredSkillRepo   stage.FetchRequiredSkillsFunc
-	StorageRepo         stage.BatchGetStorageFunc
-	ItemMasterRepo      stage.BatchGetItemMasterFunc
+	StorageRepo         stage.FetchStorageFunc
+	ItemMasterRepo      stage.FetchItemMasterFunc
 }
 
 type EmitPostActionArgsFunc func(

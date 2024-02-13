@@ -38,12 +38,12 @@ type EarningItemRes struct {
 type commonGetActionFunc func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
 
 type CreateCommonGetActionDetailRepositories struct {
-	FetchItemStorage        BatchGetStorageFunc
+	FetchItemStorage        FetchStorageFunc
 	FetchExploreMaster      FetchExploreMasterFunc
 	FetchEarningItem        FetchEarningItemFunc
-	FetchConsumingItem      GetConsumingItemFunc
+	FetchConsumingItem      FetchConsumingItemFunc
 	FetchSkillMaster        FetchSkillMasterFunc
-	FetchUserSkill          BatchGetUserSkillFunc
+	FetchUserSkill          FetchUserSkillFunc
 	FetchRequiredSkillsFunc FetchRequiredSkillsFunc
 }
 

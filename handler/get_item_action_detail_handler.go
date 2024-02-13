@@ -7,13 +7,13 @@ import (
 )
 
 func CreateGetItemActionDetailHandler(
-	fetchUserSkills stage.BatchGetUserSkillFunc,
+	fetchUserSkills stage.FetchUserSkillFunc,
 	fetchExploreMaster stage.FetchExploreMasterFunc,
 	fetchReductionSkills stage.FetchReductionStaminaSkillFunc,
 	createCalcConsumingStamina stage.CreateCalcConsumingStaminaServiceFunc,
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
-	fetchItemMaster stage.BatchGetItemMasterFunc,
+	fetchItemMaster stage.FetchItemMasterFunc,
 	validateTokenRepo core.ValidateTokenRepoFunc,
 	validateToken core.ValidateTokenServiceFunc,
 	service stage.CreateGetItemActionDetailServiceFunc,

@@ -6,7 +6,7 @@ import (
 )
 
 func CreateGetStageActionDetailHandler(
-	fetchUserSkills stage.BatchGetUserSkillFunc,
+	fetchUserSkills stage.FetchUserSkillFunc,
 	fetchExploreMaster stage.FetchExploreMasterFunc,
 	fetchReductionSkills stage.FetchReductionStaminaSkillFunc,
 	createCalcConsumingStamina stage.CreateCalcConsumingStaminaServiceFunc,
