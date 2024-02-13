@@ -159,3 +159,11 @@ const (
 type Stringer interface {
 	ToString() string
 }
+
+type ProvideId[S any] interface {
+	GetId() S
+}
+
+type MultiResponseReceiver[S any, T any, U any] interface {
+	CreateSelf(S, []T) U
+}

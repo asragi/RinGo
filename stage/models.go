@@ -39,3 +39,7 @@ func ApplyReduction(s core.Stamina, reductionRate float64, reducibleRate Stamina
 
 // stage
 type StageId string
+
+func (id StageId) ToString() string {
+	return string(id)
+}

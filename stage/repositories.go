@@ -18,14 +18,14 @@ type UpdateFundFunc func(core.UserId, core.Fund) error
 type UpdateStaminaFunc func(core.UserId, core.StaminaRecoverTime) error
 
 type GetItemMasterRes struct {
-	ItemId      core.ItemId      `json:"item_id"`
-	Price       core.Price       `json:"price"`
-	DisplayName core.DisplayName `json:"display_name"`
-	Description core.Description `json:"description"`
-	MaxStock    core.MaxStock    `json:"max_stock"`
+	ItemId      core.ItemId      `db:"item_id" json:"item_id"`
+	Price       core.Price       `db:"price" json:"price"`
+	DisplayName core.DisplayName `db:"display_name" json:"display_name"`
+	Description core.Description `db:"description" json:"description"`
+	MaxStock    core.MaxStock    `db:"max_stock" json:"max_stock"`
 }
 
-type BatchGetItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
+type FetchItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
 
 type GetItemStorageRes struct {
 	UserId core.UserId
@@ -44,9 +44,9 @@ type BatchGetStorageRes struct {
 	ItemData []ItemData
 }
 
-type BatchGetStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
+type FetchStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
 
-type GetAllStorageFunc func(core.UserId) ([]ItemData, error)
+type FetchAllStorageFunc func(core.UserId) ([]ItemData, error)
 
 type ItemStock struct {
 	ItemId     core.ItemId
@@ -73,7 +73,7 @@ type BatchGetUserSkillRes struct {
 	Skills []UserSkillRes
 }
 
-type BatchGetUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
+type FetchUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
 type SkillGrowthData struct {
 	ExploreId    ExploreId
@@ -173,9 +173,14 @@ type EarningItem struct {
 type FetchEarningItemFunc func(ExploreId) ([]EarningItem, error)
 
 type ConsumingItem struct {
-	ItemId          core.ItemId
-	MaxCount        core.Count
-	ConsumptionProb ConsumptionProb
+	ExploreId       ExploreId       `db:"explore_id"`
+	ItemId          core.ItemId     `db:"item_id"`
+	MaxCount        core.Count      `db:"max_count"`
+	ConsumptionProb ConsumptionProb `db:"consumption_prob"`
+}
+
+func (c ConsumingItem) GetId() ExploreId {
+	return c.ExploreId
 }
 
 type BatchGetConsumingItemRes struct {
@@ -183,7 +188,24 @@ type BatchGetConsumingItemRes struct {
 	ConsumingItems []ConsumingItem
 }
 
-type GetConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
+/*
+func (res *BatchGetConsumingItemRes) SetId(id ExploreId) {
+	res.ExploreId = id
+}
+
+func (res *BatchGetConsumingItemRes) SetData(data []ConsumingItem) {
+	res.ConsumingItems = data
+}
+*/
+
+func (_ BatchGetConsumingItemRes) CreateSelf(id ExploreId, data []ConsumingItem) BatchGetConsumingItemRes {
+	return BatchGetConsumingItemRes{
+		ExploreId:      id,
+		ConsumingItems: data,
+	}
+}
+
+type FetchConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
 
 type BatchGetReductionStaminaSkill struct {
 	ExploreId ExploreId
