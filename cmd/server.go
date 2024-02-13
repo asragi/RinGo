@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/core"
@@ -10,6 +9,7 @@ import (
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/stage"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 	"os"
@@ -17,16 +17,16 @@ import (
 
 type infrastructuresStruct struct {
 	getResource               stage.GetResourceFunc
-	fetchItemMaster           stage.BatchGetItemMasterFunc
-	fetchStorage              stage.BatchGetStorageFunc
-	getAllStorage             stage.GetAllStorageFunc
-	userSkill                 stage.BatchGetUserSkillFunc
+	fetchItemMaster           stage.FetchItemMasterFunc
+	fetchStorage              stage.FetchStorageFunc
+	getAllStorage             stage.FetchAllStorageFunc
+	userSkill                 stage.FetchUserSkillFunc
 	stageMaster               stage.FetchStageMasterFunc
 	fetchAllStage             stage.FetchAllStageFunc
 	exploreMaster             stage.FetchExploreMasterFunc
 	skillMaster               stage.FetchSkillMasterFunc
 	earningItem               stage.FetchEarningItemFunc
-	consumingItem             stage.GetConsumingItemFunc
+	consumingItem             stage.FetchConsumingItemFunc
 	fetchRequiredSkill        stage.FetchRequiredSkillsFunc
 	skillGrowth               stage.FetchSkillGrowthData
 	updateStorage             stage.UpdateItemStorageFunc
@@ -61,7 +61,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	closeDB := func() error {
 		return db.Close()
 	}
-	connect := func() (*sql.DB, error) {
+	connect := func() (*sqlx.DB, error) {
 		return db, nil
 	}
 	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
@@ -69,6 +69,8 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	getAllStage := infrastructure.CreateGetAllStageMaster(connect)
 	getExploreMaster := infrastructure.CreateGetExploreMasterMySQL(connect)
 	getSkillMaster := infrastructure.CreateGetSkillMaster(connect)
+	getEarningItem := infrastructure.CreateGetEarningItem(connect)
+	getConsumingItem := infrastructure.CreateGetConsumingItem(connect)
 
 	gwd, _ := os.Getwd()
 	dataDir := gwd + "/infrastructure/data/%s.csv"
@@ -85,21 +87,6 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		return handleError(err)
 	}
 	userSkill, err := infrastructure.CreateInMemoryUserSkillRepo(&infrastructure.UserSkillLoader{Path: "./infrastructure/data/user-skill.csv"})
-	if err != nil {
-		return handleError(err)
-	}
-	earningItem, err := infrastructure.CreateInMemoryEarningItemRepo(
-		&infrastructure.EarningItemLoader{
-			Path: fmt.Sprintf(
-				dataDir,
-				"earning-item",
-			),
-		},
-	)
-	if err != nil {
-		return handleError(err)
-	}
-	consumingItem, err := infrastructure.CreateInMemoryConsumingItemRepo(&infrastructure.ConsumingItemLoader{Path: "./infrastructure/data/consuming-item.csv"})
 	if err != nil {
 		return handleError(err)
 	}
@@ -143,8 +130,8 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		fetchAllStage:             getAllStage,
 		exploreMaster:             getExploreMaster,
 		skillMaster:               getSkillMaster,
-		earningItem:               earningItem.BatchGet,
-		consumingItem:             consumingItem.BatchGet,
+		earningItem:               getEarningItem,
+		consumingItem:             getConsumingItem,
 		fetchRequiredSkill:        requiredSkill.BatchGet,
 		skillGrowth:               skillGrowth.BatchGet,
 		updateStorage:             itemStorage.Update,
