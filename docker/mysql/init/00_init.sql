@@ -64,6 +64,17 @@ CREATE TABLE IF NOT EXISTS ringo.explore_masters(
     INDEX `explore_id_index` (`explore_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS ringo.user_explore_data(
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` varchar(40) NOT NULL,
+    `explore_id` varchar(40) NOT NULL,
+    `is_known` bool NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `explore_id_index` (`explore_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+    FOREIGN KEY (`explore_id`) REFERENCES `explore_masters` (`explore_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS ringo.skill_growth_data(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `explore_id` varchar(40) NOT NULL,
