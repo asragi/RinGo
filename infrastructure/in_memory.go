@@ -114,6 +114,14 @@ func (m *InMemoryItemStorageRepo) GetStock(userId core.UserId, itemId core.ItemI
 	return m.Data[userId][itemId].Stock
 }
 
+func (m *InMemoryItemStorageRepo) GetAllStock(id core.UserId) ([]stage.ItemData, error) {
+	var result []stage.ItemData
+	for _, v := range m.Data[id] {
+		result = append(result, v)
+	}
+	return result, nil
+}
+
 func (m *InMemoryItemStorageRepo) Update(userId core.UserId, items []stage.ItemStock, token core.AccessToken) error {
 	for _, v := range items {
 		if _, ok := m.Data[userId]; !ok {
@@ -526,9 +534,16 @@ func (m *InMemoryReductionStaminaSkillRepo) BatchGet(exploreIds []stage.ExploreI
 ) {
 	result := make([]stage.BatchGetReductionStaminaSkill, len(exploreIds))
 	for i, v := range exploreIds {
+		skillArray := make([]stage.StaminaReductionSkillPair, len(m.Data[v]))
+		for j, w := range m.Data[v] {
+			skillArray[j] = stage.StaminaReductionSkillPair{
+				ExploreId: v,
+				SkillId:   w,
+			}
+		}
 		result[i] = stage.BatchGetReductionStaminaSkill{
 			ExploreId: v,
-			Skills:    m.Data[v],
+			Skills:    skillArray,
 		}
 	}
 	return result, nil

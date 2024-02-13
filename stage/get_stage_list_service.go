@@ -143,9 +143,16 @@ func CreateFetchStageData(
 		}
 		stageExplorePair, err := args.FetchStageExploreRelation(stageId)
 		exploreIds := func(stageExplore []StageExploreIdPair) []ExploreId {
-			result := []ExploreId{}
+			var result []ExploreId
 			for _, v := range stageExplore {
-				result = append(result, v.ExploreIds...)
+				exploreIds := func(pairs []StageExploreIdPairRow) []ExploreId {
+					arr := make([]ExploreId, len(pairs))
+					for i, v := range pairs {
+						arr[i] = v.ExploreId
+					}
+					return arr
+				}(v.ExploreIds)
+				result = append(result, exploreIds...)
 			}
 			return result
 		}(stageExplorePair)
@@ -244,7 +251,7 @@ func getAllStage(
 					result[v.StageId] = []ExploreId{}
 				}
 				for _, w := range v.ExploreIds {
-					result[v.StageId] = append(result[v.StageId], w)
+					result[v.StageId] = append(result[v.StageId], w.ExploreId)
 				}
 			}
 			return result

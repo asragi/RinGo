@@ -66,7 +66,13 @@ func GetPostActionArgs(
 	}
 
 	exploreMasters, err := args.FetchExploreMaster([]ExploreId{exploreId})
-	skillGrowthList := args.FetchSkillGrowthData(exploreId)
+	if err != nil {
+		return handleError(err)
+	}
+	skillGrowthList, err := args.FetchSkillGrowthData(exploreId)
+	if err != nil {
+		return handleError(err)
+	}
 	skillIds := func(data []SkillGrowthData) []core.SkillId {
 		result := make([]core.SkillId, len(data))
 		for i, v := range data {

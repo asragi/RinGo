@@ -81,21 +81,29 @@ func CreateCalcConsumingStaminaService(
 		reductionSkillMap := func(reductionSkills []BatchGetReductionStaminaSkill) map[ExploreId][]core.SkillId {
 			result := map[ExploreId][]core.SkillId{}
 			for _, v := range reductionSkills {
-				result[v.ExploreId] = v.Skills
+				skillIds := func(pair []StaminaReductionSkillPair) []core.SkillId {
+					skillIdArr := make([]core.SkillId, len(pair))
+					for i, v := range pair {
+						skillIdArr[i] = v.SkillId
+					}
+					return skillIdArr
+				}(v.Skills)
+				result[v.ExploreId] = skillIds
 			}
 			return result
 		}(reductionStaminaSkills)
 
 		allRequiredSkill := func(skills []BatchGetReductionStaminaSkill) []core.SkillId {
 			check := map[core.SkillId]bool{}
-			result := []core.SkillId{}
+			var result []core.SkillId
 			for _, v := range skills {
 				for _, w := range v.Skills {
-					if _, ok := check[w]; ok {
+					skillId := w.SkillId
+					if _, ok := check[skillId]; ok {
 						continue
 					}
-					check[w] = true
-					result = append(result, w)
+					check[skillId] = true
+					result = append(result, skillId)
 				}
 			}
 			return result

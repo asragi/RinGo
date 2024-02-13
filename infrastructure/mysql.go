@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/stage"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"strconv"
 )
 
 type ConnectionSettings struct {
@@ -150,6 +151,95 @@ func CreateGetConsumingItem(connect ConnectDBFunc) stage.FetchConsumingItemFunc 
 	return f
 }
 
+func CreateGetRequiredSkills(connect ConnectDBFunc) stage.FetchRequiredSkillsFunc {
+	f := CreateBatchGetMultiQuery[stage.ExploreId, stage.RequiredSkill, stage.RequiredSkillRow](
+		connect,
+		"get required skill from mysql :%w",
+		"SELECT explore_id, skill_id, skill_lv from required_skills",
+		"explore_id",
+	)
+	return f
+}
+
+func CreateGetSkillGrowth(connect ConnectDBFunc) stage.FetchSkillGrowthData {
+	f := CreateGetQuery[stage.ExploreId, stage.SkillGrowthData](
+		connect,
+		"get skill growth from mysql: %w",
+		"SELECT explore_id, skill_id, gaining_point FROM skill_growth_data",
+		"explore_id",
+	)
+
+	return f
+}
+
+func CreateGetReductionSkill(connect ConnectDBFunc) stage.FetchReductionStaminaSkillFunc {
+	f := CreateBatchGetMultiQuery[stage.ExploreId, stage.StaminaReductionSkillPair, stage.BatchGetReductionStaminaSkill](
+		connect,
+		"get skill growth from mysql: %w",
+		"SELECT explore_id, skill_id, gaining_point FROM skill_growth_data",
+		"explore_id",
+	)
+
+	return f
+}
+
+func CreateStageExploreRelation(connect ConnectDBFunc) stage.FetchStageExploreRelation {
+	f := CreateBatchGetMultiQuery[stage.StageId, stage.StageExploreIdPairRow, stage.StageExploreIdPair](
+		connect,
+		"get stage explore relation from mysql: %w",
+		"SELECT explore_id, stage_id FROM stage_explore_relations",
+		"stage_id",
+	)
+
+	return f
+}
+
+func CreateItemExploreRelation(connect ConnectDBFunc) stage.FetchItemExploreRelationFunc {
+	f := CreateGetQuery[core.ItemId, stage.ExploreId](
+		connect,
+		"get item explore relation from mysql: %w",
+		"SELECT item_id, explore_id FROM item_explore_relations",
+		"item_id",
+	)
+
+	return f
+}
+
+func CreateGetQuery[S core.Stringer, T any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	queryBase string,
+	columnName string,
+) func(S) ([]T, error) {
+	f := func(id S) ([]T, error) {
+		handleError := func(err error) ([]T, error) {
+			return nil, fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		query := queryBase
+		queryString := fmt.Sprintf("%s WHERE %s = %s;", query, columnName, id)
+		rows, err := db.Queryx(queryString)
+		var result []T
+		for rows.Next() {
+			var row T
+			err = rows.StructScan(&row)
+			if err != nil {
+				return handleError(err)
+			}
+			result = append(result, row)
+		}
+		if err != nil {
+			return handleError(err)
+		}
+		return result, nil
+	}
+
+	return f
+}
+
 // CreateBatchGetQuery returns function that receives N args and returns N values
 func CreateBatchGetQuery[S core.Stringer, T any](
 	connect ConnectDBFunc,
@@ -237,6 +327,40 @@ func CreateBatchGetMultiQuery[S core.Stringer, T core.ProvideId[S], U core.Multi
 		}
 
 		return result, nil
+	}
+
+	return f
+}
+
+func CreateUpdateFund(connect ConnectDBFunc) stage.UpdateFundFunc {
+	return CreateUpdateUserData[core.Fund](
+		connect,
+		"insert user fund: %w",
+		`UPDATE users SET fund = %s WHERE user_id = "%s";`,
+		func(f core.Fund) string { return strconv.Itoa(int(f)) },
+	)
+}
+
+func CreateUpdateUserData[S any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	queryFormat string,
+	dataToString func(S) string,
+) func(core.UserId, S) error {
+	f := func(userId core.UserId, data S) error {
+		handleError := func(err error) error {
+			return fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		queryString := fmt.Sprintf(queryFormat, dataToString(data), userId)
+		_, err = db.Exec(queryString)
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
 	}
 
 	return f

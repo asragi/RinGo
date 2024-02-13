@@ -115,7 +115,7 @@ type CreateGetItemDetailRepositories struct {
 	GetItemMaster                 FetchItemMasterFunc
 	GetItemStorage                FetchStorageFunc
 	GetExploreMaster              FetchExploreMasterFunc
-	GetItemExploreRelation        GetItemExploreRelationFunc
+	GetItemExploreRelation        FetchItemExploreRelationFunc
 	CalcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc
 	CreateArgs                    ICreateFetchItemDetailArgs
 }
@@ -145,7 +145,7 @@ type ICreateFetchItemDetailArgs func(
 	FetchItemMasterFunc,
 	FetchStorageFunc,
 	FetchExploreMasterFunc,
-	GetItemExploreRelationFunc,
+	FetchItemExploreRelationFunc,
 	CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error)
 
@@ -154,7 +154,7 @@ func FetchGetItemDetailArgs(
 	getItemMaster FetchItemMasterFunc,
 	getItemStorage FetchStorageFunc,
 	getExploreMaster FetchExploreMasterFunc,
-	getItemExploreRelation GetItemExploreRelationFunc,
+	getItemExploreRelation FetchItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error) {
 	handleError := func(err error) (getItemDetailArgs, error) {

@@ -76,12 +76,12 @@ type BatchGetUserSkillRes struct {
 type FetchUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
 
 type SkillGrowthData struct {
-	ExploreId    ExploreId
-	SkillId      core.SkillId
-	GainingPoint GainingPoint
+	ExploreId    ExploreId    `db:"explore_id"`
+	SkillId      core.SkillId `db:"skill_id"`
+	GainingPoint GainingPoint `db:"gaining_point"`
 }
 
-type FetchSkillGrowthData func(ExploreId) []SkillGrowthData
+type FetchSkillGrowthData func(ExploreId) ([]SkillGrowthData, error)
 
 type SkillGrowthPostRow struct {
 	SkillId  core.SkillId
@@ -107,10 +107,26 @@ type GetExploreMasterRes struct {
 
 type StageExploreIdPair struct {
 	StageId    StageId
-	ExploreIds []ExploreId
+	ExploreIds []StageExploreIdPairRow
 }
 
-type GetItemExploreRelationFunc func(core.ItemId) ([]ExploreId, error)
+func (p StageExploreIdPair) CreateSelf(id StageId, data []StageExploreIdPairRow) StageExploreIdPair {
+	return StageExploreIdPair{
+		StageId:    id,
+		ExploreIds: data,
+	}
+}
+
+type StageExploreIdPairRow struct {
+	StageId   StageId   `db:"stage_id"`
+	ExploreId ExploreId `db:"explore_id"`
+}
+
+func (row StageExploreIdPairRow) GetId() StageId {
+	return row.StageId
+}
+
+type FetchItemExploreRelationFunc func(core.ItemId) ([]ExploreId, error)
 
 type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
 
@@ -129,8 +145,13 @@ type GetActionsRes struct {
 }
 
 type RequiredSkill struct {
-	SkillId    core.SkillId
-	RequiredLv core.SkillLv
+	ExploreId  ExploreId    `db:"explore_id"`
+	SkillId    core.SkillId `db:"skill_id"`
+	RequiredLv core.SkillLv `db:"skill_lv"`
+}
+
+func (r RequiredSkill) GetId() ExploreId {
+	return r.ExploreId
 }
 
 type FetchRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
@@ -138,6 +159,13 @@ type FetchRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
 type RequiredSkillRow struct {
 	ExploreId      ExploreId
 	RequiredSkills []RequiredSkill
+}
+
+func (_ RequiredSkillRow) CreateSelf(id ExploreId, data []RequiredSkill) RequiredSkillRow {
+	return RequiredSkillRow{
+		ExploreId:      id,
+		RequiredSkills: data,
+	}
 }
 
 type StageMaster struct {
@@ -188,16 +216,6 @@ type BatchGetConsumingItemRes struct {
 	ConsumingItems []ConsumingItem
 }
 
-/*
-func (res *BatchGetConsumingItemRes) SetId(id ExploreId) {
-	res.ExploreId = id
-}
-
-func (res *BatchGetConsumingItemRes) SetData(data []ConsumingItem) {
-	res.ConsumingItems = data
-}
-*/
-
 func (_ BatchGetConsumingItemRes) CreateSelf(id ExploreId, data []ConsumingItem) BatchGetConsumingItemRes {
 	return BatchGetConsumingItemRes{
 		ExploreId:      id,
@@ -209,7 +227,26 @@ type FetchConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error
 
 type BatchGetReductionStaminaSkill struct {
 	ExploreId ExploreId
-	Skills    []core.SkillId
+	Skills    []StaminaReductionSkillPair
+}
+
+func (_ BatchGetReductionStaminaSkill) CreateSelf(
+	id ExploreId,
+	data []StaminaReductionSkillPair,
+) BatchGetReductionStaminaSkill {
+	return BatchGetReductionStaminaSkill{
+		ExploreId: id,
+		Skills:    data,
+	}
+}
+
+type StaminaReductionSkillPair struct {
+	ExploreId ExploreId    `db:"explore_id"`
+	SkillId   core.SkillId `db:"skill_id"`
+}
+
+func (id StaminaReductionSkillPair) GetId() ExploreId {
+	return id.ExploreId
 }
 
 type FetchReductionStaminaSkillFunc func([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
