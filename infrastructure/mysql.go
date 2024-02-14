@@ -205,6 +205,28 @@ func CreateItemExploreRelation(connect ConnectDBFunc) stage.FetchItemExploreRela
 	return f
 }
 
+func CreateGetUserExplore(connect ConnectDBFunc) stage.GetUserExploreFunc {
+	f := CreateBatchGetUserDataQuery[stage.ExploreId, stage.ExploreUserData](
+		connect,
+		"get user explore data: %w",
+		"SELECT explore_id, is_known FROM user_explore_data",
+		"explore_id",
+	)
+
+	return f
+}
+
+func CreateGetUserStageData(connect ConnectDBFunc) stage.FetchUserStageFunc {
+	f := CreateBatchGetUserDataQuery[stage.StageId, stage.UserStage](
+		connect,
+		"get user stage data: %w",
+		"SELECT stage_id, is_known FROM user_stage_data",
+		"stage_id",
+	)
+
+	return f
+}
+
 func CreateGetQuery[S core.Stringer, T any](
 	connect ConnectDBFunc,
 	errorMessageFormat string,
@@ -332,6 +354,49 @@ func CreateBatchGetMultiQuery[S core.Stringer, T core.ProvideId[S], U core.Multi
 	return f
 }
 
+// CreateBatchGetUserDataQuery returns function that receives N args and returns N values
+func CreateBatchGetUserDataQuery[S core.Stringer, T any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	queryBase string,
+	columnName string,
+) func(core.UserId, []S) ([]T, error) {
+	f := func(userId core.UserId, ids []S) ([]T, error) {
+		handleError := func(err error) ([]T, error) {
+			return nil, fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		query := queryBase
+		listStatement := createListStatement(idToStringArray(ids))
+		queryString := fmt.Sprintf(
+			`%s WHERE user_id = "%s" AND %s IN %s;`,
+			query,
+			userId,
+			columnName,
+			listStatement,
+		)
+		rows, err := db.Queryx(queryString)
+		var result []T
+		for rows.Next() {
+			var row T
+			err = rows.StructScan(&row)
+			if err != nil {
+				return handleError(err)
+			}
+			result = append(result, row)
+		}
+		if err != nil {
+			return handleError(err)
+		}
+		return result, nil
+	}
+
+	return f
+}
+
 func CreateUpdateFund(connect ConnectDBFunc) stage.UpdateFundFunc {
 	return CreateUpdateUserData[core.Fund](
 		connect,
@@ -339,6 +404,22 @@ func CreateUpdateFund(connect ConnectDBFunc) stage.UpdateFundFunc {
 		`UPDATE users SET fund = %s WHERE user_id = "%s";`,
 		func(f core.Fund) string { return strconv.Itoa(int(f)) },
 	)
+}
+
+func CreateUpdateUserSkill(connect ConnectDBFunc) stage.UpdateUserSkillExpFunc {
+	g := CreateBulkUpdateUserData[stage.SkillGrowthPostRow]
+	f := func(growthData stage.SkillGrowthPost) error {
+		return g(
+			connect,
+			"update skill growth: %w",
+			`INSERT INTO user_skills (user_id, skill_id, skill_exp) VALUES (:user_id, :skill_id, :skill_exp) ON DUPLICATE KEY UPDATE skill_exp =VALUES(skill_exp);`,
+		)(
+			growthData.UserId,
+			growthData.SkillGrowth,
+		)
+	}
+
+	return f
 }
 
 func CreateUpdateUserData[S any](
@@ -357,6 +438,30 @@ func CreateUpdateUserData[S any](
 		}
 		queryString := fmt.Sprintf(queryFormat, dataToString(data), userId)
 		_, err = db.Exec(queryString)
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
+	}
+
+	return f
+}
+
+func CreateBulkUpdateUserData[S any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	query string,
+) func(core.UserId, []S) error {
+	f := func(userId core.UserId, data []S) error {
+		handleError := func(err error) error {
+			return fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+
+		_, err = db.NamedExec(query, data)
 		if err != nil {
 			return handleError(err)
 		}

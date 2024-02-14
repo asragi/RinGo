@@ -18,7 +18,7 @@ func testCompensatePostFunction(t *testing.T) {
 		calcConsumedItem stage.CalcConsumedItemFunc,
 		calcTotalItem stage.CalcTotalItemFunc,
 		updateItemStorage stage.UpdateItemStorageFunc,
-		updateSkill stage.SkillGrowthPostFunc,
+		updateSkill stage.UpdateUserSkillExpFunc,
 		updateStamina stage.UpdateStaminaFunc,
 		updateFund stage.UpdateFundFunc,
 		staminaReductionFunc stage.StaminaReductionFunc,

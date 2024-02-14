@@ -30,7 +30,7 @@ type infrastructuresStruct struct {
 	fetchRequiredSkill        stage.FetchRequiredSkillsFunc
 	skillGrowth               stage.FetchSkillGrowthData
 	updateStorage             stage.UpdateItemStorageFunc
-	updateSkill               stage.SkillGrowthPostFunc
+	updateSkill               stage.UpdateUserSkillExpFunc
 	getUserExplore            stage.GetUserExploreFunc
 	fetchStageExploreRelation stage.FetchStageExploreRelation
 	fetchItemExploreRelation  stage.FetchItemExploreRelationFunc
@@ -76,8 +76,11 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	getReductionSkill := infrastructure.CreateGetReductionSkill(connect)
 	getStageExploreRelation := infrastructure.CreateStageExploreRelation(connect)
 	getItemExploreRelation := infrastructure.CreateItemExploreRelation(connect)
+	getUserExplore := infrastructure.CreateGetUserExplore(connect)
+	getUserStageData := infrastructure.CreateGetUserStageData(connect)
 
 	updateFund := infrastructure.CreateUpdateFund(connect)
+	updateSkill := infrastructure.CreateUpdateUserSkill(connect)
 
 	gwd, _ := os.Getwd()
 	dataDir := gwd + "/infrastructure/data/%s.csv"
@@ -113,11 +116,11 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		fetchRequiredSkill:        getRequiredSkill,
 		skillGrowth:               getSkillGrowth,
 		updateStorage:             itemStorage.Update,
-		updateSkill:               userSkill.Update,
-		getUserExplore:            nil,
+		updateSkill:               updateSkill,
+		getUserExplore:            getUserExplore,
 		fetchStageExploreRelation: getStageExploreRelation,
 		fetchItemExploreRelation:  getItemExploreRelation,
-		fetchUserStage:            nil,
+		fetchUserStage:            getUserStageData,
 		fetchReductionSkill:       getReductionSkill,
 		validateToken:             nil,
 		updateStamina:             userResource.UpdateStamina,

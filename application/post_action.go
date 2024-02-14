@@ -25,7 +25,7 @@ type CompensatePostActionArgs struct {
 	CalcTotalItem        stage.CalcTotalItemFunc
 	StaminaReductionFunc stage.StaminaReductionFunc
 	UpdateItemStorage    stage.UpdateItemStorageFunc
-	UpdateSkill          stage.SkillGrowthPostFunc
+	UpdateSkill          stage.UpdateUserSkillExpFunc
 	UpdateStamina        stage.UpdateStaminaFunc
 	UpdateFund           stage.UpdateFundFunc
 }

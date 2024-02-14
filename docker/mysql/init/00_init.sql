@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS ringo.user_skills(
     PRIMARY KEY (`id`),
     INDEX `user_id_skill_id_index` (`user_id`, `skill_id`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-    FOREIGN KEY (`skill_id`) REFERENCES `skill_masters` (`skill_id`)
+    FOREIGN KEY (`skill_id`) REFERENCES `skill_masters` (`skill_id`),
+    CONSTRAINT user_skill_pair UNIQUE (`user_id`, `skill_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS ringo.explore_masters(

@@ -84,17 +84,17 @@ type SkillGrowthData struct {
 type FetchSkillGrowthData func(ExploreId) ([]SkillGrowthData, error)
 
 type SkillGrowthPostRow struct {
-	SkillId  core.SkillId
-	SkillExp core.SkillExp
+	UserId   core.UserId   `db:"user_id"`
+	SkillId  core.SkillId  `db:"skill_id"`
+	SkillExp core.SkillExp `db:"skill_exp"`
 }
 
 type SkillGrowthPost struct {
-	UserId      core.UserId
-	AccessToken core.AccessToken
+	UserId      core.UserId `db:"user_id"`
 	SkillGrowth []SkillGrowthPostRow
 }
 
-type SkillGrowthPostFunc func(SkillGrowthPost) error
+type UpdateUserSkillExpFunc func(SkillGrowthPost) error
 
 type GetExploreMasterRes struct {
 	ExploreId            ExploreId
@@ -133,11 +133,11 @@ type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
 type FetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
 
 type ExploreUserData struct {
-	ExploreId ExploreId
-	IsKnown   core.IsKnown
+	ExploreId ExploreId    `db:"explore_id"`
+	IsKnown   core.IsKnown `db:"is_known"`
 }
 
-type GetUserExploreFunc func(core.UserId, []ExploreId, core.AccessToken) (GetActionsRes, error)
+type GetUserExploreFunc func(core.UserId, []ExploreId) ([]ExploreUserData, error)
 
 type GetActionsRes struct {
 	UserId   core.UserId
@@ -181,11 +181,11 @@ type GetAllStagesRes struct {
 type FetchStageMasterFunc func(StageId) (StageMaster, error)
 type FetchAllStageFunc func() (GetAllStagesRes, error)
 
-type FetchUserStageFunc func(core.UserId, []StageId) (GetAllUserStagesRes, error)
+type FetchUserStageFunc func(core.UserId, []StageId) ([]UserStage, error)
 
 type UserStage struct {
-	StageId StageId
-	IsKnown core.IsKnown
+	StageId StageId      `db:"stage_id"`
+	IsKnown core.IsKnown `db:"is_known"`
 }
 
 type GetAllUserStagesRes struct {

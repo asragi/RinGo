@@ -141,6 +141,9 @@ func CreateFetchStageData(
 		if err != nil {
 			return handleError(err)
 		}
+		userStageRes := GetAllUserStagesRes{
+			UserStage: userStage,
+		}
 		stageExplorePair, err := args.FetchStageExploreRelation(stageId)
 		exploreIds := func(stageExplore []StageExploreIdPair) []ExploreId {
 			var result []ExploreId
@@ -163,7 +166,7 @@ func CreateFetchStageData(
 		return getAllStageArgs{
 			stageId:        stageId,
 			allStageRes:    allStageRes,
-			userStageRes:   userStage,
+			userStageRes:   userStageRes,
 			stageExploreId: stageExplorePair,
 			exploreMaster:  exploreMaster,
 			exploreId:      exploreIds,

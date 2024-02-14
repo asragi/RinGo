@@ -159,7 +159,7 @@ type PostActionFunc func(
 	calcConsumedItem CalcConsumedItemFunc,
 	calcTotalItem CalcTotalItemFunc,
 	updateItemStorage UpdateItemStorageFunc,
-	updateSkill SkillGrowthPostFunc,
+	updateSkill UpdateUserSkillExpFunc,
 	updateStamina UpdateStaminaFunc,
 	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
@@ -189,7 +189,7 @@ func PostAction(
 	calcConsumedItem CalcConsumedItemFunc,
 	calcTotalItem CalcTotalItemFunc,
 	updateItemStorage UpdateItemStorageFunc,
-	updateSkill SkillGrowthPostFunc,
+	updateSkill UpdateUserSkillExpFunc,
 	updateStamina UpdateStaminaFunc,
 	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
@@ -222,6 +222,7 @@ func PostAction(
 		result := make([]SkillGrowthPostRow, len(skillGrowth))
 		for i, v := range skillGrowth {
 			result[i] = SkillGrowthPostRow{
+				UserId:   userId,
 				SkillId:  v.SkillId,
 				SkillExp: v.AfterExp,
 			}
@@ -272,7 +273,6 @@ func PostAction(
 	err = updateSkill(
 		SkillGrowthPost{
 			UserId:      args.userId,
-			AccessToken: args.token,
 			SkillGrowth: skillGrowthReq,
 		},
 	)

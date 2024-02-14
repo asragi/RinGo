@@ -64,9 +64,13 @@ func CreateMakeUserExploreFunc(
 		if err != nil {
 			return handleError(err)
 		}
-		actionRes, err := repositories.GetAction(userId, nil, token)
+		actionRes, err := repositories.GetAction(userId, exploreIds)
 		if err != nil {
 			return handleError(err)
+		}
+		getActionsRes := GetActionsRes{
+			UserId:   userId,
+			Explores: actionRes,
 		}
 		requiredSkillsResponse, err := repositories.GetRequiredSkills(exploreIds)
 		if err != nil {
@@ -84,26 +88,15 @@ func CreateMakeUserExploreFunc(
 		if err != nil {
 			return handleError(err)
 		}
-		/*
-			consumingItem := func(res []*BatchGetConsumingItemRes) []BatchGetConsumingItemRes {
-				result := make([]BatchGetConsumingItemRes, len(res))
-				for i, v := range res {
-					result[i] = *v
-				}
-				return result
-			}(consumingItemRes)
-
-		*/
 
 		return CompensatedMakeUserExploreArgs{
 			resourceRes:      resourceRes,
-			actionsRes:       actionRes,
+			actionsRes:       getActionsRes,
 			requiredSkillRes: requiredSkillsResponse,
 			consumingItemRes: consumingItemRes,
 			itemData:         storage.ItemData,
 			batchGetSkillRes: skills,
 		}, nil
-
 	}
 	return makeUserExplores
 }
