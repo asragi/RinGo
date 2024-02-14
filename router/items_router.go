@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/handler"
 	"net/http"
 	"strings"
@@ -19,7 +20,7 @@ func CreateItemsRouteHandler(
 	actionPathName := "actions"
 	internalServerWrapper := func(w http.ResponseWriter, path string) {
 		errorOnInternalError(
-			w, handler.InternalServerError{
+			w, core.InternalServerError{
 				Message: fmt.Sprintf("given path is invalid: %s", path),
 			},
 		)

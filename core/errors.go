@@ -17,3 +17,11 @@ type TokenIsInvalidError struct {
 func (e TokenIsInvalidError) Error() string {
 	return fmt.Sprintf("token is invalid: %s", e.token)
 }
+
+type InternalServerError struct {
+	Message string
+}
+
+func (e InternalServerError) Error() string {
+	return fmt.Sprintf("internal server error: %s", e.Message)
+}

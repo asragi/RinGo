@@ -10,14 +10,6 @@ func (e MethodNotAllowedError) Error() string {
 	return fmt.Sprintf("method not allowed: %s", e.Message)
 }
 
-type InternalServerError struct {
-	Message string
-}
-
-func (e InternalServerError) Error() string {
-	return fmt.Sprintf("internal server error: %s", e.Message)
-}
-
 type PageNotFoundError struct {
 	Message string
 }
