@@ -7,6 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"strconv"
+	"time"
 )
 
 type ConnectionSettings struct {
@@ -56,6 +57,26 @@ func idToStringArray[T core.Stringer](ids []T) []string {
 }
 
 type ConnectDBFunc func() (*sqlx.DB, error)
+
+func CreateGetResourceMySQL(connect ConnectDBFunc) stage.GetResourceFunc {
+	return CreateGetUserDataQueryRow[stage.GetResourceRes](
+		connect,
+		"get resource: %w",
+		"SELECT user_id, max_stamina, stamina_recover_time, fund FROM users",
+	)
+}
+
+func CreateUpdateStamina(connect ConnectDBFunc) stage.UpdateStaminaFunc {
+	return CreateUpdateUserData[core.StaminaRecoverTime](
+		connect,
+		"update stamimna: %w",
+		`UPDATE users SET stamina_recover_time = %s WHERE user_id = "%s";`,
+		func(stamina core.StaminaRecoverTime) string {
+			t := time.Time(stamina)
+			return t.Format("2006-01-02 15:04:05")
+		},
+	)
+}
 
 func CreateGetItemMasterMySQL(connect ConnectDBFunc) stage.FetchItemMasterFunc {
 	return CreateBatchGetQuery[core.ItemId, stage.GetItemMasterRes](
@@ -354,6 +375,38 @@ func CreateBatchGetMultiQuery[S core.Stringer, T core.ProvideId[S], U core.Multi
 	return f
 }
 
+// CreateGetUserDataQueryRow returns function that receives N args and returns N values
+func CreateGetUserDataQueryRow[T any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	query string,
+) func(core.UserId) (T, error) {
+	f := func(userId core.UserId) (T, error) {
+		handleError := func(err error) (T, error) {
+			var empty T
+			return empty, fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		queryString := fmt.Sprintf(
+			`%s WHERE user_id = "%s";`,
+			query,
+			userId,
+		)
+		row := db.QueryRowx(queryString)
+		var result T
+		err = row.StructScan(&result)
+		if err != nil {
+			return handleError(err)
+		}
+		return result, nil
+	}
+
+	return f
+}
+
 // CreateBatchGetUserDataQuery returns function that receives N args and returns N values
 func CreateBatchGetUserDataQuery[S core.Stringer, T any](
 	connect ConnectDBFunc,
@@ -404,6 +457,82 @@ func CreateUpdateFund(connect ConnectDBFunc) stage.UpdateFundFunc {
 		`UPDATE users SET fund = %s WHERE user_id = "%s";`,
 		func(f core.Fund) string { return strconv.Itoa(int(f)) },
 	)
+}
+
+func CreateGetStorage(connect ConnectDBFunc) stage.FetchStorageFunc {
+	g := CreateBatchGetUserDataQuery[core.ItemId, stage.ItemData](
+		connect,
+		"get user storage: %w",
+		"SELECT user_id, item_id, stock, is_known FROM item_storages",
+		"item_id",
+	)
+	return func(userId core.UserId, itemId []core.ItemId) (stage.BatchGetStorageRes, error) {
+		res, err := g(userId, itemId)
+		return stage.BatchGetStorageRes{
+			UserId:   userId,
+			ItemData: res,
+		}, err
+	}
+}
+
+func CreateGetAllStorage(connect ConnectDBFunc) stage.FetchAllStorageFunc {
+	f := func(userId core.UserId) ([]stage.ItemData, error) {
+		handleError := func(err error) ([]stage.ItemData, error) {
+			return nil, fmt.Errorf("get all storage from mysql: %w", err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		query := fmt.Sprintf(
+			`SELECT user_id, item_id, stock, is_known from item_storages WHERE user_id = "%s";`,
+			userId,
+		)
+		rows, err := db.Query(query)
+		if err != nil {
+			return handleError(err)
+		}
+		var result []stage.ItemData
+		for rows.Next() {
+			var res stage.ItemData
+			err = rows.Scan(&res.UserId, &res.ItemId, &res.Stock, &res.IsKnown)
+			if err != nil {
+				return handleError(err)
+			}
+			result = append(result, res)
+		}
+		return result, nil
+	}
+
+	return f
+}
+
+func CreateUpdateItemStorage(connect ConnectDBFunc) stage.UpdateItemStorageFunc {
+	return CreateBulkUpdateUserData[stage.ItemStock](
+		connect,
+		"update user item storage",
+		`INSERT INTO item_storages (user_id, item_id, stock) VALUES (:user_id, :item_id, :stock_exp) ON DUPLICATE KEY UPDATE stock =VALUES(stock);`,
+	)
+}
+
+func CreateGetUserSkill(connect ConnectDBFunc) stage.FetchUserSkillFunc {
+	g := CreateBatchGetUserDataQuery[core.SkillId, stage.UserSkillRes](
+		connect,
+		"get user skill data :%w",
+		"SELECT user_id, skill_id, skill_exp FROM user_skills",
+		"skill_id",
+	)
+	f := func(userId core.UserId, skillIds []core.SkillId) (stage.BatchGetUserSkillRes, error) {
+		res, err := g(userId, skillIds)
+		if err != nil {
+			return stage.BatchGetUserSkillRes{}, err
+		}
+		return stage.BatchGetUserSkillRes{
+			Skills: res,
+			UserId: userId,
+		}, nil
+	}
+	return f
 }
 
 func CreateUpdateUserSkill(connect ConnectDBFunc) stage.UpdateUserSkillExpFunc {

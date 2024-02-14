@@ -12,7 +12,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
-	"os"
 )
 
 type infrastructuresStruct struct {
@@ -64,6 +63,8 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	connect := func() (*sqlx.DB, error) {
 		return db, nil
 	}
+
+	getResource := infrastructure.CreateGetResourceMySQL(connect)
 	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
 	getStageMaster := infrastructure.CreateGetStageMaster(connect)
 	getAllStage := infrastructure.CreateGetAllStageMaster(connect)
@@ -78,35 +79,21 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	getItemExploreRelation := infrastructure.CreateItemExploreRelation(connect)
 	getUserExplore := infrastructure.CreateGetUserExplore(connect)
 	getUserStageData := infrastructure.CreateGetUserStageData(connect)
+	getUserSkillData := infrastructure.CreateGetUserSkill(connect)
+	getStorage := infrastructure.CreateGetStorage(connect)
+	getAllStorage := infrastructure.CreateGetAllStorage(connect)
 
 	updateFund := infrastructure.CreateUpdateFund(connect)
 	updateSkill := infrastructure.CreateUpdateUserSkill(connect)
-
-	gwd, _ := os.Getwd()
-	dataDir := gwd + "/infrastructure/data/%s.csv"
-	userResource := infrastructure.CreateInMemoryUserResourceRepo()
-	itemStorage, err := infrastructure.CreateInMemoryItemStorageRepo(
-		&infrastructure.ItemStorageLoader{
-			Path: fmt.Sprintf(
-				dataDir,
-				"item-storage",
-			),
-		},
-	)
-	if err != nil {
-		return handleError(err)
-	}
-	userSkill, err := infrastructure.CreateInMemoryUserSkillRepo(&infrastructure.UserSkillLoader{Path: "./infrastructure/data/user-skill.csv"})
-	if err != nil {
-		return handleError(err)
-	}
+	updateStorage := infrastructure.CreateUpdateItemStorage(connect)
+	updateStamina := infrastructure.CreateUpdateStamina(connect)
 
 	return &infrastructuresStruct{
-		getResource:               userResource.GetResource,
+		getResource:               getResource,
 		fetchItemMaster:           getItemMaster,
-		fetchStorage:              itemStorage.BatchGet,
-		getAllStorage:             itemStorage.GetAllStock,
-		userSkill:                 userSkill.BatchGet,
+		fetchStorage:              getStorage,
+		getAllStorage:             getAllStorage,
+		userSkill:                 getUserSkillData,
 		stageMaster:               getStageMaster,
 		fetchAllStage:             getAllStage,
 		exploreMaster:             getExploreMaster,
@@ -115,7 +102,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		consumingItem:             getConsumingItem,
 		fetchRequiredSkill:        getRequiredSkill,
 		skillGrowth:               getSkillGrowth,
-		updateStorage:             itemStorage.Update,
+		updateStorage:             updateStorage,
 		updateSkill:               updateSkill,
 		getUserExplore:            getUserExplore,
 		fetchStageExploreRelation: getStageExploreRelation,
@@ -123,7 +110,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		fetchUserStage:            getUserStageData,
 		fetchReductionSkill:       getReductionSkill,
 		validateToken:             nil,
-		updateStamina:             userResource.UpdateStamina,
+		updateStamina:             updateStamina,
 		updateFund:                updateFund,
 		closeDB:                   closeDB,
 	}, nil

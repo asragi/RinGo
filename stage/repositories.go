@@ -4,13 +4,13 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type GetResourceFunc func(core.UserId, core.AccessToken) (GetResourceRes, error)
+type GetResourceFunc func(core.UserId) (GetResourceRes, error)
 
 type GetResourceRes struct {
-	UserId             core.UserId
-	MaxStamina         core.MaxStamina
-	StaminaRecoverTime core.StaminaRecoverTime
-	Fund               core.Fund
+	UserId             core.UserId             `db:"user_id"`
+	MaxStamina         core.MaxStamina         `db:"max_stamina"`
+	StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
+	Fund               core.Fund               `db:"fund"`
 }
 
 type UpdateFundFunc func(core.UserId, core.Fund) error
@@ -44,7 +44,7 @@ type BatchGetStorageRes struct {
 	ItemData []ItemData
 }
 
-type FetchStorageFunc func(core.UserId, []core.ItemId, core.AccessToken) (BatchGetStorageRes, error)
+type FetchStorageFunc func(core.UserId, []core.ItemId) (BatchGetStorageRes, error)
 
 type FetchAllStorageFunc func(core.UserId) ([]ItemData, error)
 
@@ -53,7 +53,7 @@ type ItemStock struct {
 	AfterStock core.Stock
 }
 
-type UpdateItemStorageFunc func(core.UserId, []ItemStock, core.AccessToken) error
+type UpdateItemStorageFunc func(core.UserId, []ItemStock) error
 
 type SkillMaster struct {
 	SkillId     core.SkillId
@@ -63,9 +63,9 @@ type SkillMaster struct {
 type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
 
 type UserSkillRes struct {
-	UserId   core.UserId
-	SkillId  core.SkillId
-	SkillExp core.SkillExp
+	UserId   core.UserId   `db:"user_id"`
+	SkillId  core.SkillId  `db:"skill_id"`
+	SkillExp core.SkillExp `db:"skill_exp"`
 }
 
 type BatchGetUserSkillRes struct {
@@ -73,7 +73,7 @@ type BatchGetUserSkillRes struct {
 	Skills []UserSkillRes
 }
 
-type FetchUserSkillFunc func(core.UserId, []core.SkillId, core.AccessToken) (BatchGetUserSkillRes, error)
+type FetchUserSkillFunc func(core.UserId, []core.SkillId) (BatchGetUserSkillRes, error)
 
 type SkillGrowthData struct {
 	ExploreId    ExploreId    `db:"explore_id"`
