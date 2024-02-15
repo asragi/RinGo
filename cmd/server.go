@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/asragi/RinGo/application"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
@@ -35,7 +36,7 @@ type infrastructuresStruct struct {
 	fetchItemExploreRelation  stage.FetchItemExploreRelationFunc
 	fetchUserStage            stage.FetchUserStageFunc
 	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
-	validateToken             core.ValidateTokenRepoFunc
+	validateToken             auth.ValidateTokenRepoFunc
 	updateStamina             stage.UpdateStaminaFunc
 	updateFund                stage.UpdateFundFunc
 	closeDB                   func() error
@@ -127,7 +128,7 @@ func main() {
 	}
 
 	diContainer := stage.CreateDIContainer()
-	validateToken := core.ValidateTokenFunc(infrastructures.validateToken)
+	validateToken := auth.ValidateTokenFunc(infrastructures.validateToken)
 	writeLogger := handler.LogHttpWrite
 	currentTimeEmitter := core.CurrentTimeEmitter{}
 	random := core.RandomEmitter{}
@@ -268,7 +269,7 @@ func main() {
 		stage.CreateCommonGetActionDetail,
 		infrastructures.fetchItemMaster,
 		infrastructures.validateToken,
-		core.CreateValidateTokenService,
+		auth.CreateValidateTokenService,
 		stage.CreateGetItemActionDetailService,
 		endpoint.CreateGetItemActionDetailEndpoint,
 		writeLogger,

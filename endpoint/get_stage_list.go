@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
@@ -28,7 +29,7 @@ func CreateGetStageList(
 			return &gateway.GetStageListResponse{}, fmt.Errorf("error on get stage list: %w", err)
 		}
 		userId := core.UserId(req.UserId)
-		token := core.AccessToken(req.Token)
+		token := auth.AccessToken(req.Token)
 		res, err := getStageList(userId, token, timer)
 		if err != nil {
 			return handleError(err)

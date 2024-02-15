@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -35,7 +36,7 @@ type EarningItemRes struct {
 	IsKnown core.IsKnown
 }
 
-type commonGetActionFunc func(core.UserId, ExploreId, core.AccessToken) (commonGetActionRes, error)
+type commonGetActionFunc func(core.UserId, ExploreId, auth.AccessToken) (commonGetActionRes, error)
 
 type CreateCommonGetActionDetailRepositories struct {
 	FetchItemStorage        FetchStorageFunc
@@ -59,7 +60,7 @@ func CreateCommonGetActionDetail(
 	getActionDetail := func(
 		userId core.UserId,
 		exploreId ExploreId,
-		token core.AccessToken,
+		token auth.AccessToken,
 	) (commonGetActionRes, error) {
 		handleError := func(err error) (commonGetActionRes, error) {
 			return commonGetActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
@@ -81,7 +82,7 @@ func CreateCommonGetActionDetail(
 			}
 			return result
 		}(consumingItems)
-		consumingItemStorage, err := args.FetchItemStorage(userId, consumingItemIds, token)
+		consumingItemStorage, err := args.FetchItemStorage(userId, consumingItemIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -106,7 +107,7 @@ func CreateCommonGetActionDetail(
 			return result
 		}(consumingItems)
 		requiredStamina, err := func(baseStamina core.Stamina) (core.Stamina, error) {
-			reducedStamina, err := calcConsumingStamina(userId, token, []ExploreId{exploreId})
+			reducedStamina, err := calcConsumingStamina(userId, []ExploreId{exploreId})
 			if err != nil {
 				return 0, err
 			}
@@ -161,7 +162,7 @@ func CreateCommonGetActionDetail(
 			if err != nil {
 				return []RequiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
-			userSkillRes, err := args.FetchUserSkill(userId, skillIds, token)
+			userSkillRes, err := args.FetchUserSkill(userId, skillIds)
 			if err != nil {
 				return []RequiredSkillsRes{}, fmt.Errorf("error on getting required skills: %w", err)
 			}
@@ -208,7 +209,7 @@ type GetStageActionDetailFunc func(
 	core.UserId,
 	StageId,
 	ExploreId,
-	core.AccessToken,
+	auth.AccessToken,
 ) (gateway.GetStageActionDetailResponse, error)
 
 type CreateGetStageActionDetailFunc func(commonGetActionFunc, FetchStageMasterFunc) GetStageActionDetailFunc
@@ -221,7 +222,7 @@ func CreateGetStageActionDetailService(
 		userId core.UserId,
 		stageId StageId,
 		exploreId ExploreId,
-		token core.AccessToken,
+		token auth.AccessToken,
 	) (gateway.GetStageActionDetailResponse, error) {
 		handleError := func(err error) (gateway.GetStageActionDetailResponse, error) {
 			return gateway.GetStageActionDetailResponse{}, fmt.Errorf("error on getting stage action detail: %w", err)

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
 )
@@ -14,8 +14,8 @@ func CreateGetItemActionDetailHandler(
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchItemMaster stage.FetchItemMasterFunc,
-	validateTokenRepo core.ValidateTokenRepoFunc,
-	validateToken core.ValidateTokenServiceFunc,
+	validateTokenRepo auth.ValidateTokenRepoFunc,
+	validateToken auth.ValidateTokenServiceFunc,
 	service stage.CreateGetItemActionDetailServiceFunc,
 	createEndpoint endpoint.CreateGetItemActionDetailEndpointFunc,
 	logger writeLogger,

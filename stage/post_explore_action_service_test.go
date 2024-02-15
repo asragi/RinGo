@@ -2,6 +2,7 @@ package stage
 
 import (
 	"errors"
+	"github.com/asragi/RinGo/auth"
 	"reflect"
 	"testing"
 	"time"
@@ -37,7 +38,7 @@ func TestPostAction(t *testing.T) {
 
 	userId := core.UserId("passedId")
 	exploreId := ExploreId("explore")
-	token := core.AccessToken("token")
+	token := auth.AccessToken("token")
 
 	req := request{
 		execCount: 2,
@@ -170,7 +171,7 @@ func TestPostAction(t *testing.T) {
 		mockTotal := func([]ItemData, []GetItemMasterRes, []earnedItem, []consumedItem) []totalItem {
 			return nil
 		}
-		mockItemUpdate := func(core.UserId, []ItemStock, core.AccessToken) error {
+		mockItemUpdate := func(core.UserId, []ItemStock, auth.AccessToken) error {
 			return nil
 		}
 		var updatedSkillGrowth SkillGrowthPost

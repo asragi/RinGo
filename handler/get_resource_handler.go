@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
 )
 
 func CreateGetResourceHandler(
-	validateToken core.ValidateTokenFunc,
+	validateToken auth.ValidateTokenFunc,
 	getResource stage.GetResourceFunc,
 	getUserResourceFunc stage.CreateGetUserResourceServiceFunc,
 	logger writeLogger,

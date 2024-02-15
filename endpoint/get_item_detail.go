@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
@@ -17,7 +18,7 @@ func CreateGetItemDetail(
 	get := func(req *gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error) {
 		userId := core.UserId(req.UserId)
 		itemId := core.ItemId(req.ItemId)
-		token := core.AccessToken(req.Token)
+		token := auth.AccessToken(req.Token)
 		handleError := func(err error) (*gateway.GetItemDetailResponse, error) {
 			return &gateway.GetItemDetailResponse{}, fmt.Errorf("error on get item detail endpoint: %w", err)
 		}

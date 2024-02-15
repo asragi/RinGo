@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
@@ -12,7 +13,7 @@ type InMemoryUserRepo struct {
 	Fund        core.Fund
 }
 
-func (m *InMemoryUserRepo) GetResource(userId core.UserId, token core.AccessToken) (stage.GetResourceRes, error) {
+func (m *InMemoryUserRepo) GetResource(userId core.UserId, token auth.AccessToken) (stage.GetResourceRes, error) {
 	return stage.GetResourceRes{
 		UserId:             userId,
 		MaxStamina:         6000,
@@ -83,7 +84,7 @@ type IItemStorageDataLoader interface {
 func (m *InMemoryItemStorageRepo) Get(
 	userId core.UserId,
 	itemId core.ItemId,
-	token core.AccessToken,
+	token auth.AccessToken,
 ) (stage.GetItemStorageRes, error) {
 	return stage.GetItemStorageRes{UserId: userId, Stock: m.GetStock(userId, itemId)}, nil
 }
@@ -91,7 +92,7 @@ func (m *InMemoryItemStorageRepo) Get(
 func (m *InMemoryItemStorageRepo) BatchGet(
 	userId core.UserId,
 	itemId []core.ItemId,
-	token core.AccessToken,
+	token auth.AccessToken,
 ) (stage.BatchGetStorageRes, error) {
 	result := make([]stage.ItemData, len(itemId))
 	for i, v := range itemId {
@@ -122,7 +123,7 @@ func (m *InMemoryItemStorageRepo) GetAllStock(id core.UserId) ([]stage.ItemData,
 	return result, nil
 }
 
-func (m *InMemoryItemStorageRepo) Update(userId core.UserId, items []stage.ItemStock, token core.AccessToken) error {
+func (m *InMemoryItemStorageRepo) Update(userId core.UserId, items []stage.ItemStock, token auth.AccessToken) error {
 	for _, v := range items {
 		if _, ok := m.Data[userId]; !ok {
 			m.Data[userId] = map[core.ItemId]stage.ItemData{}
@@ -153,7 +154,7 @@ type InMemoryUserExploreRepo struct {
 func (m *InMemoryUserExploreRepo) GetActions(
 	userId core.UserId,
 	exploreIds []stage.ExploreId,
-	token core.AccessToken,
+	token auth.AccessToken,
 ) (stage.GetActionsRes, error) {
 	result := make([]stage.ExploreUserData, len(exploreIds))
 	for i, v := range exploreIds {
@@ -248,7 +249,7 @@ type IUserSkillLoader interface {
 func (m *InMemoryUserSkillRepo) BatchGet(
 	userId core.UserId,
 	skillIds []core.SkillId,
-	token core.AccessToken,
+	token auth.AccessToken,
 ) (stage.BatchGetUserSkillRes, error) {
 	list := m.Data[userId]
 	result := make([]stage.UserSkillRes, len(skillIds))
@@ -482,7 +483,7 @@ type InMemoryItemStorageUpdateRepo struct {
 	Data map[core.UserId][]stage.ItemStock
 }
 
-func (m *InMemoryItemStorageUpdateRepo) Update(userId core.UserId, items []stage.ItemStock, _ core.AccessToken) error {
+func (m *InMemoryItemStorageUpdateRepo) Update(userId core.UserId, items []stage.ItemStock, _ auth.AccessToken) error {
 	m.Data = make(map[core.UserId][]stage.ItemStock)
 	m.Data[userId] = items
 	return nil

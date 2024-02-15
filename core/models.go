@@ -9,16 +9,6 @@ import (
 type CreatedAt time.Time
 type UpdatedAt time.Time
 
-// auth
-type AccessToken string
-
-func (token *AccessToken) IsValid() error {
-	if len(*token) <= 0 {
-		return TokenIsInvalidError{token: *token}
-	}
-	return nil
-}
-
 // user
 type UserId string
 

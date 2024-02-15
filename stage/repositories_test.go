@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 )
 
@@ -39,7 +40,7 @@ type MockUserSkillRepo struct {
 func (m *MockUserSkillRepo) BatchGet(
 	userId core.UserId,
 	skillIds []core.SkillId,
-	_ core.AccessToken,
+	_ auth.AccessToken,
 ) (BatchGetUserSkillRes, error) {
 	list := m.Data[userId]
 	result := make([]UserSkillRes, len(skillIds))
@@ -102,7 +103,7 @@ type fetchItemStorageTester struct {
 func (t *fetchItemStorageTester) BatchGet(
 	id core.UserId,
 	items []core.ItemId,
-	_ core.AccessToken,
+	_ auth.AccessToken,
 ) (BatchGetStorageRes, error) {
 	t.passedId = id
 	t.passedItemIds = items
@@ -163,7 +164,7 @@ type fetchUserSkillTester struct {
 func (t *fetchUserSkillTester) BatchGet(
 	id core.UserId,
 	skills []core.SkillId,
-	_ core.AccessToken,
+	_ auth.AccessToken,
 ) (
 	BatchGetUserSkillRes,
 	error,

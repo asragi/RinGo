@@ -13,7 +13,6 @@ func TestCreateGetUserResourceService(t *testing.T) {
 		validateToken    error
 		getResourceError error
 		userId           core.UserId
-		token            core.AccessToken
 		expectedError    error
 	}
 
@@ -23,30 +22,21 @@ func TestCreateGetUserResourceService(t *testing.T) {
 			validateToken:    nil,
 			getResourceError: nil,
 			userId:           "id",
-			token:            "token",
 			expectedError:    nil,
 		},
 	}
 
 	for _, v := range testCases {
 		var passedUserId core.UserId
-		var passedToken core.AccessToken
-		validateToken := func(id core.UserId, token core.AccessToken) error {
-			passedUserId = id
-			passedToken = token
-			return v.validateToken
-		}
 
 		var passedUserIdToResource core.UserId
-		var passedTokenToResource core.AccessToken
-		getResource := func(id core.UserId, token core.AccessToken) (GetResourceRes, error) {
+		getResource := func(id core.UserId) (GetResourceRes, error) {
 			passedUserIdToResource = id
-			passedTokenToResource = token
 			return v.res, v.getResourceError
 		}
 
-		getFunc := CreateGetUserResourceService(validateToken, getResource)
-		res, err := getFunc(v.userId, v.token)
+		getFunc := CreateGetUserResourceService(getResource)
+		res, err := getFunc(v.userId)
 		if err != v.expectedError {
 			t.Errorf("expected err: %s, got: %s", v.expectedError, err)
 		}
@@ -56,14 +46,8 @@ func TestCreateGetUserResourceService(t *testing.T) {
 		if v.userId != passedUserId {
 			t.Errorf("expected: %s, got: %s", v.userId, passedUserId)
 		}
-		if v.token != passedToken {
-			t.Errorf("expected: %s, got: %s", v.token, passedToken)
-		}
 		if v.userId != passedUserIdToResource {
 			t.Errorf("expected: %s, got: %s", v.userId, passedUserIdToResource)
-		}
-		if v.token != passedTokenToResource {
-			t.Errorf("expected: %s, got: %s", v.token, passedTokenToResource)
 		}
 	}
 

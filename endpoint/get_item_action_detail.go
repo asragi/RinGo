@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
@@ -21,7 +22,7 @@ func CreateGetItemActionDetailEndpoint(
 		userId := core.UserId(req.UserId)
 		itemId := core.ItemId(req.ItemId)
 		exploreId := stage.ExploreId(req.ExploreId)
-		token := core.AccessToken(req.AccessToken)
+		token := auth.AccessToken(req.AccessToken)
 		res, err := getItemActionFunc(userId, itemId, exploreId, token)
 		if err != nil {
 			return handleError(err)

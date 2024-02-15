@@ -2,7 +2,6 @@ package stage
 
 import (
 	"fmt"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -32,7 +31,6 @@ type CompensatedMakeUserExploreArgs struct {
 
 type fetchMakeUserExploreArgs func(
 	core.UserId,
-	core.AccessToken,
 	[]ExploreId,
 ) (CompensatedMakeUserExploreArgs, error)
 
@@ -54,13 +52,12 @@ func CreateMakeUserExploreFunc(
 ) fetchMakeUserExploreArgs {
 	makeUserExplores := func(
 		userId core.UserId,
-		token core.AccessToken,
 		exploreIds []ExploreId,
 	) (CompensatedMakeUserExploreArgs, error) {
 		handleError := func(err error) (CompensatedMakeUserExploreArgs, error) {
 			return CompensatedMakeUserExploreArgs{}, fmt.Errorf("error on create make user explore args: %w", err)
 		}
-		resourceRes, err := repositories.GetResource(userId, token)
+		resourceRes, err := repositories.GetResource(userId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -80,11 +77,11 @@ func CreateMakeUserExploreFunc(
 		if err != nil {
 			return handleError(err)
 		}
-		storage, err := repositories.GetStorage(userId, nil, token)
+		storage, err := repositories.GetStorage(userId, nil)
 		if err != nil {
 			return handleError(err)
 		}
-		skills, err := repositories.GetUserSkill(userId, nil, token)
+		skills, err := repositories.GetUserSkill(userId, nil)
 		if err != nil {
 			return handleError(err)
 		}

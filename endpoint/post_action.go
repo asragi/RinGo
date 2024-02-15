@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/core"
@@ -26,7 +27,7 @@ func CreatePostAction(
 		}
 		userId := core.UserId(req.UserId)
 		exploreId := stage.ExploreId(req.ExploreId)
-		token := core.AccessToken(req.Token)
+		token := auth.AccessToken(req.Token)
 		execCount := int(req.ExecCount)
 		res, err := postAction.Post(userId, token, exploreId, execCount)
 		if err != nil {

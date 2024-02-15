@@ -2,6 +2,7 @@ package application
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"time"
 
 	"github.com/asragi/RinGo/core"
@@ -9,7 +10,7 @@ import (
 )
 
 type CreatePostActionRes struct {
-	Post func(core.UserId, core.AccessToken, stage.ExploreId, int) (stage.PostActionResult, error)
+	Post func(core.UserId, auth.AccessToken, stage.ExploreId, int) (stage.PostActionResult, error)
 }
 
 type postFunc func(stage.PostActionArgs, time.Time) (stage.PostActionResult, error)
@@ -58,7 +59,7 @@ func CompensatePostActionFunctions(
 	}
 }
 
-type emitPostActionArgsFunc func(core.UserId, core.AccessToken, stage.ExploreId, int) (stage.PostActionArgs, error)
+type emitPostActionArgsFunc func(core.UserId, auth.AccessToken, stage.ExploreId, int) (stage.PostActionArgs, error)
 
 type EmitPostActionAppArgs struct {
 	UserResourceRepo    stage.GetResourceFunc
@@ -84,7 +85,7 @@ func EmitPostActionArgs(
 ) emitPostActionArgsFunc {
 	return func(
 		userId core.UserId,
-		token core.AccessToken,
+		token auth.AccessToken,
 		exploreId stage.ExploreId,
 		execCount int,
 	) (stage.PostActionArgs, error) {
@@ -111,7 +112,7 @@ func CreatePostActionService(
 ) CreatePostActionRes {
 	postResult := func(
 		userId core.UserId,
-		token core.AccessToken,
+		token auth.AccessToken,
 		exploreId stage.ExploreId,
 		execCount int,
 	) (stage.PostActionResult, error) {

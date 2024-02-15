@@ -2,11 +2,12 @@ package stage
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 )
 
 type GetItemActionDetailFunc func(
-	core.UserId, core.ItemId, ExploreId, core.AccessToken,
+	core.UserId, core.ItemId, ExploreId, auth.AccessToken,
 ) (GetItemActionDetailResponse, error)
 type GetItemActionDetailResponse struct {
 	UserId            core.UserId
@@ -23,19 +24,19 @@ type GetItemActionDetailResponse struct {
 type CreateGetItemActionDetailServiceFunc func(
 	commonGetActionFunc,
 	FetchItemMasterFunc,
-	core.ValidateTokenFunc,
+	auth.ValidateTokenFunc,
 ) GetItemActionDetailFunc
 
 func CreateGetItemActionDetailService(
 	getCommonAction commonGetActionFunc,
 	fetchItemMaster FetchItemMasterFunc,
-	validateToken core.ValidateTokenFunc,
+	validateToken auth.ValidateTokenFunc,
 ) GetItemActionDetailFunc {
 	get := func(
 		userId core.UserId,
 		itemId core.ItemId,
 		exploreId ExploreId,
-		token core.AccessToken,
+		token auth.AccessToken,
 	) (GetItemActionDetailResponse, error) {
 		handleError := func(err error) (GetItemActionDetailResponse, error) {
 			return GetItemActionDetailResponse{}, fmt.Errorf("on get item action detail service: %w", err)

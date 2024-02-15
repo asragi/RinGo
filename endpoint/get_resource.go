@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
@@ -19,7 +20,7 @@ func CreateGetResourceEndpoint(
 			return &gateway.GetResourceResponse{}, fmt.Errorf("error on get resource: %w", err)
 		}
 		userId := core.UserId(req.UserId)
-		token := core.AccessToken(req.Token)
+		token := auth.AccessToken(req.Token)
 		err := userId.IsValid()
 		if err != nil {
 			return handleError(err)

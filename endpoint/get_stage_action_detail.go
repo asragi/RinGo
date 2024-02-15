@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
@@ -18,7 +19,7 @@ func CreateGetStageActionDetail(
 		userId := core.UserId(req.UserId)
 		exploreId := stage.ExploreId(req.ExploreId)
 		stageId := stage.StageId(req.StageId)
-		token := core.AccessToken(req.Token)
+		token := auth.AccessToken(req.Token)
 		handleError := func(err error) (*gateway.GetStageActionDetailResponse, error) {
 			return &gateway.GetStageActionDetailResponse{}, fmt.Errorf(
 				"error on get stage action detail endpoint: %w",

@@ -1,6 +1,8 @@
-package core
+package auth
 
-type ValidateTokenFunc func(UserId, AccessToken) error
+import "github.com/asragi/RinGo/core"
+
+type ValidateTokenFunc func(core.UserId, AccessToken) error
 
 type ValidateTokenServiceFunc func(ValidateTokenRepoFunc) ValidateTokenFunc
 
@@ -8,7 +10,7 @@ func CreateValidateTokenService(
 	validateRepoFunc ValidateTokenRepoFunc,
 ) ValidateTokenFunc {
 	validate := func(
-		userId UserId,
+		userId core.UserId,
 		token AccessToken,
 	) error {
 		return validateRepoFunc(userId, token)

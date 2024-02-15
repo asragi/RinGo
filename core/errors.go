@@ -1,6 +1,8 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type UserIdIsInvalidError struct {
 	userId UserId
@@ -8,14 +10,6 @@ type UserIdIsInvalidError struct {
 
 func (e UserIdIsInvalidError) Error() string {
 	return fmt.Sprintf("id is invalid: %s", e.userId)
-}
-
-type TokenIsInvalidError struct {
-	token AccessToken
-}
-
-func (e TokenIsInvalidError) Error() string {
-	return fmt.Sprintf("token is invalid: %s", e.token)
 }
 
 type InternalServerError struct {

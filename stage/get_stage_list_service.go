@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/core"
 )
@@ -16,7 +17,7 @@ type StageInformation struct {
 
 type GetStageListFunc func(
 	core.UserId,
-	core.AccessToken,
+	auth.AccessToken,
 	core.GetCurrentTimeFunc,
 ) ([]StageInformation, error)
 
@@ -37,7 +38,7 @@ func GetStageList(
 ) GetStageListFunc {
 	getStageListFunc := func(
 		userId core.UserId,
-		token core.AccessToken,
+		token auth.AccessToken,
 		currentTime core.GetCurrentTimeFunc,
 	) ([]StageInformation, error) {
 		handleError := func(err error) ([]StageInformation, error) {
@@ -49,7 +50,6 @@ func GetStageList(
 		}
 		makeUserExploreArgs, err := fetchMakeUserExploreArgsFunc(
 			userId,
-			token,
 			stageData.exploreId,
 		)
 		if err != nil {

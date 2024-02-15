@@ -2,6 +2,7 @@ package stage
 
 import (
 	"errors"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
@@ -49,7 +50,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		var passedExploreIds []ExploreId
 		fetchUserExploreArgs := func(
 			id core.UserId,
-			token core.AccessToken,
+			token auth.AccessToken,
 			ids []ExploreId,
 		) (CompensatedMakeUserExploreArgs, error) {
 			passedExploreIds = ids
@@ -155,7 +156,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		}
 
 		var passedStorageArg core.ItemId
-		mockGetItemStorage := func(userId core.UserId, itemId []core.ItemId, token core.AccessToken) (
+		mockGetItemStorage := func(userId core.UserId, itemId []core.ItemId, token auth.AccessToken) (
 			BatchGetStorageRes,
 			error,
 		) {
@@ -173,7 +174,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		var passedStaminaArgs []ExploreId
 		consumingStamina := func(
 			userId core.UserId,
-			token core.AccessToken,
+			token auth.AccessToken,
 			ids []ExploreId,
 		) ([]ExploreStaminaPair, error) {
 			passedStaminaArgs = ids

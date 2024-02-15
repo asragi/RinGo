@@ -6,9 +6,8 @@ import (
 )
 
 type GetUserItemDetailReq struct {
-	UserId      core.UserId
-	ItemId      core.ItemId
-	AccessToken core.AccessToken
+	UserId core.UserId
+	ItemId core.ItemId
 }
 
 type getUserItemDetailRes struct {
@@ -65,7 +64,6 @@ func CreateGetItemDetailService(
 		}(args.explores)
 		fetchedActionArgs, err := fetchMakeUserExploreArgs(
 			req.UserId,
-			req.AccessToken,
 			exploreIds,
 		)
 
@@ -177,11 +175,11 @@ func FetchGetItemDetailArgs(
 	if err != nil {
 		return handleError(err)
 	}
-	staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, req.AccessToken, itemExploreIds)
+	staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, itemExploreIds)
 	if err != nil {
 		return handleError(err)
 	}
-	storageRes, err := getItemStorage(req.UserId, itemIdReq, req.AccessToken)
+	storageRes, err := getItemStorage(req.UserId, itemIdReq)
 	if err != nil {
 		return handleError(err)
 	}

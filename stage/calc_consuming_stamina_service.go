@@ -2,7 +2,6 @@ package stage
 
 import (
 	"fmt"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -38,7 +37,6 @@ type ExploreStaminaPair struct {
 
 type CalcBatchConsumingStaminaFunc func(
 	core.UserId,
-	core.AccessToken,
 	[]ExploreId,
 ) (
 	[]ExploreStaminaPair,
@@ -56,7 +54,7 @@ func CreateCalcConsumingStaminaService(
 	fetchExploreMaster FetchExploreMasterFunc,
 	fetchReductionSkills FetchReductionStaminaSkillFunc,
 ) CalcBatchConsumingStaminaFunc {
-	batchCalc := func(userId core.UserId, token core.AccessToken, exploreIds []ExploreId) (
+	batchCalc := func(userId core.UserId, exploreIds []ExploreId) (
 		[]ExploreStaminaPair,
 		error,
 	) {
@@ -109,7 +107,7 @@ func CreateCalcConsumingStaminaService(
 			return result
 		}(reductionStaminaSkills)
 
-		allSkills, err := fetchUserSkills(userId, allRequiredSkill, token)
+		allSkills, err := fetchUserSkills(userId, allRequiredSkill)
 		if err != nil {
 			return handleError(err)
 		}

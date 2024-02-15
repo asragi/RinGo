@@ -15,7 +15,6 @@ func (err invalidActionError) Error() string {
 
 type PostActionArgs struct {
 	userId            core.UserId
-	token             core.AccessToken
 	execCount         int
 	userResources     GetResourceRes
 	exploreMaster     GetExploreMasterRes
@@ -44,7 +43,6 @@ type GetPostActionRepositories struct {
 
 type GetPostActionArgsFunc func(
 	core.UserId,
-	core.AccessToken,
 	int,
 	ExploreId,
 	GetPostActionRepositories,
@@ -52,7 +50,6 @@ type GetPostActionArgsFunc func(
 
 func GetPostActionArgs(
 	userId core.UserId,
-	token core.AccessToken,
 	execCount int,
 	exploreId ExploreId,
 	args GetPostActionRepositories,
@@ -60,7 +57,7 @@ func GetPostActionArgs(
 	handleError := func(err error) (PostActionArgs, error) {
 		return PostActionArgs{}, fmt.Errorf("error on creating post action args: %w", err)
 	}
-	userResources, err := args.FetchResource(userId, token)
+	userResources, err := args.FetchResource(userId)
 	if err != nil {
 		return handleError(err)
 	}
@@ -80,7 +77,7 @@ func GetPostActionArgs(
 		}
 		return result
 	}(skillGrowthList)
-	skillsRes, err := args.FetchUserSkill(userId, skillIds, token)
+	skillsRes, err := args.FetchUserSkill(userId, skillIds)
 	if err != nil {
 		return handleError(err)
 	}
@@ -113,7 +110,7 @@ func GetPostActionArgs(
 		}
 		return result
 	}(earningItemData, consumingItemData)
-	storage, err := args.FetchStorage(userId, itemIds, token)
+	storage, err := args.FetchStorage(userId, itemIds)
 	if err != nil {
 		return handleError(err)
 	}
@@ -135,7 +132,6 @@ func GetPostActionArgs(
 	}
 	return PostActionArgs{
 		userId:            userId,
-		token:             token,
 		execCount:         execCount,
 		userResources:     userResources,
 		exploreMaster:     exploreMasters[0],
@@ -249,7 +245,7 @@ func PostAction(
 		return result
 	}(calculatedTotalItem)
 
-	err := updateItemStorage(args.userId, itemStockReq, args.token)
+	err := updateItemStorage(args.userId, itemStockReq)
 	if err != nil {
 		return handleError(err)
 	}
