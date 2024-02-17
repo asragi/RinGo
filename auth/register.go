@@ -54,7 +54,7 @@ func RegisterUser(
 		if err != nil {
 			return handleError(err)
 		}
-		err = insertNewUser(userId, hashedPass)
+		err = insertNewUser(&userId, &hashedPass)
 		if err != nil {
 			return handleError(err)
 		}
