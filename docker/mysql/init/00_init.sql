@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `fund` int(20) NOT NULL,
     `max_stamina` int(11) NOT NULL,
     `stamina_recover_time`DATETIME NOT NULL,
-    `hashed_password` varchar(40)
+    `hashed_password` varchar(40),
     PRIMARY KEY (`id`),
     INDEX `user_id_index` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
