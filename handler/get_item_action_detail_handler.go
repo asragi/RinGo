@@ -14,8 +14,7 @@ func CreateGetItemActionDetailHandler(
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchItemMaster stage.FetchItemMasterFunc,
-	validateTokenRepo auth.ValidateTokenRepoFunc,
-	validateToken auth.ValidateTokenServiceFunc,
+	validateToken auth.ValidateTokenFunc,
 	service stage.CreateGetItemActionDetailServiceFunc,
 	createEndpoint endpoint.CreateGetItemActionDetailEndpointFunc,
 	logger writeLogger,
@@ -26,8 +25,7 @@ func CreateGetItemActionDetailHandler(
 		fetchReductionSkills,
 	)
 	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)
-	validateTokenFunc := validateToken(validateTokenRepo)
-	getItemActionFunc := service(commonGetAction, fetchItemMaster, validateTokenFunc)
-	getEndpoint := createEndpoint(getItemActionFunc)
+	getItemActionFunc := service(commonGetAction, fetchItemMaster)
+	getEndpoint := createEndpoint(getItemActionFunc, validateToken)
 	return createHandler(getEndpoint, logger)
 }

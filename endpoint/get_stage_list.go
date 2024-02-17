@@ -20,6 +20,7 @@ type getStageListRes func(
 
 func CreateGetStageList(
 	getStageList stage.GetStageListFunc,
+	validateToken auth.ValidateTokenFunc,
 	timer core.GetCurrentTimeFunc,
 ) getStageListRes {
 	get := func(
@@ -28,8 +29,9 @@ func CreateGetStageList(
 		handleError := func(err error) (*gateway.GetStageListResponse, error) {
 			return &gateway.GetStageListResponse{}, fmt.Errorf("error on get stage list: %w", err)
 		}
-		userId := core.UserId(req.UserId)
 		token := auth.AccessToken(req.Token)
+		tokenInfo, err := validateToken(&token)
+		userId := tokenInfo.UserId
 		res, err := getStageList(userId, token, timer)
 		if err != nil {
 			return handleError(err)

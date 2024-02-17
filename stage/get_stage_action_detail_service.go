@@ -2,7 +2,6 @@ package stage
 
 import (
 	"fmt"
-	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -36,7 +35,7 @@ type EarningItemRes struct {
 	IsKnown core.IsKnown
 }
 
-type commonGetActionFunc func(core.UserId, ExploreId, auth.AccessToken) (commonGetActionRes, error)
+type commonGetActionFunc func(core.UserId, ExploreId) (commonGetActionRes, error)
 
 type CreateCommonGetActionDetailRepositories struct {
 	FetchItemStorage        FetchStorageFunc
@@ -60,7 +59,6 @@ func CreateCommonGetActionDetail(
 	getActionDetail := func(
 		userId core.UserId,
 		exploreId ExploreId,
-		token auth.AccessToken,
 	) (commonGetActionRes, error) {
 		handleError := func(err error) (commonGetActionRes, error) {
 			return commonGetActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
@@ -209,7 +207,6 @@ type GetStageActionDetailFunc func(
 	core.UserId,
 	StageId,
 	ExploreId,
-	auth.AccessToken,
 ) (gateway.GetStageActionDetailResponse, error)
 
 type CreateGetStageActionDetailFunc func(commonGetActionFunc, FetchStageMasterFunc) GetStageActionDetailFunc
@@ -222,12 +219,11 @@ func CreateGetStageActionDetailService(
 		userId core.UserId,
 		stageId StageId,
 		exploreId ExploreId,
-		token auth.AccessToken,
 	) (gateway.GetStageActionDetailResponse, error) {
 		handleError := func(err error) (gateway.GetStageActionDetailResponse, error) {
 			return gateway.GetStageActionDetailResponse{}, fmt.Errorf("error on getting stage action detail: %w", err)
 		}
-		getCommonActionRes, err := getCommonAction(userId, exploreId, token)
+		getCommonActionRes, err := getCommonAction(userId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}

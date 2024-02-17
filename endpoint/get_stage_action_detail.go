@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 
-	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -14,19 +13,24 @@ type getStageActionEndpointRes func(*gateway.GetStageActionDetailRequest) (*gate
 
 func CreateGetStageActionDetail(
 	createStageActionDetail stage.GetStageActionDetailFunc,
+	validateToken auth.ValidateTokenFunc,
 ) getStageActionEndpointRes {
 	get := func(req *gateway.GetStageActionDetailRequest) (*gateway.GetStageActionDetailResponse, error) {
-		userId := core.UserId(req.UserId)
-		exploreId := stage.ExploreId(req.ExploreId)
-		stageId := stage.StageId(req.StageId)
-		token := auth.AccessToken(req.Token)
 		handleError := func(err error) (*gateway.GetStageActionDetailResponse, error) {
 			return &gateway.GetStageActionDetailResponse{}, fmt.Errorf(
 				"error on get stage action detail endpoint: %w",
 				err,
 			)
 		}
-		res, err := createStageActionDetail(userId, stageId, exploreId, token)
+		exploreId := stage.ExploreId(req.ExploreId)
+		stageId := stage.StageId(req.StageId)
+		token := auth.AccessToken(req.Token)
+		tokenInfo, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
+		userId := tokenInfo.UserId
+		res, err := createStageActionDetail(userId, stageId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}

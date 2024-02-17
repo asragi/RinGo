@@ -103,7 +103,6 @@ type fetchItemStorageTester struct {
 func (t *fetchItemStorageTester) BatchGet(
 	id core.UserId,
 	items []core.ItemId,
-	_ auth.AccessToken,
 ) (BatchGetStorageRes, error) {
 	t.passedId = id
 	t.passedItemIds = items
@@ -164,7 +163,6 @@ type fetchUserSkillTester struct {
 func (t *fetchUserSkillTester) BatchGet(
 	id core.UserId,
 	skills []core.SkillId,
-	_ auth.AccessToken,
 ) (
 	BatchGetUserSkillRes,
 	error,

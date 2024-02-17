@@ -10,20 +10,28 @@ import (
 
 type GetItemActionDetailEndpoint func(*gateway.GetItemActionDetailRequest) (*gateway.GetItemActionDetailResponse, error)
 
-type CreateGetItemActionDetailEndpointFunc func(detailFunc stage.GetItemActionDetailFunc) GetItemActionDetailEndpoint
+type CreateGetItemActionDetailEndpointFunc func(
+	stage.GetItemActionDetailFunc,
+	auth.ValidateTokenFunc,
+) GetItemActionDetailEndpoint
 
 func CreateGetItemActionDetailEndpoint(
 	getItemActionFunc stage.GetItemActionDetailFunc,
+	validateToken auth.ValidateTokenFunc,
 ) GetItemActionDetailEndpoint {
 	get := func(req *gateway.GetItemActionDetailRequest) (*gateway.GetItemActionDetailResponse, error) {
 		handleError := func(err error) (*gateway.GetItemActionDetailResponse, error) {
 			return nil, fmt.Errorf("on get item action detail endpoint: %w", err)
 		}
-		userId := core.UserId(req.UserId)
+		token := auth.AccessToken(req.AccessToken)
+		tokenInformation, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
+		userId := tokenInformation.UserId
 		itemId := core.ItemId(req.ItemId)
 		exploreId := stage.ExploreId(req.ExploreId)
-		token := auth.AccessToken(req.AccessToken)
-		res, err := getItemActionFunc(userId, itemId, exploreId, token)
+		res, err := getItemActionFunc(userId, itemId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}

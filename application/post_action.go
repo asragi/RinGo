@@ -91,7 +91,6 @@ func EmitPostActionArgs(
 	) (stage.PostActionArgs, error) {
 		return getPostActionArgsFunc(
 			userId,
-			token,
 			execCount,
 			exploreId,
 			args,

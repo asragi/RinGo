@@ -2,7 +2,6 @@ package stage
 
 import (
 	"errors"
-	"github.com/asragi/RinGo/auth"
 	"reflect"
 	"testing"
 	"time"
@@ -38,7 +37,6 @@ func TestPostAction(t *testing.T) {
 
 	userId := core.UserId("passedId")
 	exploreId := ExploreId("explore")
-	token := auth.AccessToken("token")
 
 	req := request{
 		execCount: 2,
@@ -123,7 +121,6 @@ func TestPostAction(t *testing.T) {
 			expectedError:          invalidActionError{},
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				AccessToken: token,
 				SkillGrowth: []SkillGrowthPostRow{},
 			},
 		},
@@ -134,7 +131,6 @@ func TestPostAction(t *testing.T) {
 			reducedStamina:         reducedStamina,
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				AccessToken: token,
 				SkillGrowth: []SkillGrowthPostRow{},
 			},
 		},
@@ -145,7 +141,6 @@ func TestPostAction(t *testing.T) {
 			request:                req,
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				AccessToken: token,
 				SkillGrowth: []SkillGrowthPostRow{},
 			},
 		},
@@ -171,7 +166,7 @@ func TestPostAction(t *testing.T) {
 		mockTotal := func([]ItemData, []GetItemMasterRes, []earnedItem, []consumedItem) []totalItem {
 			return nil
 		}
-		mockItemUpdate := func(core.UserId, []ItemStock, auth.AccessToken) error {
+		mockItemUpdate := func(core.UserId, []ItemStock) error {
 			return nil
 		}
 		var updatedSkillGrowth SkillGrowthPost
@@ -195,7 +190,6 @@ func TestPostAction(t *testing.T) {
 		currentTime := time.Unix(100000, 0)
 		args := PostActionArgs{
 			userId:            userId,
-			token:             token,
 			execCount:         req.execCount,
 			userResources:     req.userResources,
 			exploreMaster:     req.exploreMaster,

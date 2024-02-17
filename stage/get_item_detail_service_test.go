@@ -2,7 +2,6 @@ package stage
 
 import (
 	"errors"
-	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
@@ -50,7 +49,6 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		var passedExploreIds []ExploreId
 		fetchUserExploreArgs := func(
 			id core.UserId,
-			token auth.AccessToken,
 			ids []ExploreId,
 		) (CompensatedMakeUserExploreArgs, error) {
 			passedExploreIds = ids
@@ -115,9 +113,8 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 	testCases := []testCase{
 		{
 			request: GetUserItemDetailReq{
-				UserId:      userId,
-				ItemId:      itemId,
-				AccessToken: "token",
+				UserId: userId,
+				ItemId: itemId,
 			},
 			expectedError: nil,
 			mockGetItemMasterRes: GetItemMasterRes{
@@ -156,7 +153,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		}
 
 		var passedStorageArg core.ItemId
-		mockGetItemStorage := func(userId core.UserId, itemId []core.ItemId, token auth.AccessToken) (
+		mockGetItemStorage := func(userId core.UserId, itemId []core.ItemId) (
 			BatchGetStorageRes,
 			error,
 		) {
@@ -174,7 +171,6 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		var passedStaminaArgs []ExploreId
 		consumingStamina := func(
 			userId core.UserId,
-			token auth.AccessToken,
 			ids []ExploreId,
 		) ([]ExploreStaminaPair, error) {
 			passedStaminaArgs = ids

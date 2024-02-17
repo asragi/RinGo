@@ -5,7 +5,6 @@ import (
 	"github.com/asragi/RinGo/auth"
 
 	"github.com/asragi/RinGo/application"
-	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -15,6 +14,7 @@ type postActionEndpoint func(*gateway.PostActionRequest) (*gateway.PostActionRes
 
 func CreatePostAction(
 	postAction application.CreatePostActionRes,
+	validateToken auth.ValidateTokenFunc,
 ) postActionEndpoint {
 	post := func(req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
 		handleError := func(err error) (*gateway.PostActionResponse, error) {
@@ -25,9 +25,13 @@ func CreatePostAction(
 				},
 			}, fmt.Errorf("error on post action: %w", err)
 		}
-		userId := core.UserId(req.UserId)
 		exploreId := stage.ExploreId(req.ExploreId)
 		token := auth.AccessToken(req.Token)
+		tokenInfo, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
+		userId := tokenInfo.UserId
 		execCount := int(req.ExecCount)
 		res, err := postAction.Post(userId, token, exploreId, execCount)
 		if err != nil {

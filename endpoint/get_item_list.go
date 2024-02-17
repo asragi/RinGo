@@ -2,7 +2,7 @@ package endpoint
 
 import (
 	"fmt"
-	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -13,9 +13,18 @@ type GetItemEndpoint func(*gateway.GetItemListRequest) (*gateway.GetItemListResp
 
 func CreateGetItemService(
 	getItem stage.GetItemListFunc,
+	validateToken auth.ValidateTokenFunc,
 ) GetItemEndpoint {
 	get := func(req *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error) {
-		userId := core.UserId(req.UserId)
+		handleError := func(err error) (*gateway.GetItemListResponse, error) {
+			return nil, fmt.Errorf("get item list endpoint: %w", err)
+		}
+		token := auth.AccessToken(req.Token)
+		tokenInfo, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
+		userId := tokenInfo.UserId
 		res, err := getItem(userId)
 		if err != nil {
 			return &gateway.GetItemListResponse{}, fmt.Errorf("error on get item list endpoint: %w", err)

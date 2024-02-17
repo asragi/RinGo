@@ -2,12 +2,11 @@ package stage
 
 import (
 	"fmt"
-	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 )
 
 type GetItemActionDetailFunc func(
-	core.UserId, core.ItemId, ExploreId, auth.AccessToken,
+	core.UserId, core.ItemId, ExploreId,
 ) (GetItemActionDetailResponse, error)
 type GetItemActionDetailResponse struct {
 	UserId            core.UserId
@@ -24,28 +23,21 @@ type GetItemActionDetailResponse struct {
 type CreateGetItemActionDetailServiceFunc func(
 	commonGetActionFunc,
 	FetchItemMasterFunc,
-	auth.ValidateTokenFunc,
 ) GetItemActionDetailFunc
 
 func CreateGetItemActionDetailService(
 	getCommonAction commonGetActionFunc,
 	fetchItemMaster FetchItemMasterFunc,
-	validateToken auth.ValidateTokenFunc,
 ) GetItemActionDetailFunc {
 	get := func(
 		userId core.UserId,
 		itemId core.ItemId,
 		exploreId ExploreId,
-		token auth.AccessToken,
 	) (GetItemActionDetailResponse, error) {
 		handleError := func(err error) (GetItemActionDetailResponse, error) {
 			return GetItemActionDetailResponse{}, fmt.Errorf("on get item action detail service: %w", err)
 		}
-		err := validateToken(userId, token)
-		if err != nil {
-			return handleError(err)
-		}
-		getCommonActionRes, err := getCommonAction(userId, exploreId, token)
+		getCommonActionRes, err := getCommonAction(userId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}

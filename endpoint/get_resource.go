@@ -3,7 +3,6 @@ package endpoint
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
-	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,22 +13,19 @@ type GetResourceFunc func(request *gateway.GetResourceRequest) (*gateway.GetReso
 
 func CreateGetResourceEndpoint(
 	serviceFunc stage.GetUserResourceServiceFunc,
+	validateToken auth.ValidateTokenFunc,
 ) GetResourceFunc {
 	get := func(req *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error) {
 		handleError := func(err error) (*gateway.GetResourceResponse, error) {
 			return &gateway.GetResourceResponse{}, fmt.Errorf("error on get resource: %w", err)
 		}
-		userId := core.UserId(req.UserId)
 		token := auth.AccessToken(req.Token)
-		err := userId.IsValid()
+		tokenInfo, err := validateToken(&token)
 		if err != nil {
 			return handleError(err)
 		}
-		err = token.IsValid()
-		if err != nil {
-			return handleError(err)
-		}
-		res, err := serviceFunc(userId, token)
+		userId := tokenInfo.UserId
+		res, err := serviceFunc(userId)
 		if err != nil {
 			return handleError(err)
 		}

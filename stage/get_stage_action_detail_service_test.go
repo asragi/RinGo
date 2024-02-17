@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"github.com/asragi/RinGo/auth"
 	"reflect"
 	"testing"
 
@@ -46,7 +45,7 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			RequiredSkills:    []RequiredSkillsRes{},
 		}
 
-		calcConsumingStamina := func(_ core.UserId, _ auth.AccessToken, exploreIds []ExploreId) (
+		calcConsumingStamina := func(_ core.UserId, exploreIds []ExploreId) (
 			[]ExploreStaminaPair,
 			error,
 		) {

@@ -7,7 +7,7 @@ import (
 
 type base64EncodeFunc func(string) string
 
-func stringToBase64(text string) string {
+func StringToBase64(text string) string {
 	src := []byte(text)
 	return base64.StdEncoding.EncodeToString(src)
 }

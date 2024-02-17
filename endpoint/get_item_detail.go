@@ -3,7 +3,6 @@ package endpoint
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
-
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
@@ -14,19 +13,23 @@ type GetItemDetailEndpoint func(detailFunc stage.GetItemDetailFunc) getItemDetai
 
 func CreateGetItemDetail(
 	getItemDetail stage.GetItemDetailFunc,
+	validateToken auth.ValidateTokenFunc,
 ) getItemDetailEndpointRes {
 	get := func(req *gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error) {
-		userId := core.UserId(req.UserId)
-		itemId := core.ItemId(req.ItemId)
-		token := auth.AccessToken(req.Token)
 		handleError := func(err error) (*gateway.GetItemDetailResponse, error) {
 			return &gateway.GetItemDetailResponse{}, fmt.Errorf("error on get item detail endpoint: %w", err)
 		}
+		itemId := core.ItemId(req.ItemId)
+		token := auth.AccessToken(req.Token)
+		tokenInfo, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
+		userId := tokenInfo.UserId
 		res, err := getItemDetail(
 			stage.GetUserItemDetailReq{
-				UserId:      userId,
-				ItemId:      itemId,
-				AccessToken: token,
+				UserId: userId,
+				ItemId: itemId,
 			},
 		)
 		if err != nil {

@@ -18,7 +18,7 @@ func TestStringToBase64(t *testing.T) {
 	}
 
 	for _, v := range testCases {
-		base64String := stringToBase64(v.text)
+		base64String := StringToBase64(v.text)
 		if base64String != v.base64Text {
 			t.Errorf("expected: %s, got %s", v.base64Text, base64String)
 		}

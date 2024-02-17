@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"github.com/asragi/RinGo/auth"
 	"reflect"
 	"testing"
 
@@ -40,7 +39,7 @@ func TestGetStageList(t *testing.T) {
 
 			return f
 		}
-		fetchMakeUserExploreArgs := func(core.UserId, auth.AccessToken, []ExploreId) (
+		fetchMakeUserExploreArgs := func(core.UserId, []ExploreId) (
 			CompensatedMakeUserExploreArgs,
 			error,
 		) {
