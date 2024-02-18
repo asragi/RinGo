@@ -6,8 +6,8 @@ import (
 )
 
 type registerResult struct {
-	userId   core.UserId
-	password RowPassword
+	UserId   core.UserId
+	Password RowPassword
 }
 
 type generateIdStringFunc func() string
@@ -59,8 +59,8 @@ func RegisterUser(
 			return handleError(err)
 		}
 		return registerResult{
-			userId:   userId,
-			password: rowPass,
+			UserId:   userId,
+			Password: rowPass,
 		}, nil
 	}
 	return f

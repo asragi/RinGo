@@ -1,7 +1,10 @@
 package infrastructure
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/stage"
 	_ "github.com/go-sql-driver/mysql"
@@ -57,6 +60,47 @@ func idToStringArray[T core.Stringer](ids []T) []string {
 }
 
 type ConnectDBFunc func() (*sqlx.DB, error)
+
+func CreateCheckUserExistence(connect ConnectDBFunc) core.CheckDoesUserExist {
+	return func(userId core.UserId) error {
+		handleError := func(err error) error {
+			return fmt.Errorf("check user existence: %w", err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		queryString := fmt.Sprintf("SELECT user_id WHERE user_id = %s;", userId)
+		row := db.QueryRowx(queryString)
+		type userIdResponse struct {
+			UserId string `db:"user_id"`
+		}
+		var res userIdResponse
+		err = row.StructScan(&res)
+		if err == nil {
+			return handleError(&auth.UserAlreadyExistsError{UserId: string(userId)})
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return handleError(err)
+		}
+		return nil
+	}
+}
+
+func CreateGetUserPassword(connect ConnectDBFunc) auth.FetchHashedPassword {
+	type dbResponse struct {
+		HashedPassword auth.HashedPassword `db:"hashed_password"`
+	}
+	f := CreateGetUserDataQueryRow[dbResponse](
+		connect,
+		"get hashed password: %w",
+		`SELECT hashed_password FROM users`,
+	)
+	return func(id *core.UserId) (*auth.HashedPassword, error) {
+		res, err := f(*id)
+		return &res.HashedPassword, err
+	}
+}
 
 func CreateGetResourceMySQL(connect ConnectDBFunc) stage.GetResourceFunc {
 	return CreateGetUserDataQueryRow[stage.GetResourceRes](

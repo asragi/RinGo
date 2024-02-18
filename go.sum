@@ -2,6 +2,8 @@ github.com/asragi/RingoSuPBGo v0.0.0-20240208131503-2257ced32feb h1:T+XwxG5quj4F
 github.com/asragi/RingoSuPBGo v0.0.0-20240208131503-2257ced32feb/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/asragi/RingoSuPBGo v0.0.0-20240218011013-cbb9ef7a976a h1:XjK+hn28RTmgSD8LpFsduCTY7MPyLr6NjAkzfc0ZiDM=
 github.com/asragi/RingoSuPBGo v0.0.0-20240218011013-cbb9ef7a976a/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
+github.com/asragi/RingoSuPBGo v0.0.0-20240218030531-e35c436984c7 h1:WAwdjGbrPpDTptHjQEpOpd3FxrpkUkeQHSv0aDouzK4=
+github.com/asragi/RingoSuPBGo v0.0.0-20240218030531-e35c436984c7/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-sql-driver/mysql v1.7.1 h1:lUIinVbN1DY0xBg0eMOzmmtGoHwWBbvnWubQUrtU8EI=
 github.com/go-sql-driver/mysql v1.7.1/go.mod h1:OXbVy3sEdcQ2Doequ6Z5BW6fXNQTmx+9S1MCJN5yJMI=

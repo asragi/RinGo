@@ -24,7 +24,7 @@ func TestCreateHashedPassword(t *testing.T) {
 
 		f := createHashedPassword(mockEncrypt)
 		res, _ := f(RowPassword(v.text))
-		expectedPass := hashedPassword(v.expected)
+		expectedPass := HashedPassword(v.expected)
 		if res != expectedPass {
 			t.Errorf("expected: %s, got %s", v.expected, string(res))
 		}

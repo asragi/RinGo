@@ -104,6 +104,9 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		return db, nil
 	}
 
+	checkUserExistence := infrastructure.CreateCheckUserExistence(connect)
+	getUserPassword := infrastructure.CreateGetUserPassword(connect)
+
 	getResource := infrastructure.CreateGetResourceMySQL(connect)
 	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
 	getStageMaster := infrastructure.CreateGetStageMaster(connect)
@@ -129,7 +132,8 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	updateStamina := infrastructure.CreateUpdateStamina(connect)
 
 	return &infrastructuresStruct{
-		fetchPassword:             nil,
+		checkUser:                 checkUserExistence,
+		fetchPassword:             getUserPassword,
 		getResource:               getResource,
 		fetchItemMaster:           getItemMaster,
 		fetchStorage:              getStorage,
@@ -325,11 +329,17 @@ func main() {
 		handler.ErrorOnInternalError,
 		handler.ErrorOnPageNotFound,
 	)
+	register := handler.CreateRegisterHandler(
+		functions.register,
+		endpoint.CreateRegisterEndpoint,
+		writeLogger,
+	)
 	login := handler.CreateLoginHandler(
 		functions.login,
 		endpoint.CreateLoginEndpoint,
 		writeLogger,
 	)
+	http.HandleFunc("/register", register)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
