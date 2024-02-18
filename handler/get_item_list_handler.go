@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RingoSuPBGo/gateway"
@@ -12,6 +13,7 @@ func CreateGetItemListHandler(
 	getItemMaster stage.FetchItemMasterFunc,
 	createGetItemList stage.CreateGetItemListFunc,
 	createEndpoint endpoint.CreateGetItemListEndpoint,
+	validateToken auth.ValidateTokenFunc,
 	logger writeLogger,
 ) Handler {
 	getItemListSelectParams := func(
@@ -22,20 +24,15 @@ func CreateGetItemListHandler(
 		handleError := func(err error) (*gateway.GetItemListRequest, error) {
 			return nil, fmt.Errorf("get query: %w", err)
 		}
-		userId, err := query.GetFirstQuery("user_id")
-		if err != nil {
-			return handleError(err)
-		}
 		token, err := query.GetFirstQuery("token")
 		if err != nil {
 			return handleError(err)
 		}
 		return &gateway.GetItemListRequest{
-			UserId: userId,
-			Token:  token,
+			Token: token,
 		}, nil
 	}
 	getItemListFunc := createGetItemList(getAllStorage, getItemMaster)
-	endpointFunc := createEndpoint(getItemListFunc)
+	endpointFunc := createEndpoint(getItemListFunc, validateToken)
 	return createHandlerWithParameter(endpointFunc, getItemListSelectParams, logger)
 }

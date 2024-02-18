@@ -5,17 +5,21 @@ import (
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/crypto"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/utils"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 )
 
 type infrastructuresStruct struct {
+	checkUser                 core.CheckDoesUserExist
+	fetchPassword             auth.FetchHashedPassword
 	getResource               stage.GetResourceFunc
 	fetchItemMaster           stage.FetchItemMasterFunc
 	fetchStorage              stage.FetchStorageFunc
@@ -36,10 +40,45 @@ type infrastructuresStruct struct {
 	fetchItemExploreRelation  stage.FetchItemExploreRelationFunc
 	fetchUserStage            stage.FetchUserStageFunc
 	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
-	validateToken             auth.ValidateTokenRepoFunc
 	updateStamina             stage.UpdateStaminaFunc
 	updateFund                stage.UpdateFundFunc
 	closeDB                   func() error
+}
+
+type functionContainer struct {
+	validateToken auth.ValidateTokenFunc
+	login         auth.LoginFunc
+	register      auth.RegisterUserFunc
+}
+
+func createFunction(infra *infrastructuresStruct) *functionContainer {
+	key := auth.SecretHashKey("tmp")
+	sha256Func := func(key *auth.SecretHashKey, text *string) (*string, error) {
+		keyString := string(*key)
+		return crypto.SHA256WithKey(&keyString, text)
+	}
+	compare := auth.CreateCompareToken(&key, sha256Func)
+	getTokenInfo := auth.CreateGetTokenInformation(
+		auth.Base64ToString,
+		utils.JsonToStruct[auth.AccessTokenInformation],
+	)
+	validateToken := auth.CreateValidateToken(compare, getTokenInfo)
+
+	createToken := auth.CreateTokenFuncEmitter(
+		auth.StringToBase64,
+		nil,
+		utils.StructToJson[auth.AccessTokenInformation],
+		key,
+		nil,
+	)
+	login := auth.CreateLoginFunc(infra.fetchPassword, crypto.Compare, createToken)
+	createUserIdFunc := auth.CreateUserId(3, nil, nil)
+	register := auth.RegisterUser(createUserIdFunc, nil, nil, nil)
+	return &functionContainer{
+		validateToken: validateToken,
+		login:         login,
+		register:      register,
+	}
 }
 
 func createInfrastructures() (*infrastructuresStruct, error) {
@@ -90,6 +129,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 	updateStamina := infrastructure.CreateUpdateStamina(connect)
 
 	return &infrastructuresStruct{
+		fetchPassword:             nil,
 		getResource:               getResource,
 		fetchItemMaster:           getItemMaster,
 		fetchStorage:              getStorage,
@@ -110,7 +150,6 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		fetchItemExploreRelation:  getItemExploreRelation,
 		fetchUserStage:            getUserStageData,
 		fetchReductionSkill:       getReductionSkill,
-		validateToken:             nil,
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
 		closeDB:                   closeDB,
@@ -126,9 +165,9 @@ func main() {
 		handleError(err)
 		return
 	}
+	functions := createFunction(infrastructures)
 
 	diContainer := stage.CreateDIContainer()
-	validateToken := auth.ValidateTokenFunc(infrastructures.validateToken)
 	writeLogger := handler.LogHttpWrite
 	currentTimeEmitter := core.CurrentTimeEmitter{}
 	random := core.RandomEmitter{}
@@ -167,6 +206,7 @@ func main() {
 		&random,
 		&currentTimeEmitter,
 		endpoint.CreatePostAction,
+		functions.validateToken,
 		writeLogger,
 	)
 	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
@@ -187,6 +227,7 @@ func main() {
 		infrastructures.stageMaster,
 		stage.CreateGetStageActionDetailService,
 		endpoint.CreateGetStageActionDetail,
+		functions.validateToken,
 		writeLogger,
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
@@ -210,11 +251,12 @@ func main() {
 		},
 		stage.CreateFetchStageData,
 		stage.GetStageList,
+		functions.validateToken,
 		writeLogger,
 	)
 	getResource := handler.CreateGetResourceHandler(
-		validateToken,
 		infrastructures.getResource,
+		functions.validateToken,
 		diContainer.CreateGetUserResourceServiceFunc,
 		writeLogger,
 	)
@@ -243,6 +285,7 @@ func main() {
 		stage.CreateGetItemDetailArgs,
 		stage.CreateGetItemDetailService,
 		endpoint.CreateGetItemDetail,
+		functions.validateToken,
 		writeLogger,
 	)
 	getItemList := handler.CreateGetItemListHandler(
@@ -250,6 +293,7 @@ func main() {
 		infrastructures.fetchItemMaster,
 		stage.CreateGetItemListService,
 		endpoint.CreateGetItemService,
+		functions.validateToken,
 		writeLogger,
 	)
 	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
@@ -268,8 +312,7 @@ func main() {
 		},
 		stage.CreateCommonGetActionDetail,
 		infrastructures.fetchItemMaster,
-		infrastructures.validateToken,
-		auth.CreateValidateTokenService,
+		functions.validateToken,
 		stage.CreateGetItemActionDetailService,
 		endpoint.CreateGetItemActionDetailEndpoint,
 		writeLogger,
@@ -282,6 +325,12 @@ func main() {
 		handler.ErrorOnInternalError,
 		handler.ErrorOnPageNotFound,
 	)
+	login := handler.CreateLoginHandler(
+		functions.login,
+		endpoint.CreateLoginEndpoint,
+		writeLogger,
+	)
+	http.HandleFunc("/login", login)
 	http.HandleFunc("/action", postActionHandler)
 	http.HandleFunc("/stage", getStageActionDetailHandler)
 	http.HandleFunc("/stages", getStageListHandler)

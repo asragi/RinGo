@@ -109,7 +109,7 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			},
 		)
 
-		res, _ := service(userId, req, "token")
+		res, _ := service(userId, req)
 
 		if req != fetchExploreMaster.passedArgs[0] {
 			t.Errorf("case: %d, expect: %s, got: %s", i, req, fetchExploreMaster.passedArgs[0])

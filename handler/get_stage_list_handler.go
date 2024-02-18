@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
@@ -15,6 +16,7 @@ func CreateGetStageListHandler(
 	fetchStageDataArgs stage.CreateFetchStageDataRepositories,
 	createFetchStageData stage.ICreateFetchStageData,
 	getStageList stage.IGetStageList,
+	validateToken auth.ValidateTokenFunc,
 	logger writeLogger,
 ) Handler {
 	fetchArgs := createMakeUserExplores(repoArgs)
@@ -26,6 +28,6 @@ func CreateGetStageListHandler(
 		diContainer.GetAllStage,
 		fetchStageData,
 	)
-	endpointFunc := getStageListEndpoint(get, timer)
+	endpointFunc := getStageListEndpoint(get, validateToken, timer)
 	return createHandler(endpointFunc, logger)
 }

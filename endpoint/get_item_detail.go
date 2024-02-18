@@ -8,8 +8,16 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type getItemDetailEndpointRes func(*gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error)
-type GetItemDetailEndpoint func(detailFunc stage.GetItemDetailFunc) getItemDetailEndpointRes
+type (
+	getItemDetailEndpointRes func(*gateway.GetItemDetailRequest) (
+		*gateway.GetItemDetailResponse,
+		error,
+	)
+	GetItemDetailEndpoint func(
+		stage.GetItemDetailFunc,
+		auth.ValidateTokenFunc,
+	) getItemDetailEndpointRes
+)
 
 func CreateGetItemDetail(
 	getItemDetail stage.GetItemDetailFunc,

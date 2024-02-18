@@ -9,7 +9,7 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreatePostActionEndpoint func(application.CreatePostActionRes) postActionEndpoint
+type CreatePostActionEndpoint func(application.CreatePostActionRes, auth.ValidateTokenFunc) postActionEndpoint
 type postActionEndpoint func(*gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
@@ -20,7 +20,7 @@ func CreatePostAction(
 		handleError := func(err error) (*gateway.PostActionResponse, error) {
 			return &gateway.PostActionResponse{
 				Error: &gateway.Error{
-					ErrorOccured:   true,
+					ErrorOccurred:  true,
 					DisplayMessage: err.Error(),
 				},
 			}, fmt.Errorf("error on post action: %w", err)
@@ -74,7 +74,7 @@ func CreatePostAction(
 		}()
 		return &gateway.PostActionResponse{
 			Error: &gateway.Error{
-				ErrorOccured:   false,
+				ErrorOccurred:  false,
 				DisplayMessage: "",
 			},
 			EarnedItems:       earnedItem,

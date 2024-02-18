@@ -7,7 +7,7 @@ import (
 
 type registerResult struct {
 	userId   core.UserId
-	password rowPassword
+	password RowPassword
 }
 
 type generateIdStringFunc func() string
@@ -15,7 +15,7 @@ type generatePasswordStringFunc func() string
 
 type createUserIdFunc func() (core.UserId, error)
 
-func createUserId(
+func CreateUserId(
 	challengeNum int,
 	checkUser core.CheckDoesUserExist,
 	generate generateIdStringFunc,
@@ -69,5 +69,5 @@ func RegisterUser(
 func createPassword(
 	generateStr generatePasswordStringFunc,
 ) createRowPasswordFunc {
-	return func() rowPassword { return rowPassword(generateStr()) }
+	return func() RowPassword { return RowPassword(generateStr()) }
 }

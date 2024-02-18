@@ -11,6 +11,7 @@ import (
 
 type GetStageListEndpoint func(
 	stage.GetStageListFunc,
+	auth.ValidateTokenFunc,
 	core.GetCurrentTimeFunc,
 ) getStageListRes
 
@@ -32,7 +33,7 @@ func CreateGetStageList(
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		userId := tokenInfo.UserId
-		res, err := getStageList(userId, token, timer)
+		res, err := getStageList(userId, timer)
 		if err != nil {
 			return handleError(err)
 		}

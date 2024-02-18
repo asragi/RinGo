@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
@@ -17,6 +18,7 @@ func CreateGetItemDetailHandler(
 	createGetItemDetailArgs stage.CreateGetItemDetailArgsFunc,
 	createGetItemDetailFunc stage.CreateGetItemDetailServiceFunc,
 	getItemDetailEndpoint endpoint.GetItemDetailEndpoint,
+	validateToken auth.ValidateTokenFunc,
 	logger writeLogger,
 ) Handler {
 	createArgsFunc := createGetItemDetailArgs(repositories)
@@ -29,6 +31,6 @@ func CreateGetItemDetailHandler(
 		fetchMakeUserExploreArgsFunc,
 		createCompensatedMakeUserExplore,
 	)
-	endpointFunc := getItemDetailEndpoint(getItemDetailFunc)
+	endpointFunc := getItemDetailEndpoint(getItemDetailFunc, validateToken)
 	return createHandler(endpointFunc, logger)
 }

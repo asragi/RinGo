@@ -8,7 +8,10 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetStageActionDetailFunc func(stage.GetStageActionDetailFunc) getStageActionEndpointRes
+type CreateGetStageActionDetailFunc func(
+	stage.GetStageActionDetailFunc,
+	auth.ValidateTokenFunc,
+) getStageActionEndpointRes
 type getStageActionEndpointRes func(*gateway.GetStageActionDetailRequest) (*gateway.GetStageActionDetailResponse, error)
 
 func CreateGetStageActionDetail(

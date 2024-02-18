@@ -7,7 +7,7 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetItemListEndpoint func(stage.GetItemListFunc) GetItemEndpoint
+type CreateGetItemListEndpoint func(stage.GetItemListFunc, auth.ValidateTokenFunc) GetItemEndpoint
 
 type GetItemEndpoint func(*gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
 

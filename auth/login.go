@@ -5,7 +5,7 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type LoginFunc func(*core.UserId, *rowPassword) (*AccessToken, error)
+type LoginFunc func(*core.UserId, *RowPassword) (*AccessToken, error)
 type compareHashedPassword func(hash, password string) error
 
 func CreateLoginFunc(
@@ -13,7 +13,7 @@ func CreateLoginFunc(
 	comparePassword compareHashedPassword,
 	createToken createTokenFunc,
 ) LoginFunc {
-	return func(userId *core.UserId, rowPass *rowPassword) (*AccessToken, error) {
+	return func(userId *core.UserId, rowPass *RowPassword) (*AccessToken, error) {
 		handleError := func(err error) (*AccessToken, error) {
 			return nil, fmt.Errorf("login: %w", err)
 		}
