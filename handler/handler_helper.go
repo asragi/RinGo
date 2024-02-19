@@ -62,7 +62,7 @@ func DecodeBody[T any](body io.ReadCloser) (*T, error) {
 }
 
 func createHandlerWithParameter[T any, S any](
-	endpointFunc func(*T) (S, error),
+	endpointFunc func(*T) (*S, error),
 	selectParam func(RequestBody, QueryParameter, PathString) (*T, error),
 	logger writeLogger,
 ) Handler {
@@ -79,7 +79,7 @@ func createHandlerWithParameter[T any, S any](
 			ErrorOnGenerateResponse(w, err)
 			return
 		}
-		resJson, err := json.Marshal(res)
+		resJson, err := json.Marshal(*res)
 		if err != nil {
 			ErrorOnGenerateResponse(w, err)
 			return

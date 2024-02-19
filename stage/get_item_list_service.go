@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/asragi/RinGo/core"
@@ -29,6 +31,9 @@ func CreateGetItemListService(
 			return nil, fmt.Errorf("error on get all storage: %w", err)
 		}
 		storages, err := getAllStorage(userId)
+		if errors.Is(err, sql.ErrNoRows) {
+			return []ItemListRow{}, nil
+		}
 		if err != nil {
 			return handleError(err)
 		}

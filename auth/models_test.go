@@ -22,7 +22,7 @@ func TestCreateHashedPassword(t *testing.T) {
 			return v.expected, nil
 		}
 
-		f := createHashedPassword(mockEncrypt)
+		f := CreateHashedPassword(mockEncrypt)
 		res, _ := f(RowPassword(v.text))
 		expectedPass := HashedPassword(v.expected)
 		if res != expectedPass {

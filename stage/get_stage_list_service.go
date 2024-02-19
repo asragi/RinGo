@@ -22,7 +22,7 @@ type IGetStageList func(
 	CreateCompensateMakeUserExploreFunc,
 	fetchMakeUserExploreArgs,
 	MakeUserExploreArrayFunc,
-	getAllStageFunc,
+	GetAllStageFunc,
 	fetchStageDataFunc,
 ) GetStageListFunc
 
@@ -30,7 +30,7 @@ func GetStageList(
 	createCompensateMakeUserExploreFunc CreateCompensateMakeUserExploreFunc,
 	fetchMakeUserExploreArgsFunc fetchMakeUserExploreArgs,
 	makeUserExploreFunc MakeUserExploreArrayFunc,
-	getAllStage getAllStageFunc,
+	getAllStage GetAllStageFunc,
 	fetchStageData fetchStageDataFunc,
 ) GetStageListFunc {
 	getStageListFunc := func(
@@ -182,7 +182,7 @@ type getAllStageArgs struct {
 	exploreId          []ExploreId
 }
 
-type getAllStageFunc func(
+type GetAllStageFunc func(
 	getAllStageArgs,
 	compensatedMakeUserExploreFunc,
 ) []StageInformation

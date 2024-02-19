@@ -11,7 +11,6 @@ type registerResult struct {
 }
 
 type generateIdStringFunc func() string
-type generatePasswordStringFunc func() string
 
 type createUserIdFunc func() (core.UserId, error)
 
@@ -21,18 +20,20 @@ func CreateUserId(
 	generate generateIdStringFunc,
 ) createUserIdFunc {
 	f := func() (core.UserId, error) {
+		var err error
 		for i := 0; i < challengeNum; i++ {
 			userId := core.UserId(generate())
-			err := checkUser(userId)
+			err = checkUser(userId)
 			if err == nil {
 				return userId, nil
 			}
 		}
-		return "", core.InternalServerError{Message: "creating user id was failed"}
+		return "", fmt.Errorf("creating user id was failed: %w", err)
 	}
 	return f
 }
 
+type decideInitialName func() core.UserName
 type RegisterUserFunc func() (registerResult, error)
 
 func RegisterUser(
@@ -40,6 +41,7 @@ func RegisterUser(
 	generateRowPassword createRowPasswordFunc,
 	createHashedPassword createHashedPasswordFunc,
 	insertNewUser InsertNewUser,
+	decideName decideInitialName,
 ) RegisterUserFunc {
 	f := func() (registerResult, error) {
 		handleError := func(err error) (registerResult, error) {
@@ -54,7 +56,8 @@ func RegisterUser(
 		if err != nil {
 			return handleError(err)
 		}
-		err = insertNewUser(&userId, &hashedPass)
+		initialName := decideName()
+		err = insertNewUser(&userId, &initialName, &hashedPass)
 		if err != nil {
 			return handleError(err)
 		}
@@ -64,10 +67,4 @@ func RegisterUser(
 		}, nil
 	}
 	return f
-}
-
-func createPassword(
-	generateStr generatePasswordStringFunc,
-) createRowPasswordFunc {
-	return func() RowPassword { return RowPassword(generateStr()) }
 }

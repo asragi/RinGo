@@ -15,10 +15,12 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+	"time"
 )
 
 type infrastructuresStruct struct {
 	checkUser                 core.CheckDoesUserExist
+	insertNewUser             auth.InsertNewUser
 	fetchPassword             auth.FetchHashedPassword
 	getResource               stage.GetResourceFunc
 	fetchItemMaster           stage.FetchItemMasterFunc
@@ -43,15 +45,18 @@ type infrastructuresStruct struct {
 	updateStamina             stage.UpdateStaminaFunc
 	updateFund                stage.UpdateFundFunc
 	closeDB                   func() error
+	getTime                   core.GetCurrentTimeFunc
 }
 
 type functionContainer struct {
 	validateToken auth.ValidateTokenFunc
 	login         auth.LoginFunc
 	register      auth.RegisterUserFunc
+	getTime       core.GetCurrentTimeFunc
 }
 
 func createFunction(infra *infrastructuresStruct) *functionContainer {
+	getTime := infra.getTime
 	key := auth.SecretHashKey("tmp")
 	sha256Func := func(key *auth.SecretHashKey, text *string) (*string, error) {
 		keyString := string(*key)
@@ -66,25 +71,37 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 
 	createToken := auth.CreateTokenFuncEmitter(
 		auth.StringToBase64,
-		nil,
+		getTime,
 		utils.StructToJson[auth.AccessTokenInformation],
 		key,
-		nil,
+		sha256Func,
 	)
 	login := auth.CreateLoginFunc(infra.fetchPassword, crypto.Compare, createToken)
-	createUserIdFunc := auth.CreateUserId(3, nil, nil)
-	register := auth.RegisterUser(createUserIdFunc, nil, nil, nil)
+	createUserIdFunc := auth.CreateUserId(3, infra.checkUser, utils.GenerateUUID)
+	createHashedPassword := auth.CreateHashedPassword(crypto.Encrypt)
+	generatePassword := func() auth.RowPassword { return auth.RowPassword(utils.GenerateUUID()) }
+	// TODO: initial name must be decided depending on locale
+	initialName := func() core.UserName { return "夢追い人" }
+	register := auth.RegisterUser(
+		createUserIdFunc,
+		generatePassword,
+		createHashedPassword,
+		infra.insertNewUser,
+		initialName,
+	)
 	return &functionContainer{
 		validateToken: validateToken,
 		login:         login,
 		register:      register,
+		getTime:       getTime,
 	}
 }
 
-func createInfrastructures() (*infrastructuresStruct, error) {
+func createInfrastructures(constants *core.Constants) (*infrastructuresStruct, error) {
 	handleError := func(err error) (*infrastructuresStruct, error) {
 		return nil, fmt.Errorf("error on create infrastructures: %w", err)
 	}
+	getTime := func() time.Time { return time.Now() }
 	dbSettings := &infrastructure.ConnectionSettings{
 		UserName: "root",
 		Password: "ringo",
@@ -106,6 +123,12 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 
 	checkUserExistence := infrastructure.CreateCheckUserExistence(connect)
 	getUserPassword := infrastructure.CreateGetUserPassword(connect)
+	insertNewUser := infrastructure.CreateInsertNewUser(
+		connect,
+		constants.InitialFund,
+		constants.InitialMaxStamina,
+		getTime,
+	)
 
 	getResource := infrastructure.CreateGetResourceMySQL(connect)
 	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
@@ -133,6 +156,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
+		insertNewUser:             insertNewUser,
 		fetchPassword:             getUserPassword,
 		getResource:               getResource,
 		fetchItemMaster:           getItemMaster,
@@ -157,6 +181,7 @@ func createInfrastructures() (*infrastructuresStruct, error) {
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
 		closeDB:                   closeDB,
+		getTime:                   getTime,
 	}, nil
 }
 
@@ -164,7 +189,11 @@ func main() {
 	handleError := func(err error) {
 		log.Fatal(err.Error())
 	}
-	infrastructures, err := createInfrastructures()
+	constants := core.Constants{
+		InitialFund:       core.Fund(100000),
+		InitialMaxStamina: core.MaxStamina(6000),
+	}
+	infrastructures, err := createInfrastructures(&constants)
 	if err != nil {
 		handleError(err)
 		return
@@ -235,8 +264,10 @@ func main() {
 		writeLogger,
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
-		diContainer,
-		currentTimeEmitter.Get,
+		diContainer.GetAllStage,
+		diContainer.MakeStageUserExplore,
+		diContainer.MakeUserExplore,
+		infrastructures.getTime,
 		endpoint.CreateGetStageList,
 		stage.CreateMakeUserExploreRepositories{
 			GetResource:       infrastructures.getResource,

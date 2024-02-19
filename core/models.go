@@ -19,6 +19,8 @@ func (id UserId) IsValid() error {
 	return nil
 }
 
+type UserName string
+
 type Fund int
 
 func (f Fund) CheckIsFundEnough(price Price) bool {

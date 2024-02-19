@@ -12,7 +12,7 @@ type DependencyInjectionContainer struct {
 	GetPostActionArgs                GetPostActionArgsFunc
 	MakeStageUserExplore             CreateCompensateMakeUserExploreFunc
 	MakeUserExplore                  MakeUserExploreArrayFunc
-	GetAllStage                      getAllStageFunc
+	GetAllStage                      GetAllStageFunc
 	CreateGetUserResourceServiceFunc CreateGetUserResourceServiceFunc
 }
 

@@ -97,12 +97,12 @@ type SkillGrowthPost struct {
 type UpdateUserSkillExpFunc func(SkillGrowthPost) error
 
 type GetExploreMasterRes struct {
-	ExploreId            ExploreId
-	DisplayName          core.DisplayName
-	Description          core.Description
-	ConsumingStamina     core.Stamina
-	RequiredPayment      core.Price
-	StaminaReducibleRate StaminaReducibleRate
+	ExploreId            ExploreId            `db:"explore_id"`
+	DisplayName          core.DisplayName     `db:"display_name"`
+	Description          core.Description     `db:"description"`
+	ConsumingStamina     core.Stamina         `db:"consuming_stamina"`
+	RequiredPayment      core.Price           `db:"required_payment"`
+	StaminaReducibleRate StaminaReducibleRate `db:"stamina_reducible_rate"`
 }
 
 type StageExploreIdPair struct {

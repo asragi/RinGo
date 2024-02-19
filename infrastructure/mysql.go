@@ -32,6 +32,7 @@ func ConnectDB(settings *ConnectionSettings) (*sqlx.DB, error) {
 		settings.Port,
 		settings.Database,
 	)
+	dataSource = fmt.Sprintf("%s?parseTime=True", dataSource)
 	db, err := sqlx.Open("mysql", dataSource)
 	if err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func CreateCheckUserExistence(connect ConnectDBFunc) core.CheckDoesUserExist {
 		if err != nil {
 			return handleError(err)
 		}
-		queryString := fmt.Sprintf("SELECT user_id WHERE user_id = %s;", userId)
+		queryString := fmt.Sprintf(`SELECT user_id from users WHERE user_id = "%s";`, userId)
 		row := db.QueryRowx(queryString)
 		type userIdResponse struct {
 			UserId string `db:"user_id"`
@@ -102,12 +103,71 @@ func CreateGetUserPassword(connect ConnectDBFunc) auth.FetchHashedPassword {
 	}
 }
 
+func CreateInsertNewUser(
+	connect ConnectDBFunc,
+	initialFund core.Fund,
+	initialMaxStamina core.MaxStamina,
+	getTime core.GetCurrentTimeFunc,
+) auth.InsertNewUser {
+	return func(id *core.UserId, userName *core.UserName, password *auth.HashedPassword) error {
+		handleError := func(err error) error {
+			return fmt.Errorf("insert new user: %w", err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		queryText := `INSERT INTO users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password);`
+
+		type UserToDB struct {
+			UserId             core.UserId         `db:"user_id"`
+			Name               core.UserName       `db:"name"`
+			Fund               core.Fund           `db:"fund"`
+			MaxStamina         core.MaxStamina     `db:"max_stamina"`
+			StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
+			HashedPassword     auth.HashedPassword `db:"hashed_password"`
+		}
+
+		createUserData := UserToDB{
+			UserId:             *id,
+			Name:               *userName,
+			Fund:               initialFund,
+			MaxStamina:         initialMaxStamina,
+			StaminaRecoverTime: getTime(),
+			HashedPassword:     *password,
+		}
+
+		_, err = db.NamedExec(queryText, createUserData)
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
+	}
+
+}
+
 func CreateGetResourceMySQL(connect ConnectDBFunc) stage.GetResourceFunc {
-	return CreateGetUserDataQueryRow[stage.GetResourceRes](
+	type responseStruct struct {
+		UserId             core.UserId     `db:"user_id"`
+		MaxStamina         core.MaxStamina `db:"max_stamina"`
+		StaminaRecoverTime time.Time       `db:"stamina_recover_time"`
+		Fund               core.Fund       `db:"fund"`
+	}
+	f := CreateGetUserDataQueryRow[responseStruct](
 		connect,
 		"get resource: %w",
 		"SELECT user_id, max_stamina, stamina_recover_time, fund FROM users",
 	)
+
+	return func(userId core.UserId) (stage.GetResourceRes, error) {
+		res, err := f(userId)
+		return stage.GetResourceRes{
+			UserId:             res.UserId,
+			MaxStamina:         res.MaxStamina,
+			StaminaRecoverTime: core.StaminaRecoverTime(res.StaminaRecoverTime),
+			Fund:               res.Fund,
+		}, err
+	}
 }
 
 func CreateUpdateStamina(connect ConnectDBFunc) stage.UpdateStaminaFunc {
@@ -338,6 +398,9 @@ func CreateBatchGetQuery[S core.Stringer, T any](
 		handleError := func(err error) ([]T, error) {
 			return nil, fmt.Errorf(errorMessageFormat, err)
 		}
+		if len(ids) == 0 {
+			return []T{}, sql.ErrNoRows
+		}
 		db, err := connect()
 		if err != nil {
 			return handleError(err)
@@ -346,6 +409,9 @@ func CreateBatchGetQuery[S core.Stringer, T any](
 		listStatement := createListStatement(idToStringArray(ids))
 		queryString := fmt.Sprintf("%s WHERE %s IN %s;", query, columnName, listStatement)
 		rows, err := db.Queryx(queryString)
+		if err != nil {
+			return handleError(err)
+		}
 		var result []T
 		for rows.Next() {
 			var row T
@@ -462,6 +528,9 @@ func CreateBatchGetUserDataQuery[S core.Stringer, T any](
 		handleError := func(err error) ([]T, error) {
 			return nil, fmt.Errorf(errorMessageFormat, err)
 		}
+		if len(ids) <= 0 {
+			return []T{}, nil
+		}
 		db, err := connect()
 		if err != nil {
 			return handleError(err)
@@ -476,6 +545,9 @@ func CreateBatchGetUserDataQuery[S core.Stringer, T any](
 			listStatement,
 		)
 		rows, err := db.Queryx(queryString)
+		if err != nil {
+			return handleError(err)
+		}
 		var result []T
 		for rows.Next() {
 			var row T
@@ -484,9 +556,6 @@ func CreateBatchGetUserDataQuery[S core.Stringer, T any](
 				return handleError(err)
 			}
 			result = append(result, row)
-		}
-		if err != nil {
-			return handleError(err)
 		}
 		return result, nil
 	}
@@ -544,6 +613,9 @@ func CreateGetAllStorage(connect ConnectDBFunc) stage.FetchAllStorageFunc {
 				return handleError(err)
 			}
 			result = append(result, res)
+		}
+		if result == nil || len(result) == 0 {
+			return []stage.ItemData{}, sql.ErrNoRows
 		}
 		return result, nil
 	}
@@ -642,4 +714,25 @@ func CreateBulkUpdateUserData[S any](
 	}
 
 	return f
+}
+
+func CreateInsertUserDataRow[S any](
+	connect ConnectDBFunc,
+	errorMessageFormat string,
+	query string,
+) func(core.UserId, *S) error {
+	return func(userId core.UserId, data *S) error {
+		handleError := func(err error) error {
+			return fmt.Errorf(errorMessageFormat, err)
+		}
+		db, err := connect()
+		if err != nil {
+			return handleError(err)
+		}
+		_, err = db.NamedExec(query, data)
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
+	}
 }
