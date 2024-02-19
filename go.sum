@@ -1,7 +1,3 @@
-github.com/asragi/RingoSuPBGo v0.0.0-20240208131503-2257ced32feb h1:T+XwxG5quj4FndjdpYzOXiDjbJoAlQ4iWltfpuvelMs=
-github.com/asragi/RingoSuPBGo v0.0.0-20240208131503-2257ced32feb/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
-github.com/asragi/RingoSuPBGo v0.0.0-20240218011013-cbb9ef7a976a h1:XjK+hn28RTmgSD8LpFsduCTY7MPyLr6NjAkzfc0ZiDM=
-github.com/asragi/RingoSuPBGo v0.0.0-20240218011013-cbb9ef7a976a/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/asragi/RingoSuPBGo v0.0.0-20240218030531-e35c436984c7 h1:WAwdjGbrPpDTptHjQEpOpd3FxrpkUkeQHSv0aDouzK4=
 github.com/asragi/RingoSuPBGo v0.0.0-20240218030531-e35c436984c7/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
@@ -12,6 +8,8 @@ github.com/golang/protobuf v1.5.3 h1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg
 github.com/golang/protobuf v1.5.3/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
 github.com/google/go-cmp v0.5.5 h1:Khx7svrCpmxxtHBq5j2mp/xVjsi8hQMfNLvJFAlrGgU=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/jmoiron/sqlx v1.3.5 h1:vFFPA71p1o5gAeqtEAwLU4dnX2napprKtHr7PYIcN3g=
 github.com/jmoiron/sqlx v1.3.5/go.mod h1:nRVWtLre0KfCLJvgxzCsLVMogSvQ1zNJtpYr2Ccp0mQ=
 github.com/lib/pq v1.2.0 h1:LXpIM/LZ5xGFhOpXAQUIMM1HdyqzVYM13zNdjCEEcA0=
