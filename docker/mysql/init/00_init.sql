@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `name` varchar(40) NOT NULL,
     `fund` int(20) NOT NULL,
     `max_stamina` int(11) NOT NULL,
-    `stamina_recover_time`DATETIME NOT NULL,
-    `hashed_password` varchar(40),
+    `stamina_recover_time` DATETIME NOT NULL,
+    `hashed_password` varchar(64),
     PRIMARY KEY (`id`),
     INDEX `user_id_index` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -162,4 +162,15 @@ CREATE TABLE IF NOT EXISTS ringo.stamina_reduction_skills(
     INDEX `explore_id_index` (`explore_id`, `skill_id`),
     FOREIGN KEY (`explore_id`) REFERENCES `explore_masters` (`explore_id`),
     FOREIGN KEY (`skill_id`) REFERENCES `skill_masters` (`skill_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS ringo.user_stage_data(
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` varchar(40) NOT NULL,
+    `stage_id` varchar(40) NOT NULL,
+    `is_known` bool NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `user_id_index` (`user_id`),
+    FOREIGN KEY (`stage_id`) REFERENCES `stage_masters` (`stage_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
