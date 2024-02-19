@@ -22,8 +22,10 @@ type ICurrentTime interface {
 	Get() time.Time
 }
 
+// Deprecated: use GetCurrentTimeFunc
 type CurrentTimeEmitter struct{}
 
+// Deprecated: use GetCurrentTimeFunc
 func (t *CurrentTimeEmitter) Get() time.Time {
 	return time.Now()
 }
