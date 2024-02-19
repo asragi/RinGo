@@ -77,11 +77,40 @@ func CreateMakeUserExploreFunc(
 		if err != nil {
 			return handleError(err)
 		}
-		storage, err := repositories.GetStorage(userId, nil)
+		itemIds := func(consuming []BatchGetConsumingItemRes) []core.ItemId {
+			checkedItems := make(map[core.ItemId]bool)
+			var result []core.ItemId
+			for _, v := range consuming {
+				for _, w := range v.ConsumingItems {
+					if _, ok := checkedItems[w.ItemId]; ok {
+						continue
+					}
+					checkedItems[w.ItemId] = true
+					result = append(result, w.ItemId)
+				}
+			}
+			return result
+		}(consumingItemRes)
+		storage, err := repositories.GetStorage(userId, itemIds)
 		if err != nil {
 			return handleError(err)
 		}
-		skills, err := repositories.GetUserSkill(userId, nil)
+		skillIds := func(requiredSkills []RequiredSkillRow) []core.SkillId {
+			checkedItems := make(map[core.SkillId]bool)
+			var result []core.SkillId
+			for _, v := range requiredSkills {
+				for _, w := range v.RequiredSkills {
+					if _, ok := checkedItems[w.SkillId]; ok {
+						continue
+					}
+					checkedItems[w.SkillId] = true
+					result = append(result, w.SkillId)
+				}
+			}
+			return result
+
+		}(requiredSkillsResponse)
+		skills, err := repositories.GetUserSkill(userId, skillIds)
 		if err != nil {
 			return handleError(err)
 		}
