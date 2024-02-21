@@ -360,6 +360,13 @@ func main() {
 		handler.ErrorOnInternalError,
 		handler.ErrorOnPageNotFound,
 	)
+	stageRouteHandler := router.CreateStageRouteHandler(
+		getStageListHandler,
+		getStageActionDetailHandler,
+		handler.ErrorOnMethodNotAllowed,
+		handler.ErrorOnInternalError,
+		handler.ErrorOnPageNotFound,
+	)
 	register := handler.CreateRegisterHandler(
 		functions.register,
 		endpoint.CreateRegisterEndpoint,
@@ -373,8 +380,8 @@ func main() {
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/action", postActionHandler)
-	http.HandleFunc("/stage", getStageActionDetailHandler)
-	http.HandleFunc("/stages", getStageListHandler)
+	// http.HandleFunc("/stages", getStageListHandler)
+	http.HandleFunc("/stages/", stageRouteHandler)
 	http.HandleFunc("/users", getResource)
 	http.HandleFunc("/items/", itemsRouteHandler)
 	http.HandleFunc("/items", getItemList)

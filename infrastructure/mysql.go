@@ -200,6 +200,9 @@ func CreateGetStageMaster(connect ConnectDBFunc) stage.FetchStageMasterFunc {
 	)
 	return func(s stage.StageId) (stage.StageMaster, error) {
 		res, err := f([]stage.StageId{s})
+		if err != nil {
+			return stage.StageMaster{}, err
+		}
 		return res[0], err
 	}
 }
@@ -246,7 +249,7 @@ func CreateGetExploreMasterMySQL(connect ConnectDBFunc) stage.FetchExploreMaster
 func CreateGetSkillMaster(connect ConnectDBFunc) stage.FetchSkillMasterFunc {
 	return CreateBatchGetQuery[core.SkillId, stage.SkillMaster](
 		connect,
-		"get explore master from mysql: %w",
+		"get skill master from mysql: %w",
 		"SELECT skill_id, display_name from skill_masters",
 		"explore_id",
 	)
@@ -300,8 +303,8 @@ func CreateGetSkillGrowth(connect ConnectDBFunc) stage.FetchSkillGrowthData {
 func CreateGetReductionSkill(connect ConnectDBFunc) stage.FetchReductionStaminaSkillFunc {
 	f := CreateBatchGetMultiQuery[stage.ExploreId, stage.StaminaReductionSkillPair, stage.BatchGetReductionStaminaSkill](
 		connect,
-		"get skill growth from mysql: %w",
-		"SELECT explore_id, skill_id, gaining_point FROM skill_growth_data",
+		"get stamina reduction skill from mysql: %w",
+		"SELECT explore_id, skill_id FROM stamina_reduction_skills",
 		"explore_id",
 	)
 
@@ -399,7 +402,7 @@ func CreateBatchGetQuery[S core.Stringer, T any](
 			return nil, fmt.Errorf(errorMessageFormat, err)
 		}
 		if len(ids) == 0 {
-			return []T{}, sql.ErrNoRows
+			return []T{}, nil
 		}
 		db, err := connect()
 		if err != nil {

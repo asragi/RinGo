@@ -61,9 +61,11 @@ func DecodeBody[T any](body io.ReadCloser) (*T, error) {
 	return &req, err
 }
 
+type selectParam[T any] func(RequestBody, QueryParameter, PathString) (*T, error)
+
 func createHandlerWithParameter[T any, S any](
 	endpointFunc func(*T) (*S, error),
-	selectParam func(RequestBody, QueryParameter, PathString) (*T, error),
+	selectParam selectParam[T],
 	logger writeLogger,
 ) Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -127,4 +129,22 @@ func LogHttpWrite(status int, err error) {
 		return
 	}
 	log.Printf("Write failed: %v, status: %d", err, status)
+}
+
+func getTokenParams[T any](createRequest func(token string) *T) selectParam[T] {
+	return func(
+		_ RequestBody,
+		query QueryParameter,
+		_ PathString,
+	) (*T, error) {
+		handleError := func(err error) (*T, error) {
+			return nil, fmt.Errorf("get params: %w", err)
+		}
+		token, err := query.GetFirstQuery("token")
+		if err != nil {
+			return handleError(err)
+		}
+
+		return createRequest(token), nil
+	}
 }

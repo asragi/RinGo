@@ -169,9 +169,9 @@ func (_ RequiredSkillRow) CreateSelf(id ExploreId, data []RequiredSkill) Require
 }
 
 type StageMaster struct {
-	StageId     StageId
-	DisplayName core.DisplayName
-	Description core.Description
+	StageId     StageId          `db:"stage_id"`
+	DisplayName core.DisplayName `db:"display_name"`
+	Description core.Description `db:"description"`
 }
 
 type GetAllStagesRes struct {
@@ -193,9 +193,10 @@ type GetAllUserStagesRes struct {
 }
 
 type EarningItem struct {
-	ItemId   core.ItemId
-	MinCount core.Count
-	MaxCount core.Count
+	ItemId      core.ItemId `db:"item_id"`
+	MinCount    core.Count  `db:"min_count"`
+	MaxCount    core.Count  `db:"max_count"`
+	Probability EarningProb `db:"probability"`
 }
 
 type FetchEarningItemFunc func(ExploreId) ([]EarningItem, error)

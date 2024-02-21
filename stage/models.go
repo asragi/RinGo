@@ -8,6 +8,7 @@ import (
 
 // item
 type ConsumptionProb float32
+type EarningProb float32
 
 // skill
 type GainingPoint int

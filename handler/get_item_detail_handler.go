@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RingoSuPBGo/gateway"
+	"strings"
 )
 
 func CreateGetItemDetailHandler(
@@ -21,6 +24,28 @@ func CreateGetItemDetailHandler(
 	validateToken auth.ValidateTokenFunc,
 	logger writeLogger,
 ) Handler {
+	getParams := func(
+		_ RequestBody,
+		query QueryParameter,
+		path PathString,
+	) (*gateway.GetItemDetailRequest, error) {
+		handleError := func(err error) (*gateway.GetItemDetailRequest, error) {
+			return nil, fmt.Errorf("get params: %w", err)
+		}
+		token, err := query.GetFirstQuery("token")
+		if err != nil {
+			return handleError(err)
+		}
+		splitPath := strings.Split(string(path), "/")
+		if len(splitPath) != 3 {
+			return nil, PageNotFoundError{Message: fmt.Sprintf("path is invalid: %s", string(path))}
+		}
+		itemId := splitPath[2]
+		return &gateway.GetItemDetailRequest{
+			Token:  token,
+			ItemId: itemId,
+		}, nil
+	}
 	createArgsFunc := createGetItemDetailArgs(repositories)
 	fetchMakeUserExploreArgsFunc := createMakeUserExploreFunc(makeUserExploreRepo)
 	getItemDetailFunc := createGetItemDetailFunc(
@@ -32,5 +57,5 @@ func CreateGetItemDetailHandler(
 		createCompensatedMakeUserExplore,
 	)
 	endpointFunc := getItemDetailEndpoint(getItemDetailFunc, validateToken)
-	return createHandler(endpointFunc, logger)
+	return createHandlerWithParameter(endpointFunc, getParams, logger)
 }
