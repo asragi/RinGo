@@ -251,7 +251,7 @@ func CreateGetSkillMaster(connect ConnectDBFunc) stage.FetchSkillMasterFunc {
 		connect,
 		"get skill master from mysql: %w",
 		"SELECT skill_id, display_name from skill_masters",
-		"explore_id",
+		"skill_id",
 	)
 }
 
@@ -323,14 +323,27 @@ func CreateStageExploreRelation(connect ConnectDBFunc) stage.FetchStageExploreRe
 }
 
 func CreateItemExploreRelation(connect ConnectDBFunc) stage.FetchItemExploreRelationFunc {
-	f := CreateGetQuery[core.ItemId, stage.ExploreId](
+	type fetchExploreIdRes struct {
+		ExploreId stage.ExploreId `db:"explore_id"`
+	}
+	f := CreateGetQuery[core.ItemId, fetchExploreIdRes](
 		connect,
 		"get item explore relation from mysql: %w",
-		"SELECT item_id, explore_id FROM item_explore_relations",
+		"SELECT explore_id FROM item_explore_relations",
 		"item_id",
 	)
 
-	return f
+	return func(id core.ItemId) ([]stage.ExploreId, error) {
+		res, err := f(id)
+		if err != nil {
+			return nil, err
+		}
+		result := make([]stage.ExploreId, len(res))
+		for i, v := range res {
+			result[i] = v.ExploreId
+		}
+		return result, nil
+	}
 }
 
 func CreateGetUserExplore(connect ConnectDBFunc) stage.GetUserExploreFunc {

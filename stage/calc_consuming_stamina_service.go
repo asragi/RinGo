@@ -43,12 +43,6 @@ type CalcBatchConsumingStaminaFunc func(
 	error,
 )
 
-type CreateCalcConsumingStaminaServiceFunc func(
-	fetchUserSkills FetchUserSkillFunc,
-	fetchExploreMaster FetchExploreMasterFunc,
-	fetchReductionSkills FetchReductionStaminaSkillFunc,
-) CalcBatchConsumingStaminaFunc
-
 func CreateCalcConsumingStaminaService(
 	fetchUserSkills FetchUserSkillFunc,
 	fetchExploreMaster FetchExploreMasterFunc,

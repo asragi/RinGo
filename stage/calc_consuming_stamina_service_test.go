@@ -9,8 +9,11 @@ import (
 func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 	userId := core.UserId("passedId")
 	type testCase struct {
-		request []ExploreId
-		expect  []ExploreStaminaPair
+		mockUserSkillRes   []UserSkillRes
+		mockExploreMaster  []GetExploreMasterRes
+		mockReductionSkill []BatchGetReductionStaminaSkill
+		request            []ExploreId
+		expect             []ExploreStaminaPair
 	}
 	skillIds := []core.SkillId{
 		"skillA", "skillB", "skillC",
@@ -52,22 +55,22 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 			StaminaReducibleRate: 0.5,
 		},
 	}
-	userSkillRepo.Add(userId, skills)
-	for _, v := range master {
-		exploreMasterRepo.Add(v.ExploreId, v)
-	}
-	reductionSkillRepo.Add(exploreIds[1], []core.SkillId{skillIds[0]})
-	reductionSkillRepo.Add(exploreIds[2], []core.SkillId{skillIds[1], skillIds[2]})
-
-	service := CreateCalcConsumingStaminaService(
-		userSkillRepo.BatchGet,
-		exploreMasterRepo.BatchGet,
-		reductionSkillRepo.BatchGet,
-	)
-
 	testCases := []testCase{
 		{
-			request: exploreIds,
+			request:           exploreIds,
+			mockUserSkillRes:  skills,
+			mockExploreMaster: master,
+			mockReductionSkill: []BatchGetReductionStaminaSkill{
+				{
+					ExploreId: exploreIds[0],
+					Skills: []StaminaReductionSkillPair{
+						{
+							ExploreId: exploreIds[2],
+							SkillId:   skillIds[2],
+						},
+					},
+				},
+			},
 			expect: []ExploreStaminaPair{
 				{
 					ExploreId:      exploreIds[0],
@@ -86,10 +89,25 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 	}
 
 	for i, v := range testCases {
-		res, _ := service(
-			userId, "token",
-			v.request,
+		batchGetUserSkill := func(id core.UserId, skillIds []core.SkillId) (BatchGetUserSkillRes, error) {
+			return BatchGetUserSkillRes{
+				UserId: id,
+				Skills: v.mockUserSkillRes,
+			}, nil
+		}
+		getExploreMaster := func([]ExploreId) ([]GetExploreMasterRes, error) {
+			return v.mockExploreMaster, nil
+		}
+		getReductionSkill := func([]ExploreId) ([]BatchGetReductionStaminaSkill, error) {
+			return v.mockReductionSkill, nil
+		}
+		service := CreateCalcConsumingStaminaService(
+			batchGetUserSkill,
+			getExploreMaster,
+			getReductionSkill,
 		)
+
+		res, _ := service(userId, v.request)
 		for j, w := range res {
 			expect := v.expect[j]
 			if expect.ReducedStamina != w.ReducedStamina {

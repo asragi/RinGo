@@ -62,7 +62,7 @@ func TestGetStageList(t *testing.T) {
 			fetchStageData,
 		)
 
-		res, _ := getStageListFunc(userId, "token", nil)
+		res, _ := getStageListFunc(userId, nil)
 		if !reflect.DeepEqual(v.mockInformation, res) {
 			t.Errorf("expect: %+v, got: %+v", v.mockInformation, res)
 		}
@@ -114,8 +114,17 @@ func TestGetAllStage(t *testing.T) {
 
 	stageExplores := []StageExploreIdPair{
 		{
-			StageId:    stageIds[0],
-			ExploreIds: exploreIds,
+			StageId: stageIds[0],
+			ExploreIds: []StageExploreIdPairRow{
+				{
+					StageId:   stageIds[0],
+					ExploreId: exploreIds[0],
+				},
+				{
+					StageId:   stageIds[0],
+					ExploreId: exploreIds[1],
+				},
+			},
 		},
 	}
 

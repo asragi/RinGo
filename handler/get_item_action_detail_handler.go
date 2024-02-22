@@ -10,10 +10,7 @@ import (
 )
 
 func CreateGetItemActionDetailHandler(
-	fetchUserSkills stage.FetchUserSkillFunc,
-	fetchExploreMaster stage.FetchExploreMasterFunc,
-	fetchReductionSkills stage.FetchReductionStaminaSkillFunc,
-	createCalcConsumingStamina stage.CreateCalcConsumingStaminaServiceFunc,
+	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc,
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchItemMaster stage.FetchItemMasterFunc,
@@ -43,11 +40,6 @@ func CreateGetItemActionDetailHandler(
 			AccessToken: token,
 		}, nil
 	}
-	calcConsumingStamina := createCalcConsumingStamina(
-		fetchUserSkills,
-		fetchExploreMaster,
-		fetchReductionSkills,
-	)
 	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)
 	getItemActionFunc := service(commonGetAction, fetchItemMaster)
 	getEndpoint := createEndpoint(getItemActionFunc, validateToken)

@@ -102,6 +102,43 @@ func TestCreateTotalItemService(t *testing.T) {
 				},
 			},
 		},
+		{
+			request: request{
+				earnedItems: []earnedItem{
+					{
+						ItemId: itemId[0],
+						Count:  core.Count(30),
+					},
+					{
+						ItemId: itemId[1],
+						Count:  core.Count(30),
+					},
+					{
+						ItemId: itemId[2],
+						Count:  core.Count(30),
+					},
+				},
+				consumedItem: []consumedItem{},
+				storageItem:  []ItemData{},
+				itemMaster:   itemMaster,
+			},
+			expect: expect{
+				totalItem: []totalItem{
+					{
+						ItemId: itemId[0],
+						Stock:  core.Stock(20),
+					},
+					{
+						ItemId: itemId[1],
+						Stock:  core.Stock(10),
+					},
+					{
+						ItemId: itemId[2],
+						Stock:  core.Stock(30),
+					},
+				},
+			},
+		},
 	}
 
 	for i, v := range testCases {

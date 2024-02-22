@@ -49,10 +49,11 @@ type infrastructuresStruct struct {
 }
 
 type functionContainer struct {
-	validateToken auth.ValidateTokenFunc
-	login         auth.LoginFunc
-	register      auth.RegisterUserFunc
-	getTime       core.GetCurrentTimeFunc
+	validateToken        auth.ValidateTokenFunc
+	login                auth.LoginFunc
+	register             auth.RegisterUserFunc
+	getTime              core.GetCurrentTimeFunc
+	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc
 }
 
 func createFunction(infra *infrastructuresStruct) *functionContainer {
@@ -89,11 +90,17 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.insertNewUser,
 		initialName,
 	)
+	calcConsumingStamina := stage.CreateCalcConsumingStaminaService(
+		infra.userSkill,
+		infra.exploreMaster,
+		infra.fetchReductionSkill,
+	)
 	return &functionContainer{
-		validateToken: validateToken,
-		login:         login,
-		register:      register,
-		getTime:       getTime,
+		validateToken:        validateToken,
+		login:                login,
+		register:             register,
+		getTime:              getTime,
+		calcConsumingStamina: calcConsumingStamina,
 	}
 }
 
@@ -243,10 +250,7 @@ func main() {
 		writeLogger,
 	)
 	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
-		infrastructures.userSkill,
-		infrastructures.exploreMaster,
-		infrastructures.fetchReductionSkill,
-		stage.CreateCalcConsumingStaminaService,
+		functions.calcConsumingStamina,
 		stage.CreateCommonGetActionDetailRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
@@ -314,7 +318,7 @@ func main() {
 			GetItemStorage:                infrastructures.fetchStorage,
 			GetExploreMaster:              infrastructures.exploreMaster,
 			GetItemExploreRelation:        infrastructures.fetchItemExploreRelation,
-			CalcBatchConsumingStaminaFunc: nil,
+			CalcBatchConsumingStaminaFunc: functions.calcConsumingStamina,
 			CreateArgs:                    stage.FetchGetItemDetailArgs,
 		},
 		stage.CreateGetItemDetailArgs,
@@ -332,10 +336,7 @@ func main() {
 		writeLogger,
 	)
 	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
-		infrastructures.userSkill,
-		infrastructures.exploreMaster,
-		infrastructures.fetchReductionSkill,
-		stage.CreateCalcConsumingStaminaService,
+		functions.calcConsumingStamina,
 		stage.CreateCommonGetActionDetailRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,

@@ -56,8 +56,8 @@ type ItemStock struct {
 type UpdateItemStorageFunc func(core.UserId, []ItemStock) error
 
 type SkillMaster struct {
-	SkillId     core.SkillId
-	DisplayName core.DisplayName
+	SkillId     core.SkillId     `db:"skill_id"`
+	DisplayName core.DisplayName `db:"display_name"`
 }
 
 type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
