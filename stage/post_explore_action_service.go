@@ -240,6 +240,7 @@ func PostAction(
 			result[i] = ItemStock{
 				ItemId:     v.ItemId,
 				AfterStock: v.Stock,
+				IsKnown:    true,
 			}
 		}
 		return result

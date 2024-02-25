@@ -33,10 +33,10 @@ type GetItemStorageRes struct {
 }
 
 type ItemData struct {
-	UserId  core.UserId
-	ItemId  core.ItemId
-	Stock   core.Stock
-	IsKnown core.IsKnown
+	UserId  core.UserId  `db:"user_id"`
+	ItemId  core.ItemId  `db:"item_id"`
+	Stock   core.Stock   `db:"stock"`
+	IsKnown core.IsKnown `db:"is_known"`
 }
 
 type BatchGetStorageRes struct {
@@ -51,6 +51,7 @@ type FetchAllStorageFunc func(core.UserId) ([]ItemData, error)
 type ItemStock struct {
 	ItemId     core.ItemId
 	AfterStock core.Stock
+	IsKnown    core.IsKnown
 }
 
 type UpdateItemStorageFunc func(core.UserId, []ItemStock) error

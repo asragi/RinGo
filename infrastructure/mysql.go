@@ -173,8 +173,8 @@ func CreateGetResourceMySQL(connect ConnectDBFunc) stage.GetResourceFunc {
 func CreateUpdateStamina(connect ConnectDBFunc) stage.UpdateStaminaFunc {
 	return CreateUpdateUserData[core.StaminaRecoverTime](
 		connect,
-		"update stamimna: %w",
-		`UPDATE users SET stamina_recover_time = %s WHERE user_id = "%s";`,
+		"update stamina: %w",
+		`UPDATE users SET stamina_recover_time = "%s" WHERE user_id = "%s";`,
 		func(stamina core.StaminaRecoverTime) string {
 			t := time.Time(stamina)
 			return t.Format("2006-01-02 15:04:05")
@@ -589,7 +589,13 @@ func CreateUpdateFund(connect ConnectDBFunc) stage.UpdateFundFunc {
 }
 
 func CreateGetStorage(connect ConnectDBFunc) stage.FetchStorageFunc {
-	g := CreateBatchGetUserDataQuery[core.ItemId, stage.ItemData](
+	type ItemDataRes struct {
+		UserId  core.UserId `db:"user_id"`
+		ItemId  core.ItemId `db:"item_id"`
+		Stock   core.Stock  `db:"stock"`
+		IsKnown bool        `db:"is_known"`
+	}
+	g := CreateBatchGetUserDataQuery[core.ItemId, ItemDataRes](
 		connect,
 		"get user storage: %w",
 		"SELECT user_id, item_id, stock, is_known FROM item_storages",
@@ -597,9 +603,21 @@ func CreateGetStorage(connect ConnectDBFunc) stage.FetchStorageFunc {
 	)
 	return func(userId core.UserId, itemId []core.ItemId) (stage.BatchGetStorageRes, error) {
 		res, err := g(userId, itemId)
+		result := func() []stage.ItemData {
+			r := make([]stage.ItemData, len(res))
+			for i, v := range res {
+				r[i] = stage.ItemData{
+					UserId:  v.UserId,
+					ItemId:  v.ItemId,
+					Stock:   v.Stock,
+					IsKnown: core.IsKnown(v.IsKnown),
+				}
+			}
+			return r
+		}()
 		return stage.BatchGetStorageRes{
 			UserId:   userId,
-			ItemData: res,
+			ItemData: result,
 		}, err
 	}
 }
@@ -640,11 +658,33 @@ func CreateGetAllStorage(connect ConnectDBFunc) stage.FetchAllStorageFunc {
 }
 
 func CreateUpdateItemStorage(connect ConnectDBFunc) stage.UpdateItemStorageFunc {
-	return CreateBulkUpdateUserData[stage.ItemStock](
-		connect,
-		"update user item storage",
-		`INSERT INTO item_storages (user_id, item_id, stock) VALUES (:user_id, :item_id, :stock_exp) ON DUPLICATE KEY UPDATE stock =VALUES(stock);`,
-	)
+	return func(userId core.UserId, stocks []stage.ItemStock) error {
+		type userItemStock struct {
+			UserId  core.UserId  `db:"user_id"`
+			ItemId  core.ItemId  `db:"item_id"`
+			Stock   core.Stock   `db:"stock"`
+			IsKnown core.IsKnown `db:"is_known"`
+		}
+
+		stockData := func(stocks []stage.ItemStock) []userItemStock {
+			result := make([]userItemStock, len(stocks))
+			for i, v := range stocks {
+				result[i] = userItemStock{
+					UserId:  userId,
+					ItemId:  v.ItemId,
+					Stock:   v.AfterStock,
+					IsKnown: v.IsKnown,
+				}
+			}
+			return result
+		}(stocks)
+
+		return CreateBulkUpdateUserData[userItemStock](
+			connect,
+			"update user item storage",
+			`INSERT INTO item_storages (user_id, item_id, stock, is_known) VALUES (:user_id, :item_id, :stock, :is_known) ON DUPLICATE KEY UPDATE stock =VALUES(stock);`,
+		)(userId, stockData)
+	}
 }
 
 func CreateGetUserSkill(connect ConnectDBFunc) stage.FetchUserSkillFunc {
