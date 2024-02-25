@@ -44,6 +44,23 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 				},
 			},
 		},
+		{
+			request: request{
+				skillGrowth: []skillGrowthResult{
+					{
+						SkillId: skillId,
+						GainSum: 30,
+					},
+				},
+				userSkills: nil,
+			},
+			expect: []growthApplyResult{
+				{
+					SkillId:  skillId,
+					AfterExp: 30,
+				},
+			},
+		},
 	}
 
 	for _, v := range testCases {
