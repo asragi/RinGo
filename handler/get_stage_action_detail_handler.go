@@ -5,6 +5,7 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"strings"
 )
@@ -17,6 +18,7 @@ func CreateGetStageActionDetailHandler(
 	createService stage.CreateGetStageActionDetailFunc,
 	createEndpoint endpoint.CreateGetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
+	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
 	getParams := func(
@@ -46,5 +48,5 @@ func CreateGetStageActionDetailHandler(
 	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)
 	service := createService(commonGetAction, fetchStageMaster)
 	endpointFunc := createEndpoint(service, validateToken)
-	return createHandlerWithParameter(endpointFunc, getParams, logger)
+	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

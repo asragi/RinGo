@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 
@@ -12,13 +13,20 @@ type CreateGetStageActionDetailFunc func(
 	stage.GetStageActionDetailFunc,
 	auth.ValidateTokenFunc,
 ) getStageActionEndpointRes
-type getStageActionEndpointRes func(*gateway.GetStageActionDetailRequest) (*gateway.GetStageActionDetailResponse, error)
+
+type getStageActionEndpointRes func(
+	context.Context,
+	*gateway.GetStageActionDetailRequest,
+) (*gateway.GetStageActionDetailResponse, error)
 
 func CreateGetStageActionDetail(
 	createStageActionDetail stage.GetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 ) getStageActionEndpointRes {
-	get := func(req *gateway.GetStageActionDetailRequest) (*gateway.GetStageActionDetailResponse, error) {
+	get := func(
+		ctx context.Context,
+		req *gateway.GetStageActionDetailRequest,
+	) (*gateway.GetStageActionDetailResponse, error) {
 		handleError := func(err error) (*gateway.GetStageActionDetailResponse, error) {
 			return &gateway.GetStageActionDetailResponse{}, fmt.Errorf(
 				"error on get stage action detail endpoint: %w",
@@ -33,7 +41,7 @@ func CreateGetStageActionDetail(
 			return handleError(err)
 		}
 		userId := tokenInfo.UserId
-		res, err := createStageActionDetail(userId, stageId, exploreId)
+		res, err := createStageActionDetail(ctx, userId, stageId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}

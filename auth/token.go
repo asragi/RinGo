@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type createTokenFunc func(*core.UserId) (*AccessToken, error)
+type createTokenFunc func(core.UserId) (AccessToken, error)
 type sha256Func func(*SecretHashKey, *string) (*string, error)
 
 type AccessToken string
@@ -24,14 +24,14 @@ func CreateTokenFuncEmitter(
 	secret SecretHashKey,
 	sha256 sha256Func,
 ) createTokenFunc {
-	return func(userId *core.UserId) (*AccessToken, error) {
-		handleError := func(err error) (*AccessToken, error) {
-			return nil, fmt.Errorf("create token: %w", err)
+	return func(userId core.UserId) (AccessToken, error) {
+		handleError := func(err error) (AccessToken, error) {
+			return "", fmt.Errorf("create token: %w", err)
 		}
 		nowTime := getTime()
 		header := `{ alg: 'HS256', typ: 'JWT' }`
 		info := &AccessTokenInformation{
-			UserId:         *userId,
+			UserId:         userId,
 			ExpirationTime: ExpirationTime(nowTime.Unix()),
 		}
 		payload, err := jsonFunc(info)
@@ -45,7 +45,7 @@ func CreateTokenFuncEmitter(
 		}
 		jwt := fmt.Sprintf("%s.%s", unsignedToken, *signature)
 		token := AccessToken(jwt)
-		return &token, nil
+		return token, nil
 	}
 }
 

@@ -3,11 +3,13 @@ package handler
 import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/utils"
 )
 
 func CreateRegisterHandler(
 	register auth.RegisterUserFunc,
 	createEndpoint endpoint.CreateRegisterEndpointFunc,
+	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
 	getParams := func(
@@ -18,5 +20,5 @@ func CreateRegisterHandler(
 		return &endpoint.RegisterRequest{}, nil
 	}
 	endpointFunc := createEndpoint(register)
-	return createHandlerWithParameter(endpointFunc, getParams, logger)
+	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

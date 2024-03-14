@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 )
@@ -8,27 +9,26 @@ import (
 type CreateGetUserResourceServiceFunc func(
 	resourceFunc GetResourceFunc,
 ) GetUserResourceServiceFunc
-type GetUserResourceServiceFunc func(core.UserId) (GetResourceRes, error)
+type GetUserResourceServiceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
 
 func CreateGetUserResourceService(
 	getResource GetResourceFunc,
 ) GetUserResourceServiceFunc {
-	get := func(
+	return func(
+		ctx context.Context,
 		userId core.UserId,
-	) (GetResourceRes, error) {
-		handleError := func(err error) (GetResourceRes, error) {
-			return GetResourceRes{}, fmt.Errorf("error on get user resource: %w", err)
+	) (*GetResourceRes, error) {
+		handleError := func(err error) (*GetResourceRes, error) {
+			return nil, fmt.Errorf("error on get user resource: %w", err)
 		}
 		err := userId.IsValid()
 		if err != nil {
 			return handleError(err)
 		}
-		res, err := getResource(userId)
+		res, err := getResource(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}
 		return res, nil
 	}
-
-	return get
 }

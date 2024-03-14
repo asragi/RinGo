@@ -6,24 +6,24 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type CalcEarnedItemFunc func(int, []EarningItem, core.IRandom) []earnedItem
+type CalcEarnedItemFunc func(int, []*EarningItem, core.EmitRandomFunc) []*earnedItem
 
 type earnedItem struct {
 	ItemId core.ItemId
 	Count  core.Count
 }
 
-func calcEarnedItem(
+func CalcEarnedItem(
 	execCount int,
-	earningItemData []EarningItem,
-	random core.IRandom,
-) []earnedItem {
+	earningItemData []*EarningItem,
+	random core.EmitRandomFunc,
+) []*earnedItem {
 	calcItemCount := func(
 		minCount core.Count,
 		maxCount core.Count,
-		random core.IRandom,
+		random core.EmitRandomFunc,
 	) core.Count {
-		randValue := random.Emit()
+		randValue := random()
 		randWidth := maxCount - minCount
 		randCount := core.Count(math.Round(float64(randWidth) * float64(randValue)))
 		return minCount + randCount
@@ -32,7 +32,7 @@ func calcEarnedItem(
 	execMultipleCalcItemCount := func(
 		minCount core.Count,
 		maxCount core.Count,
-		random core.IRandom,
+		random core.EmitRandomFunc,
 		execCount int,
 	) core.Count {
 		sum := core.Count(0)
@@ -42,13 +42,13 @@ func calcEarnedItem(
 		return sum
 	}
 
-	result := []earnedItem{}
+	var result []*earnedItem
 	for _, v := range earningItemData {
 		earnedItem := earnedItem{
 			ItemId: v.ItemId,
 			Count:  execMultipleCalcItemCount(v.MinCount, v.MaxCount, random, execCount),
 		}
-		result = append(result, earnedItem)
+		result = append(result, &earnedItem)
 	}
 	return result
 }

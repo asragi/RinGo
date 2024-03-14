@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 
@@ -10,13 +11,13 @@ import (
 )
 
 type CreatePostActionEndpoint func(application.CreatePostActionRes, auth.ValidateTokenFunc) postActionEndpoint
-type postActionEndpoint func(*gateway.PostActionRequest) (*gateway.PostActionResponse, error)
+type postActionEndpoint func(context.Context, *gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
 	postAction application.CreatePostActionRes,
 	validateToken auth.ValidateTokenFunc,
 ) postActionEndpoint {
-	post := func(req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
+	post := func(ctx context.Context, req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
 		handleError := func(err error) (*gateway.PostActionResponse, error) {
 			return &gateway.PostActionResponse{
 				Error: &gateway.Error{
@@ -33,7 +34,7 @@ func CreatePostAction(
 		}
 		userId := tokenInfo.UserId
 		execCount := int(req.ExecCount)
-		res, err := postAction.Post(userId, token, exploreId, execCount)
+		res, err := postAction(ctx, userId, token, exploreId, execCount)
 		if err != nil {
 			return handleError(err)
 		}

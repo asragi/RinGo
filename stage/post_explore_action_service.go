@@ -1,7 +1,9 @@
 package stage
 
 import (
+	"context"
 	"fmt"
+	"github.com/asragi/RinGo/utils"
 	"time"
 
 	"github.com/asragi/RinGo/core"
@@ -16,16 +18,16 @@ func (err invalidActionError) Error() string {
 type PostActionArgs struct {
 	userId            core.UserId
 	execCount         int
-	userResources     GetResourceRes
-	exploreMaster     GetExploreMasterRes
-	skillGrowthList   []SkillGrowthData
+	userResources     *GetResourceRes
+	exploreMaster     *GetExploreMasterRes
+	skillGrowthList   []*SkillGrowthData
 	skillsRes         BatchGetUserSkillRes
-	skillMaster       []SkillMaster
-	earningItemData   []EarningItem
-	consumingItemData []ConsumingItem
-	requiredSkills    []RequiredSkill
-	allStorageItems   BatchGetStorageRes
-	allItemMasterRes  []GetItemMasterRes
+	skillMaster       []*SkillMaster
+	earningItemData   []*EarningItem
+	consumingItemData []*ConsumingItem
+	requiredSkills    []*RequiredSkill
+	allStorageItems   []*ItemData
+	allItemMasterRes  []*GetItemMasterRes
 }
 
 type GetPostActionRepositories struct {
@@ -42,55 +44,56 @@ type GetPostActionRepositories struct {
 }
 
 type GetPostActionArgsFunc func(
+	context.Context,
 	core.UserId,
 	int,
 	ExploreId,
 	GetPostActionRepositories,
-) (PostActionArgs, error)
+) (*PostActionArgs, error)
 
 func GetPostActionArgs(
+	ctx context.Context,
 	userId core.UserId,
 	execCount int,
 	exploreId ExploreId,
 	args GetPostActionRepositories,
-) (PostActionArgs, error) {
-	handleError := func(err error) (PostActionArgs, error) {
-		return PostActionArgs{}, fmt.Errorf("error on creating post action args: %w", err)
+) (*PostActionArgs, error) {
+	handleError := func(err error) (*PostActionArgs, error) {
+		return nil, fmt.Errorf("error on creating post action args: %w", err)
 	}
-	userResources, err := args.FetchResource(userId)
+	userResources, err := args.FetchResource(ctx, userId)
 	if err != nil {
 		return handleError(err)
 	}
 
-	exploreMasters, err := args.FetchExploreMaster([]ExploreId{exploreId})
+	exploreMasters, err := args.FetchExploreMaster(ctx, []ExploreId{exploreId})
 	if err != nil {
 		return handleError(err)
 	}
-	skillGrowthList, err := args.FetchSkillGrowthData(exploreId)
+	skillGrowthList, err := args.FetchSkillGrowthData(ctx, exploreId)
 	if err != nil {
 		return handleError(err)
 	}
-	skillIds := func(data []SkillGrowthData) []core.SkillId {
+	skillIds := func(data []*SkillGrowthData) []core.SkillId {
 		result := make([]core.SkillId, len(data))
 		for i, v := range data {
 			result[i] = v.SkillId
 		}
 		return result
 	}(skillGrowthList)
-	skillsRes, err := args.FetchUserSkill(userId, skillIds)
+	skillsRes, err := args.FetchUserSkill(ctx, userId, skillIds)
 	if err != nil {
 		return handleError(err)
 	}
-	earningItemData, err := args.FetchEarningItem(exploreId)
+	earningItemData, err := args.FetchEarningItem(ctx, exploreId)
 	if err != nil {
 		return handleError(err)
 	}
-	consumingItemRes, err := args.FetchConsumingItem([]ExploreId{exploreId})
-	consumingItemData := consumingItemRes[0].ConsumingItems
+	consumingItem, err := args.FetchConsumingItem(ctx, []ExploreId{exploreId})
 	if err != nil {
 		return handleError(err)
 	}
-	itemIds := func(earningItems []EarningItem, consumingItem []ConsumingItem) []core.ItemId {
+	itemIds := func(earningItems []*EarningItem, consumingItem []*ConsumingItem) []core.ItemId {
 		var result []core.ItemId
 		check := map[core.ItemId]bool{}
 		for _, v := range earningItems {
@@ -109,28 +112,27 @@ func GetPostActionArgs(
 			result = append(result, v.ItemId)
 		}
 		return result
-	}(earningItemData, consumingItemData)
-	storage, err := args.FetchStorage(userId, itemIds)
+	}(earningItemData, consumingItem)
+	storage, err := args.FetchStorage(ctx, userId, itemIds)
 	if err != nil {
 		return handleError(err)
 	}
 
-	itemMaster, err := args.FetchItemMaster(itemIds)
+	itemMaster, err := args.FetchItemMaster(ctx, itemIds)
 	if err != nil {
 		return handleError(err)
 	}
 
-	requiredSkillsRow, err := args.FetchRequiredSkill([]ExploreId{exploreId})
+	requiredSkills, err := args.FetchRequiredSkill(ctx, []ExploreId{exploreId})
 	if err != nil {
 		return handleError(err)
 	}
-	requiredSkills := requiredSkillsRow[0].RequiredSkills
 
-	skillMaster, err := args.FetchSkillMaster(skillIds)
+	skillMaster, err := args.FetchSkillMaster(ctx, skillIds)
 	if err != nil {
 		return handleError(err)
 	}
-	return PostActionArgs{
+	return &PostActionArgs{
 		userId:            userId,
 		execCount:         execCount,
 		userResources:     userResources,
@@ -139,15 +141,15 @@ func GetPostActionArgs(
 		skillsRes:         skillsRes,
 		skillMaster:       skillMaster,
 		earningItemData:   earningItemData,
-		consumingItemData: consumingItemData,
+		consumingItemData: consumingItem,
 		requiredSkills:    requiredSkills,
-		allStorageItems:   storage,
+		allStorageItems:   storage.ItemData,
 		allItemMasterRes:  itemMaster,
 	}, nil
 }
 
 type PostActionFunc func(
-	args PostActionArgs,
+	args *PostActionArgs,
 	validateAction ValidateActionFunc,
 	calcSkillGrowth CalcSkillGrowthFunc,
 	calcGrowthApply GrowthApplyFunc,
@@ -159,25 +161,27 @@ type PostActionFunc func(
 	updateStamina UpdateStaminaFunc,
 	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
-	random core.IRandom,
+	random core.EmitRandomFunc,
 	currentTime time.Time,
+	createContext utils.CreateContextFunc,
+	transaction TransactionFunc,
 ) (PostActionResult, error)
 
 type skillGrowthInformation struct {
 	DisplayName  core.DisplayName
-	GrowthResult growthApplyResult
+	GrowthResult *growthApplyResult
 }
 
 type PostActionResult struct {
-	EarnedItems            []earnedItem
-	ConsumedItems          []consumedItem
-	SkillGrowthInformation []skillGrowthInformation
+	EarnedItems            []*earnedItem
+	ConsumedItems          []*consumedItem
+	SkillGrowthInformation []*skillGrowthInformation
 	AfterFund              core.Fund
 	AfterStamina           core.StaminaRecoverTime
 }
 
 func PostAction(
-	args PostActionArgs,
+	args *PostActionArgs,
 	validateAction ValidateActionFunc,
 	calcSkillGrowth CalcSkillGrowthFunc,
 	calcGrowthApply GrowthApplyFunc,
@@ -189,8 +193,10 @@ func PostAction(
 	updateStamina UpdateStaminaFunc,
 	updateFund UpdateFundFunc,
 	staminaReductionFunc StaminaReductionFunc,
-	random core.IRandom,
+	random core.EmitRandomFunc,
 	currentTime time.Time,
+	createContext utils.CreateContextFunc,
+	transaction TransactionFunc,
 ) (PostActionResult, error) {
 	handleError := func(err error) (PostActionResult, error) {
 		return PostActionResult{}, fmt.Errorf("error on post action: %w", err)
@@ -202,7 +208,7 @@ func PostAction(
 		args.consumingItemData,
 		args.requiredSkills,
 		args.skillsRes.Skills,
-		args.allStorageItems.ItemData,
+		args.allStorageItems,
 		args.execCount,
 		staminaReductionFunc,
 		currentTime,
@@ -214,10 +220,10 @@ func PostAction(
 
 	skillGrowth := calcSkillGrowth(args.execCount, args.skillGrowthList)
 	applySkillGrowth := calcGrowthApply(args.skillsRes.Skills, skillGrowth)
-	skillGrowthReq := func(skillGrowth []growthApplyResult) []SkillGrowthPostRow {
-		result := make([]SkillGrowthPostRow, len(skillGrowth))
+	skillGrowthReq := func(skillGrowth []*growthApplyResult) []*SkillGrowthPostRow {
+		result := make([]*SkillGrowthPostRow, len(skillGrowth))
 		for i, v := range skillGrowth {
-			result[i] = SkillGrowthPostRow{
+			result[i] = &SkillGrowthPostRow{
 				UserId:   userId,
 				SkillId:  v.SkillId,
 				SkillExp: v.AfterExp,
@@ -229,15 +235,15 @@ func PostAction(
 	earnedItems := calcEarnedItem(args.execCount, args.earningItemData, random)
 	consumedItems := calcConsumedItem(args.execCount, args.consumingItemData, random)
 	calculatedTotalItem := calcTotalItem(
-		args.allStorageItems.ItemData,
+		args.allStorageItems,
 		args.allItemMasterRes,
 		earnedItems,
 		consumedItems,
 	)
-	itemStockReq := func(totalItems []totalItem) []ItemStock {
-		result := make([]ItemStock, len(totalItems))
+	itemStockReq := func(totalItems []*totalItem) []*ItemStock {
+		result := make([]*ItemStock, len(totalItems))
 		for i, v := range totalItems {
-			result[i] = ItemStock{
+			result[i] = &ItemStock{
 				ItemId:     v.ItemId,
 				AfterStock: v.Stock,
 				IsKnown:    true,
@@ -246,54 +252,67 @@ func PostAction(
 		return result
 	}(calculatedTotalItem)
 
-	err := updateItemStorage(args.userId, itemStockReq)
-	if err != nil {
-		return handleError(err)
-	}
-
+	ctx := createContext()
 	currentStaminaRecoverTime := args.userResources.StaminaRecoverTime
 	requiredStamina := checkIsPossibleArgs.requiredStamina
 	afterStaminaTime := core.CalcAfterStamina(
 		currentStaminaRecoverTime,
 		requiredStamina,
 	)
-	err = updateStamina(userId, afterStaminaTime)
-	if err != nil {
-		return handleError(err)
-	}
-
 	currentFund := checkIsPossibleArgs.currentFund
 	requiredCost := checkIsPossibleArgs.requiredPrice
 	afterFund := currentFund.ReduceFund(requiredCost)
-	err = updateFund(userId, afterFund)
-
-	err = updateSkill(
-		SkillGrowthPost{
-			UserId:      args.userId,
-			SkillGrowth: skillGrowthReq,
-		},
-	)
+	// Tx
+	txFunc := func(ctx context.Context) error {
+		txHandleError := func(err error) error {
+			return fmt.Errorf("post action transaction: %w", err)
+		}
+		err := updateItemStorage(ctx, args.userId, itemStockReq)
+		if err != nil {
+			return txHandleError(err)
+		}
+		err = updateStamina(ctx, userId, afterStaminaTime)
+		if err != nil {
+			return txHandleError(err)
+		}
+		err = updateFund(ctx, userId, afterFund)
+		if err != nil {
+			return txHandleError(err)
+		}
+		err = updateSkill(
+			ctx,
+			SkillGrowthPost{
+				UserId:      args.userId,
+				SkillGrowth: skillGrowthReq,
+			},
+		)
+		if err != nil {
+			return txHandleError(err)
+		}
+		return nil
+	}
+	err := transaction(ctx, txFunc)
 	if err != nil {
 		return handleError(err)
 	}
 
 	postResult := func(
-		earnedItem []earnedItem,
-		consumedItem []consumedItem,
-		skillMaster []SkillMaster,
-		skillGrowth []growthApplyResult,
+		earnedItem []*earnedItem,
+		consumedItem []*consumedItem,
+		skillMaster []*SkillMaster,
+		skillGrowth []*growthApplyResult,
 		afterFund core.Fund,
 		afterStamina core.StaminaRecoverTime,
 	) PostActionResult {
-		skillMasterMap := func() map[core.SkillId]SkillMaster {
-			result := map[core.SkillId]SkillMaster{}
+		skillMasterMap := func() map[core.SkillId]*SkillMaster {
+			result := map[core.SkillId]*SkillMaster{}
 			for _, v := range skillMaster {
 				result[v.SkillId] = v
 			}
 			return result
 		}()
-		skillGrowthMap := func() map[core.SkillId]growthApplyResult {
-			result := map[core.SkillId]growthApplyResult{}
+		skillGrowthMap := func() map[core.SkillId]*growthApplyResult {
+			result := map[core.SkillId]*growthApplyResult{}
 			for _, v := range skillGrowth {
 				result[v.SkillId] = v
 			}
@@ -306,13 +325,13 @@ func PostAction(
 			}
 			return result
 		}()
-		growthInfo := func() []skillGrowthInformation {
-			result := make([]skillGrowthInformation, len(idArr))
+		growthInfo := func() []*skillGrowthInformation {
+			result := make([]*skillGrowthInformation, len(idArr))
 			for i := 0; i < len(idArr); i++ {
 				id := idArr[i]
 				master := skillMasterMap[id]
 				growth := skillGrowthMap[id]
-				result[i] = skillGrowthInformation{
+				result[i] = &skillGrowthInformation{
 					DisplayName:  master.DisplayName,
 					GrowthResult: growth,
 				}

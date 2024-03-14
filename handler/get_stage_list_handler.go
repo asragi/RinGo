@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -21,6 +22,7 @@ func CreateGetStageListHandler(
 	createFetchStageData stage.ICreateFetchStageData,
 	getStageList stage.IGetStageList,
 	validateToken auth.ValidateTokenFunc,
+	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
 	getParams := func(
@@ -50,5 +52,5 @@ func CreateGetStageListHandler(
 		fetchStageData,
 	)
 	endpointFunc := getStageListEndpoint(get, validateToken, timer)
-	return createHandlerWithParameter(endpointFunc, getParams, logger)
+	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

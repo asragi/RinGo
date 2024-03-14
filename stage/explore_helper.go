@@ -9,8 +9,8 @@ import (
 type CheckIsPossibleArgs struct {
 	requiredStamina core.Stamina
 	requiredPrice   core.Price
-	requiredItems   []ConsumingItem
-	requiredSkills  []RequiredSkill
+	requiredItems   []*ConsumingItem
+	requiredSkills  []*RequiredSkill
 	currentStamina  core.Stamina
 	currentFund     core.Fund
 	itemStockList   map[core.ItemId]core.Stock
@@ -19,12 +19,12 @@ type CheckIsPossibleArgs struct {
 }
 
 func createIsPossibleArgs(
-	exploreMaster GetExploreMasterRes,
-	userResources GetResourceRes,
-	requiredItems []ConsumingItem,
-	requiredSkills []RequiredSkill,
-	userSkills []UserSkillRes,
-	storage []ItemData,
+	exploreMaster *GetExploreMasterRes,
+	userResources *GetResourceRes,
+	requiredItems []*ConsumingItem,
+	requiredSkills []*RequiredSkill,
+	userSkills []*UserSkillRes,
+	storage []*ItemData,
 	execNum int,
 	staminaReductionFunc StaminaReductionFunc,
 	currentTime time.Time,
@@ -37,14 +37,14 @@ func createIsPossibleArgs(
 	currentStamina := userResources.StaminaRecoverTime.CalcStamina(
 		currentTime, userResources.MaxStamina,
 	)
-	itemStockList := func(storage []ItemData) map[core.ItemId]core.Stock {
+	itemStockList := func(storage []*ItemData) map[core.ItemId]core.Stock {
 		result := map[core.ItemId]core.Stock{}
 		for _, v := range storage {
 			result[v.ItemId] = v.Stock
 		}
 		return result
 	}(storage)
-	skillLvList := func(userSkills []UserSkillRes) map[core.SkillId]core.SkillLv {
+	skillLvList := func(userSkills []*UserSkillRes) map[core.SkillId]core.SkillLv {
 		result := map[core.SkillId]core.SkillLv{}
 		for _, v := range userSkills {
 			result[v.SkillId] = v.SkillExp.CalcLv()
@@ -66,7 +66,7 @@ func createIsPossibleArgs(
 
 type checkIsExplorePossibleFunc func(CheckIsPossibleArgs) map[core.IsPossibleType]core.IsPossible
 
-func checkIsExplorePossible(
+func CheckIsExplorePossible(
 	args CheckIsPossibleArgs,
 ) map[core.IsPossibleType]core.IsPossible {
 	isStaminaEnough := func(required core.Stamina, actual core.Stamina, execNum int) core.IsPossible {
@@ -77,7 +77,7 @@ func checkIsExplorePossible(
 		return core.IsPossible(actual.CheckIsFundEnough(required.Multiply(execNum)))
 	}(args.requiredPrice, args.currentFund, args.execNum)
 
-	isSkillEnough := func(required []RequiredSkill, actual map[core.SkillId]core.SkillLv) core.IsPossible {
+	isSkillEnough := func(required []*RequiredSkill, actual map[core.SkillId]core.SkillLv) core.IsPossible {
 		for _, v := range required {
 			skillLv := actual[v.SkillId]
 			if skillLv < v.RequiredLv {
@@ -87,7 +87,7 @@ func checkIsExplorePossible(
 		return true
 	}(args.requiredSkills, args.skillLvList)
 
-	isItemEnough := func(required []ConsumingItem, actual map[core.ItemId]core.Stock, execNum int) core.IsPossible {
+	isItemEnough := func(required []*ConsumingItem, actual map[core.ItemId]core.Stock, execNum int) core.IsPossible {
 		for _, v := range required {
 			itemStock := actual[v.ItemId]
 			if itemStock < core.Stock(v.MaxCount).Multiply(execNum) {

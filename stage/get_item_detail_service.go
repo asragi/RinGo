@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 )
@@ -18,14 +19,14 @@ type getUserItemDetailRes struct {
 	Description  core.Description
 	MaxStock     core.MaxStock
 	Stock        core.Stock
-	UserExplores []UserExplore
+	UserExplores []*UserExplore
 }
 
 type getItemDetailArgs struct {
-	masterRes          GetItemMasterRes
-	storageRes         GetItemStorageRes
-	exploreStaminaPair []ExploreStaminaPair
-	explores           []GetExploreMasterRes
+	masterRes          *GetItemMasterRes
+	storageRes         *GetItemStorageRes
+	exploreStaminaPair []*ExploreStaminaPair
+	explores           []*GetExploreMasterRes
 }
 
 type CreateGetItemDetailServiceFunc func(
@@ -36,7 +37,7 @@ type CreateGetItemDetailServiceFunc func(
 	fetchMakeUserExploreArgs fetchMakeUserExploreArgs,
 	createMakeUserExplore CreateCompensateMakeUserExploreFunc,
 ) GetItemDetailFunc
-type GetItemDetailFunc func(GetUserItemDetailReq) (getUserItemDetailRes, error)
+type GetItemDetailFunc func(context.Context, GetUserItemDetailReq) (getUserItemDetailRes, error)
 
 func CreateGetItemDetailService(
 	timer core.GetCurrentTimeFunc,
@@ -46,16 +47,16 @@ func CreateGetItemDetailService(
 	fetchMakeUserExploreArgs fetchMakeUserExploreArgs,
 	createMakeUserExplore CreateCompensateMakeUserExploreFunc,
 ) GetItemDetailFunc {
-	get := func(req GetUserItemDetailReq) (getUserItemDetailRes, error) {
+	return func(ctx context.Context, req GetUserItemDetailReq) (getUserItemDetailRes, error) {
 		handleError := func(err error) (getUserItemDetailRes, error) {
 			return getUserItemDetailRes{}, fmt.Errorf("error on get user item data: %w", err)
 		}
-		args, err := createArgs(req)
+		args, err := createArgs(ctx, req)
 		if err != nil {
 			return handleError(err)
 		}
 
-		exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
+		exploreIds := func(explores []*GetExploreMasterRes) []ExploreId {
 			result := make([]ExploreId, len(explores))
 			for i, explore := range explores {
 				result[i] = explore.ExploreId
@@ -63,6 +64,7 @@ func CreateGetItemDetailService(
 			return result
 		}(args.explores)
 		fetchedActionArgs, err := fetchMakeUserExploreArgs(
+			ctx,
 			req.UserId,
 			exploreIds,
 		)
@@ -84,9 +86,9 @@ func CreateGetItemDetailService(
 		)
 
 		return func(
-			masterRes GetItemMasterRes,
-			storageRes GetItemStorageRes,
-			explores []UserExplore,
+			masterRes *GetItemMasterRes,
+			storageRes *GetItemStorageRes,
+			explores []*UserExplore,
 		) getUserItemDetailRes {
 			return getUserItemDetailRes{
 				UserId:       storageRes.UserId,
@@ -104,11 +106,9 @@ func CreateGetItemDetailService(
 			userExplores,
 		), nil
 	}
-
-	return get
 }
 
-type ICreateGetItemDetailArgs func(GetUserItemDetailReq) (getItemDetailArgs, error)
+type ICreateGetItemDetailArgs func(context.Context, GetUserItemDetailReq) (getItemDetailArgs, error)
 type CreateGetItemDetailRepositories struct {
 	GetItemMaster                 FetchItemMasterFunc
 	GetItemStorage                FetchStorageFunc
@@ -118,16 +118,18 @@ type CreateGetItemDetailRepositories struct {
 	CreateArgs                    ICreateFetchItemDetailArgs
 }
 type CreateGetItemDetailArgsFunc func(
-	repo CreateGetItemDetailRepositories,
+	CreateGetItemDetailRepositories,
 ) ICreateGetItemDetailArgs
 
 func CreateGetItemDetailArgs(
 	repo CreateGetItemDetailRepositories,
 ) ICreateGetItemDetailArgs {
 	return func(
+		ctx context.Context,
 		req GetUserItemDetailReq,
 	) (getItemDetailArgs, error) {
 		return repo.CreateArgs(
+			ctx,
 			req,
 			repo.GetItemMaster,
 			repo.GetItemStorage,
@@ -139,6 +141,7 @@ func CreateGetItemDetailArgs(
 }
 
 type ICreateFetchItemDetailArgs func(
+	context.Context,
 	GetUserItemDetailReq,
 	FetchItemMasterFunc,
 	FetchStorageFunc,
@@ -147,7 +150,9 @@ type ICreateFetchItemDetailArgs func(
 	CalcBatchConsumingStaminaFunc,
 ) (getItemDetailArgs, error)
 
+// TODO: Separate passing arguments and functions
 func FetchGetItemDetailArgs(
+	ctx context.Context,
 	req GetUserItemDetailReq,
 	getItemMaster FetchItemMasterFunc,
 	getItemStorage FetchStorageFunc,
@@ -159,7 +164,7 @@ func FetchGetItemDetailArgs(
 		return getItemDetailArgs{}, fmt.Errorf("error on create get item detail args: %w", err)
 	}
 	itemIdReq := []core.ItemId{req.ItemId}
-	itemMasterRes, err := getItemMaster(itemIdReq)
+	itemMasterRes, err := getItemMaster(ctx, itemIdReq)
 	if err != nil {
 		return handleError(err)
 	}
@@ -167,19 +172,19 @@ func FetchGetItemDetailArgs(
 		return handleError(&InvalidResponseFromInfrastructureError{Message: "item master response"})
 	}
 	itemMaster := itemMasterRes[0]
-	itemExploreIds, err := getItemExploreRelation(req.ItemId)
+	itemExploreIds, err := getItemExploreRelation(ctx, req.ItemId)
 	if err != nil {
 		return handleError(err)
 	}
-	explores, err := getExploreMaster(itemExploreIds)
+	explores, err := getExploreMaster(ctx, itemExploreIds)
 	if err != nil {
 		return handleError(err)
 	}
-	staminaRes, err := calcBatchConsumingStaminaFunc(req.UserId, itemExploreIds)
+	staminaRes, err := calcBatchConsumingStaminaFunc(ctx, req.UserId, itemExploreIds)
 	if err != nil {
 		return handleError(err)
 	}
-	storageRes, err := getItemStorage(req.UserId, itemIdReq)
+	storageRes, err := getItemStorage(ctx, req.UserId, itemIdReq)
 	if err != nil {
 		return handleError(err)
 	}
@@ -187,7 +192,7 @@ func FetchGetItemDetailArgs(
 	if len(itemData) <= 0 {
 		return handleError(&InvalidResponseFromInfrastructureError{Message: "Item Storage Data"})
 	}
-	storage := GetItemStorageRes{
+	storage := &GetItemStorageRes{
 		UserId: itemData[0].UserId,
 		Stock:  itemData[0].Stock,
 	}
@@ -201,31 +206,31 @@ func FetchGetItemDetailArgs(
 }
 
 type IGetAllItemAction func(
-	[]ExploreStaminaPair,
-	[]GetExploreMasterRes,
+	[]*ExploreStaminaPair,
+	[]*GetExploreMasterRes,
 	compensatedMakeUserExploreFunc,
-) []UserExplore
+) []*UserExplore
 
 func GetAllItemAction(
-	exploreStaminaPair []ExploreStaminaPair,
-	explores []GetExploreMasterRes,
+	exploreStaminaPair []*ExploreStaminaPair,
+	explores []*GetExploreMasterRes,
 	compensatedMakeUserExploreFunc compensatedMakeUserExploreFunc,
-) []UserExplore {
-	exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
+) []*UserExplore {
+	exploreIds := func(explores []*GetExploreMasterRes) []ExploreId {
 		res := make([]ExploreId, len(explores))
 		for i, v := range explores {
 			res[i] = v.ExploreId
 		}
 		return res
 	}(explores)
-	exploreMap := func(masters []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
-		result := make(map[ExploreId]GetExploreMasterRes)
+	exploreMap := func(masters []*GetExploreMasterRes) map[ExploreId]*GetExploreMasterRes {
+		result := make(map[ExploreId]*GetExploreMasterRes)
 		for _, v := range masters {
 			result[v.ExploreId] = v
 		}
 		return result
 	}(explores)
-	staminaMap := func(pair []ExploreStaminaPair) map[ExploreId]core.Stamina {
+	staminaMap := func(pair []*ExploreStaminaPair) map[ExploreId]core.Stamina {
 		result := map[ExploreId]core.Stamina{}
 		for _, v := range pair {
 			result[v.ExploreId] = v.ReducedStamina
@@ -233,7 +238,7 @@ func GetAllItemAction(
 		return result
 	}(exploreStaminaPair)
 	return compensatedMakeUserExploreFunc(
-		makeUserExploreArgs{
+		&makeUserExploreArgs{
 			exploreIds:        exploreIds,
 			exploreMasterMap:  exploreMap,
 			calculatedStamina: staminaMap,

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/crypto"
+	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
 	"github.com/asragi/RinGo/infrastructure"
@@ -44,19 +46,37 @@ type infrastructuresStruct struct {
 	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
 	updateStamina             stage.UpdateStaminaFunc
 	updateFund                stage.UpdateFundFunc
-	closeDB                   func() error
 	getTime                   core.GetCurrentTimeFunc
 }
 
 type functionContainer struct {
+	createContext        utils.CreateContextFunc
 	validateToken        auth.ValidateTokenFunc
 	login                auth.LoginFunc
 	register             auth.RegisterUserFunc
 	getTime              core.GetCurrentTimeFunc
 	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc
+	postFunc             application.PostFunc
 }
 
-func createFunction(infra *infrastructuresStruct) *functionContainer {
+func createDB() (*database.DBAccessor, error) {
+	dbSettings := &database.ConnectionSettings{
+		UserName: "root",
+		Password: "ringo",
+		Port:     "13306",
+		Protocol: "tcp",
+		Host:     "127.0.0.1",
+		Database: "ringo",
+	}
+	db, err := database.ConnectDB(dbSettings)
+	if err != nil {
+		return nil, fmt.Errorf("connect DB: %w", err)
+	}
+	return database.NewDBAccessor(db, db), nil
+}
+
+func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *functionContainer {
+	random := core.RandomEmitter{}
 	getTime := infra.getTime
 	key := auth.SecretHashKey("tmp")
 	sha256Func := func(key *auth.SecretHashKey, text *string) (*string, error) {
@@ -95,71 +115,75 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.exploreMaster,
 		infra.fetchReductionSkill,
 	)
+	validateAction := stage.CreateValidateAction(stage.CheckIsExplorePossible)
+	postFunc := application.CompensatePostActionFunctions(
+		application.CompensatePostActionRepositories{
+			ValidateAction:       validateAction,
+			CalcSkillGrowth:      stage.CalcSkillGrowthService,
+			CalcGrowthApply:      stage.CalcApplySkillGrowth,
+			CalcEarnedItem:       stage.CalcEarnedItem,
+			CalcConsumedItem:     stage.CalcConsumedItem,
+			CalcTotalItem:        stage.CalcTotalItem,
+			StaminaReductionFunc: stage.CalcStaminaReduction,
+			UpdateItemStorage:    infra.updateStorage,
+			UpdateSkill:          infra.updateSkill,
+			UpdateStamina:        infra.updateStamina,
+			UpdateFund:           infra.updateFund,
+		},
+		random.Emit,
+		stage.PostAction,
+		utils.CreateContext,
+		db.Transaction,
+	)
 	return &functionContainer{
 		validateToken:        validateToken,
 		login:                login,
 		register:             register,
 		getTime:              getTime,
 		calcConsumingStamina: calcConsumingStamina,
+		postFunc:             postFunc,
+		createContext:        utils.CreateContext,
 	}
 }
 
-func createInfrastructures(constants *core.Constants) (*infrastructuresStruct, error) {
-	handleError := func(err error) (*infrastructuresStruct, error) {
-		return nil, fmt.Errorf("error on create infrastructures: %w", err)
-	}
+func createInfrastructures(constants *core.Constants, db *database.DBAccessor) (*infrastructuresStruct, error) {
 	getTime := func() time.Time { return time.Now() }
-	dbSettings := &infrastructure.ConnectionSettings{
-		UserName: "root",
-		Password: "ringo",
-		Port:     "13306",
-		Protocol: "tcp",
-		Host:     "127.0.0.1",
-		Database: "ringo",
-	}
-	db, err := infrastructure.ConnectDB(dbSettings)
-	if err != nil {
-		return handleError(err)
-	}
-	closeDB := func() error {
-		return db.Close()
-	}
-	connect := func() (*sqlx.DB, error) {
-		return db, nil
+	dbQuery := func(ctx context.Context, query string, args interface{}) (*sqlx.Rows, error) {
+		return db.Query(ctx, query, args)
 	}
 
-	checkUserExistence := infrastructure.CreateCheckUserExistence(connect)
-	getUserPassword := infrastructure.CreateGetUserPassword(connect)
+	checkUserExistence := infrastructure.CreateCheckUserExistence(dbQuery)
+	getUserPassword := infrastructure.CreateGetUserPassword(dbQuery)
+	getResource := infrastructure.CreateGetResourceMySQL(dbQuery)
+	getItemMaster := infrastructure.CreateGetItemMasterMySQL(dbQuery)
+	getStageMaster := infrastructure.CreateGetStageMaster(dbQuery)
+	getAllStage := infrastructure.CreateGetAllStageMaster(dbQuery)
+	getExploreMaster := infrastructure.CreateGetExploreMasterMySQL(dbQuery)
+	getSkillMaster := infrastructure.CreateGetSkillMaster(dbQuery)
+	getEarningItem := infrastructure.CreateGetEarningItem(dbQuery)
+	getConsumingItem := infrastructure.CreateGetConsumingItem(dbQuery)
+	getRequiredSkill := infrastructure.CreateGetRequiredSkills(dbQuery)
+	getSkillGrowth := infrastructure.CreateGetSkillGrowth(dbQuery)
+	getReductionSkill := infrastructure.CreateGetReductionSkill(dbQuery)
+	getStageExploreRelation := infrastructure.CreateStageExploreRelation(dbQuery)
+	getItemExploreRelation := infrastructure.CreateItemExploreRelation(dbQuery)
+	getUserExplore := infrastructure.CreateGetUserExplore(dbQuery)
+	getUserStageData := infrastructure.CreateGetUserStageData(dbQuery)
+	getUserSkillData := infrastructure.CreateGetUserSkill(dbQuery)
+	getStorage := infrastructure.CreateGetStorage(dbQuery)
+	getAllStorage := infrastructure.CreateGetAllStorage(dbQuery)
+
 	insertNewUser := infrastructure.CreateInsertNewUser(
-		connect,
+		db.Exec,
 		constants.InitialFund,
 		constants.InitialMaxStamina,
 		getTime,
 	)
 
-	getResource := infrastructure.CreateGetResourceMySQL(connect)
-	getItemMaster := infrastructure.CreateGetItemMasterMySQL(connect)
-	getStageMaster := infrastructure.CreateGetStageMaster(connect)
-	getAllStage := infrastructure.CreateGetAllStageMaster(connect)
-	getExploreMaster := infrastructure.CreateGetExploreMasterMySQL(connect)
-	getSkillMaster := infrastructure.CreateGetSkillMaster(connect)
-	getEarningItem := infrastructure.CreateGetEarningItem(connect)
-	getConsumingItem := infrastructure.CreateGetConsumingItem(connect)
-	getRequiredSkill := infrastructure.CreateGetRequiredSkills(connect)
-	getSkillGrowth := infrastructure.CreateGetSkillGrowth(connect)
-	getReductionSkill := infrastructure.CreateGetReductionSkill(connect)
-	getStageExploreRelation := infrastructure.CreateStageExploreRelation(connect)
-	getItemExploreRelation := infrastructure.CreateItemExploreRelation(connect)
-	getUserExplore := infrastructure.CreateGetUserExplore(connect)
-	getUserStageData := infrastructure.CreateGetUserStageData(connect)
-	getUserSkillData := infrastructure.CreateGetUserSkill(connect)
-	getStorage := infrastructure.CreateGetStorage(connect)
-	getAllStorage := infrastructure.CreateGetAllStorage(connect)
-
-	updateFund := infrastructure.CreateUpdateFund(connect)
-	updateSkill := infrastructure.CreateUpdateUserSkill(connect)
-	updateStorage := infrastructure.CreateUpdateItemStorage(connect)
-	updateStamina := infrastructure.CreateUpdateStamina(connect)
+	updateFund := infrastructure.CreateUpdateFund(db.Exec)
+	updateSkill := infrastructure.CreateUpdateUserSkill(db.Exec)
+	updateStorage := infrastructure.CreateUpdateItemStorage(db.Exec)
+	updateStamina := infrastructure.CreateUpdateStamina(db.Exec)
 
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
@@ -187,7 +211,6 @@ func createInfrastructures(constants *core.Constants) (*infrastructuresStruct, e
 		fetchReductionSkill:       getReductionSkill,
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
-		closeDB:                   closeDB,
 		getTime:                   getTime,
 	}, nil
 }
@@ -200,17 +223,28 @@ func main() {
 		InitialFund:       core.Fund(100000),
 		InitialMaxStamina: core.MaxStamina(6000),
 	}
-	infrastructures, err := createInfrastructures(&constants)
+	db, err := createDB()
 	if err != nil {
 		handleError(err)
 		return
 	}
-	functions := createFunction(infrastructures)
+	closeDB := func() {
+		err := db.Close()
+		if err != nil {
+			handleError(err)
+		}
+	}
+	defer closeDB()
+	infrastructures, err := createInfrastructures(&constants, db)
+	if err != nil {
+		handleError(err)
+		return
+	}
+	functions := createFunction(db, infrastructures)
 
 	diContainer := stage.CreateDIContainer()
 	writeLogger := handler.LogHttpWrite
 	currentTimeEmitter := core.CurrentTimeEmitter{}
-	random := core.RandomEmitter{}
 
 	postActionHandler := handler.CreatePostActionHandler(
 		stage.GetPostActionRepositories{
@@ -227,26 +261,12 @@ func main() {
 		},
 		stage.GetPostActionArgs,
 		application.EmitPostActionArgs,
-		application.CompensatePostActionArgs{
-			ValidateAction:       diContainer.ValidateAction,
-			CalcSkillGrowth:      diContainer.CalcSkillGrowth,
-			CalcGrowthApply:      diContainer.CalcGrowthApply,
-			CalcEarnedItem:       diContainer.CalcEarnedItem,
-			CalcConsumedItem:     diContainer.CalcConsumedItem,
-			CalcTotalItem:        diContainer.CalcTotalItem,
-			StaminaReductionFunc: diContainer.StaminaReduction,
-			UpdateItemStorage:    infrastructures.updateStorage,
-			UpdateSkill:          infrastructures.updateSkill,
-			UpdateStamina:        infrastructures.updateStamina,
-			UpdateFund:           infrastructures.updateFund,
-		},
-		application.CompensatePostActionFunctions,
-		stage.PostAction,
 		application.CreatePostActionService,
-		&random,
+		functions.postFunc,
 		&currentTimeEmitter,
 		endpoint.CreatePostAction,
 		functions.validateToken,
+		functions.createContext,
 		writeLogger,
 	)
 	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
@@ -265,6 +285,7 @@ func main() {
 		stage.CreateGetStageActionDetailService,
 		endpoint.CreateGetStageActionDetail,
 		functions.validateToken,
+		functions.createContext,
 		writeLogger,
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
@@ -291,12 +312,14 @@ func main() {
 		stage.CreateFetchStageData,
 		stage.GetStageList,
 		functions.validateToken,
+		functions.createContext,
 		writeLogger,
 	)
 	getResource := handler.CreateGetResourceHandler(
 		infrastructures.getResource,
 		functions.validateToken,
 		diContainer.CreateGetUserResourceServiceFunc,
+		functions.createContext,
 		writeLogger,
 	)
 	getItemDetail := handler.CreateGetItemDetailHandler(
@@ -325,6 +348,7 @@ func main() {
 		stage.CreateGetItemDetailService,
 		endpoint.CreateGetItemDetail,
 		functions.validateToken,
+		functions.createContext,
 		writeLogger,
 	)
 	getItemList := handler.CreateGetItemListHandler(
@@ -333,6 +357,7 @@ func main() {
 		stage.CreateGetItemListService,
 		endpoint.CreateGetItemService,
 		functions.validateToken,
+		functions.createContext,
 		writeLogger,
 	)
 	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
@@ -351,6 +376,7 @@ func main() {
 		functions.validateToken,
 		stage.CreateGetItemActionDetailService,
 		endpoint.CreateGetItemActionDetailEndpoint,
+		functions.createContext,
 		writeLogger,
 	)
 	itemsRouteHandler := router.CreateItemsRouteHandler(
@@ -371,11 +397,13 @@ func main() {
 	register := handler.CreateRegisterHandler(
 		functions.register,
 		endpoint.CreateRegisterEndpoint,
+		functions.createContext,
 		writeLogger,
 	)
 	login := handler.CreateLoginHandler(
 		functions.login,
 		endpoint.CreateLoginEndpoint,
+		functions.createContext,
 		writeLogger,
 	)
 	http.HandleFunc("/register", register)

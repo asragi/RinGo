@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RingoSuPBGo/gateway"
@@ -9,11 +10,11 @@ import (
 type CreateRegisterEndpointFunc func(auth.RegisterUserFunc) registerEndpointFunc
 type RegisterRequest struct{}
 
-type registerEndpointFunc func(*RegisterRequest) (*gateway.RegisterUserResponse, error)
+type registerEndpointFunc func(context.Context, *RegisterRequest) (*gateway.RegisterUserResponse, error)
 
 func CreateRegisterEndpoint(register auth.RegisterUserFunc) registerEndpointFunc {
-	return func(*RegisterRequest) (*gateway.RegisterUserResponse, error) {
-		res, err := register()
+	return func(ctx context.Context, _ *RegisterRequest) (*gateway.RegisterUserResponse, error) {
+		res, err := register(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("register endpoint: %w", err)
 		}

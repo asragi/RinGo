@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
@@ -8,7 +9,10 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type GetItemActionDetailEndpoint func(*gateway.GetItemActionDetailRequest) (*gateway.GetItemActionDetailResponse, error)
+type GetItemActionDetailEndpoint func(
+	context.Context,
+	*gateway.GetItemActionDetailRequest,
+) (*gateway.GetItemActionDetailResponse, error)
 
 type CreateGetItemActionDetailEndpointFunc func(
 	stage.GetItemActionDetailFunc,
@@ -19,7 +23,10 @@ func CreateGetItemActionDetailEndpoint(
 	getItemActionFunc stage.GetItemActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetItemActionDetailEndpoint {
-	get := func(req *gateway.GetItemActionDetailRequest) (*gateway.GetItemActionDetailResponse, error) {
+	return func(ctx context.Context, req *gateway.GetItemActionDetailRequest) (
+		*gateway.GetItemActionDetailResponse,
+		error,
+	) {
 		handleError := func(err error) (*gateway.GetItemActionDetailResponse, error) {
 			return nil, fmt.Errorf("on get item action detail endpoint: %w", err)
 		}
@@ -31,7 +38,7 @@ func CreateGetItemActionDetailEndpoint(
 		userId := tokenInformation.UserId
 		itemId := core.ItemId(req.ItemId)
 		exploreId := stage.ExploreId(req.ExploreId)
-		res, err := getItemActionFunc(userId, itemId, exploreId)
+		res, err := getItemActionFunc(ctx, userId, itemId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -51,6 +58,4 @@ func CreateGetItemActionDetailEndpoint(
 			EarningItems:      earningItems,
 		}, nil
 	}
-
-	return get
 }

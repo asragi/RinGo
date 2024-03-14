@@ -1,10 +1,11 @@
 package stage
 
 import (
+	"context"
 	"github.com/asragi/RinGo/core"
 )
 
-type GetResourceFunc func(core.UserId) (GetResourceRes, error)
+type GetResourceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
 
 type GetResourceRes struct {
 	UserId             core.UserId             `db:"user_id"`
@@ -13,9 +14,9 @@ type GetResourceRes struct {
 	Fund               core.Fund               `db:"fund"`
 }
 
-type UpdateFundFunc func(core.UserId, core.Fund) error
+type UpdateFundFunc func(context.Context, core.UserId, core.Fund) error
 
-type UpdateStaminaFunc func(core.UserId, core.StaminaRecoverTime) error
+type UpdateStaminaFunc func(context.Context, core.UserId, core.StaminaRecoverTime) error
 
 type GetItemMasterRes struct {
 	ItemId      core.ItemId      `db:"item_id" json:"item_id"`
@@ -25,7 +26,7 @@ type GetItemMasterRes struct {
 	MaxStock    core.MaxStock    `db:"max_stock" json:"max_stock"`
 }
 
-type FetchItemMasterFunc func([]core.ItemId) ([]GetItemMasterRes, error)
+type FetchItemMasterFunc func(context.Context, []core.ItemId) ([]*GetItemMasterRes, error)
 
 type GetItemStorageRes struct {
 	UserId core.UserId
@@ -41,12 +42,12 @@ type ItemData struct {
 
 type BatchGetStorageRes struct {
 	UserId   core.UserId
-	ItemData []ItemData
+	ItemData []*ItemData
 }
 
-type FetchStorageFunc func(core.UserId, []core.ItemId) (BatchGetStorageRes, error)
+type FetchStorageFunc func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
 
-type FetchAllStorageFunc func(core.UserId) ([]ItemData, error)
+type FetchAllStorageFunc func(context.Context, core.UserId) ([]*ItemData, error)
 
 type ItemStock struct {
 	ItemId     core.ItemId
@@ -54,14 +55,14 @@ type ItemStock struct {
 	IsKnown    core.IsKnown
 }
 
-type UpdateItemStorageFunc func(core.UserId, []ItemStock) error
+type UpdateItemStorageFunc func(context.Context, core.UserId, []*ItemStock) error
 
 type SkillMaster struct {
 	SkillId     core.SkillId     `db:"skill_id"`
 	DisplayName core.DisplayName `db:"display_name"`
 }
 
-type FetchSkillMasterFunc func([]core.SkillId) ([]SkillMaster, error)
+type FetchSkillMasterFunc func(context.Context, []core.SkillId) ([]*SkillMaster, error)
 
 type UserSkillRes struct {
 	UserId   core.UserId   `db:"user_id"`
@@ -71,10 +72,10 @@ type UserSkillRes struct {
 
 type BatchGetUserSkillRes struct {
 	UserId core.UserId
-	Skills []UserSkillRes
+	Skills []*UserSkillRes
 }
 
-type FetchUserSkillFunc func(core.UserId, []core.SkillId) (BatchGetUserSkillRes, error)
+type FetchUserSkillFunc func(context.Context, core.UserId, []core.SkillId) (BatchGetUserSkillRes, error)
 
 type SkillGrowthData struct {
 	ExploreId    ExploreId    `db:"explore_id"`
@@ -82,7 +83,7 @@ type SkillGrowthData struct {
 	GainingPoint GainingPoint `db:"gaining_point"`
 }
 
-type FetchSkillGrowthData func(ExploreId) ([]SkillGrowthData, error)
+type FetchSkillGrowthData func(context.Context, ExploreId) ([]*SkillGrowthData, error)
 
 type SkillGrowthPostRow struct {
 	UserId   core.UserId   `db:"user_id"`
@@ -92,10 +93,10 @@ type SkillGrowthPostRow struct {
 
 type SkillGrowthPost struct {
 	UserId      core.UserId `db:"user_id"`
-	SkillGrowth []SkillGrowthPostRow
+	SkillGrowth []*SkillGrowthPostRow
 }
 
-type UpdateUserSkillExpFunc func(SkillGrowthPost) error
+type UpdateUserSkillExpFunc func(context.Context, SkillGrowthPost) error
 
 type GetExploreMasterRes struct {
 	ExploreId            ExploreId            `db:"explore_id"`
@@ -127,22 +128,22 @@ func (row StageExploreIdPairRow) GetId() StageId {
 	return row.StageId
 }
 
-type FetchItemExploreRelationFunc func(core.ItemId) ([]ExploreId, error)
+type FetchItemExploreRelationFunc func(context.Context, core.ItemId) ([]ExploreId, error)
 
-type FetchStageExploreRelation func([]StageId) ([]StageExploreIdPair, error)
+type FetchStageExploreRelation func(context.Context, []StageId) ([]*StageExploreIdPairRow, error)
 
-type FetchExploreMasterFunc func([]ExploreId) ([]GetExploreMasterRes, error)
+type FetchExploreMasterFunc func(context.Context, []ExploreId) ([]*GetExploreMasterRes, error)
 
 type ExploreUserData struct {
 	ExploreId ExploreId    `db:"explore_id"`
 	IsKnown   core.IsKnown `db:"is_known"`
 }
 
-type GetUserExploreFunc func(core.UserId, []ExploreId) ([]ExploreUserData, error)
+type GetUserExploreFunc func(context.Context, core.UserId, []ExploreId) ([]*ExploreUserData, error)
 
 type GetActionsRes struct {
 	UserId   core.UserId
-	Explores []ExploreUserData
+	Explores []*ExploreUserData
 }
 
 type RequiredSkill struct {
@@ -155,7 +156,7 @@ func (r RequiredSkill) GetId() ExploreId {
 	return r.ExploreId
 }
 
-type FetchRequiredSkillsFunc func([]ExploreId) ([]RequiredSkillRow, error)
+type FetchRequiredSkillsFunc func(context.Context, []ExploreId) ([]*RequiredSkill, error)
 
 type RequiredSkillRow struct {
 	ExploreId      ExploreId
@@ -179,10 +180,10 @@ type GetAllStagesRes struct {
 	Stages []StageMaster
 }
 
-type FetchStageMasterFunc func(StageId) (StageMaster, error)
-type FetchAllStageFunc func() (GetAllStagesRes, error)
+type FetchStageMasterFunc func(context.Context, []StageId) ([]*StageMaster, error)
+type FetchAllStageFunc func(context.Context) ([]*StageMaster, error)
 
-type FetchUserStageFunc func(core.UserId, []StageId) ([]UserStage, error)
+type FetchUserStageFunc func(context.Context, core.UserId, []StageId) ([]*UserStage, error)
 
 type UserStage struct {
 	StageId StageId      `db:"stage_id"`
@@ -200,7 +201,7 @@ type EarningItem struct {
 	Probability EarningProb `db:"probability"`
 }
 
-type FetchEarningItemFunc func(ExploreId) ([]EarningItem, error)
+type FetchEarningItemFunc func(context.Context, ExploreId) ([]*EarningItem, error)
 
 type ConsumingItem struct {
 	ExploreId       ExploreId       `db:"explore_id"`
@@ -225,7 +226,7 @@ func (_ BatchGetConsumingItemRes) CreateSelf(id ExploreId, data []ConsumingItem)
 	}
 }
 
-type FetchConsumingItemFunc func([]ExploreId) ([]BatchGetConsumingItemRes, error)
+type FetchConsumingItemFunc func(context.Context, []ExploreId) ([]*ConsumingItem, error)
 
 type BatchGetReductionStaminaSkill struct {
 	ExploreId ExploreId
@@ -251,4 +252,4 @@ func (id StaminaReductionSkillPair) GetId() ExploreId {
 	return id.ExploreId
 }
 
-type FetchReductionStaminaSkillFunc func([]ExploreId) ([]BatchGetReductionStaminaSkill, error)
+type FetchReductionStaminaSkillFunc func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error)

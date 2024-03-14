@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/asragi/RinGo/core"
+import (
+	"context"
+	"github.com/asragi/RinGo/core"
+)
 
-type InsertNewUser func(*core.UserId, *core.UserName, *HashedPassword) error
-type FetchHashedPassword func(*core.UserId) (*HashedPassword, error)
+type InsertNewUser func(context.Context, core.UserId, core.UserName, HashedPassword) error
+type FetchHashedPassword func(context.Context, core.UserId) (HashedPassword, error)

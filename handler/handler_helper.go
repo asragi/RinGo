@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/asragi/RinGo/utils"
 	"io"
 	"log"
 	"net/http"
@@ -64,7 +66,8 @@ func DecodeBody[T any](body io.ReadCloser) (*T, error) {
 type selectParam[T any] func(RequestBody, QueryParameter, PathString) (*T, error)
 
 func createHandlerWithParameter[T any, S any](
-	endpointFunc func(*T) (*S, error),
+	endpointFunc func(context.Context, *T) (*S, error),
+	createContext utils.CreateContextFunc,
 	selectParam selectParam[T],
 	logger writeLogger,
 ) Handler {
@@ -76,7 +79,8 @@ func createHandlerWithParameter[T any, S any](
 			ErrorOnDecode(w, err)
 			return
 		}
-		res, err := endpointFunc(req)
+		ctx := createContext()
+		res, err := endpointFunc(ctx, req)
 		if err != nil {
 			ErrorOnGenerateResponse(w, err)
 			return

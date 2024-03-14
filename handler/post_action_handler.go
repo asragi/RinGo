@@ -7,6 +7,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -41,19 +42,16 @@ func CreatePostActionHandler(
 	repoArgs stage.GetPostActionRepositories,
 	argsFunc stage.GetPostActionArgsFunc,
 	emitPostActionArgs application.EmitPostActionArgsFunc,
-	funcArgs application.CompensatePostActionArgs,
-	compensatePostAction application.CompensatePostActionFunc,
-	postAction stage.PostActionFunc,
 	createPostAction application.CreatePostActionServiceFunc,
-	random core.IRandom,
+	postFunc application.PostFunc,
 	currentTime core.ICurrentTime,
 	createEndpoint endpoint.CreatePostActionEndpoint,
 	validateToken auth.ValidateTokenFunc,
+	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
 	emitArgsFunc := emitPostActionArgs(repoArgs, argsFunc)
-	postFunc := compensatePostAction(funcArgs, random, postAction)
 	postActionApp := createPostAction(currentTime, postFunc, emitArgsFunc)
 	postEndpoint := createEndpoint(postActionApp, validateToken)
-	return createHandlerWithParameter(postEndpoint, GetPostActionParams, logger)
+	return createHandlerWithParameter(postEndpoint, createContext, GetPostActionParams, logger)
 }

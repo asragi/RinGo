@@ -9,36 +9,36 @@ type consumedItem struct {
 	Count  core.Count
 }
 
-type CalcConsumedItemFunc func(int, []ConsumingItem, core.IRandom) []consumedItem
+type CalcConsumedItemFunc func(int, []*ConsumingItem, core.EmitRandomFunc) []*consumedItem
 
-func calcConsumedItem(
+func CalcConsumedItem(
 	execCount int,
-	consumingItem []ConsumingItem,
-	random core.IRandom,
-) []consumedItem {
+	consumingItem []*ConsumingItem,
+	random core.EmitRandomFunc,
+) []*consumedItem {
 	simMultipleItemCount := func(
 		maxCount core.Count,
-		random core.IRandom,
+		random core.EmitRandomFunc,
 		consumptionProb ConsumptionProb,
 		execCount int,
 	) core.Count {
 		result := 0
 		// TODO: using approximation to avoid using "for" statement
 		for i := 0; i < execCount*int(maxCount); i++ {
-			rand := random.Emit()
+			rand := random()
 			if rand < float32(consumptionProb) {
 				result += 1
 			}
 		}
 		return core.Count(result)
 	}
-	result := []consumedItem{}
+	var result []*consumedItem
 	for _, v := range consumingItem {
 		consumedItem := consumedItem{
 			ItemId: v.ItemId,
 			Count:  simMultipleItemCount(v.MaxCount, random, v.ConsumptionProb, execCount),
 		}
-		result = append(result, consumedItem)
+		result = append(result, &consumedItem)
 	}
 	return result
 }

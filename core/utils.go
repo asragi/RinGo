@@ -5,9 +5,12 @@ import (
 	"time"
 )
 
+// Deprecated: use EmitRandomFunc
 type IRandom interface {
 	Emit() float32
 }
+
+type EmitRandomFunc func() float32
 
 type RandomEmitter struct{}
 

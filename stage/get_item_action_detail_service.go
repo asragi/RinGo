@@ -1,12 +1,13 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 )
 
 type GetItemActionDetailFunc func(
-	core.UserId, core.ItemId, ExploreId,
+	context.Context, core.UserId, core.ItemId, ExploreId,
 ) (GetItemActionDetailResponse, error)
 type GetItemActionDetailResponse struct {
 	UserId            core.UserId
@@ -30,6 +31,7 @@ func CreateGetItemActionDetailService(
 	fetchItemMaster FetchItemMasterFunc,
 ) GetItemActionDetailFunc {
 	get := func(
+		ctx context.Context,
 		userId core.UserId,
 		itemId core.ItemId,
 		exploreId ExploreId,
@@ -37,11 +39,11 @@ func CreateGetItemActionDetailService(
 		handleError := func(err error) (GetItemActionDetailResponse, error) {
 			return GetItemActionDetailResponse{}, fmt.Errorf("on get item action detail service: %w", err)
 		}
-		getCommonActionRes, err := getCommonAction(userId, exploreId)
+		getCommonActionRes, err := getCommonAction(ctx, userId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
-		itemMasterRes, err := fetchItemMaster([]core.ItemId{itemId})
+		itemMasterRes, err := fetchItemMaster(ctx, []core.ItemId{itemId})
 		if err != nil {
 			return handleError(err)
 		}

@@ -5,6 +5,7 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -12,6 +13,7 @@ func CreateGetResourceHandler(
 	getResource stage.GetResourceFunc,
 	validateToken auth.ValidateTokenFunc,
 	getUserResourceFunc stage.CreateGetUserResourceServiceFunc,
+	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
 	getParams := func(
@@ -38,7 +40,7 @@ func CreateGetResourceHandler(
 		getUserResourceService,
 		validateToken,
 	)
-	getResourceHandler := createHandlerWithParameter(getResourceEndpoint, getParams, logger)
+	getResourceHandler := createHandlerWithParameter(getResourceEndpoint, createContext, getParams, logger)
 
 	return getResourceHandler
 }

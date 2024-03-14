@@ -15,7 +15,7 @@ func validateAction(
 	return true
 }
 
-func createValidateAction(
+func CreateValidateAction(
 	checkIsExplorePossibleFunc checkIsExplorePossibleFunc,
 ) ValidateActionFunc {
 	return func(checkIsPossibleArgs CheckIsPossibleArgs) core.IsPossible {

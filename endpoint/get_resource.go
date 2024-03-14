@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/stage"
@@ -9,13 +10,13 @@ import (
 	"time"
 )
 
-type GetResourceFunc func(request *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error)
+type GetResourceFunc func(context.Context, *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error)
 
 func CreateGetResourceEndpoint(
 	serviceFunc stage.GetUserResourceServiceFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetResourceFunc {
-	get := func(req *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error) {
+	get := func(ctx context.Context, req *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error) {
 		handleError := func(err error) (*gateway.GetResourceResponse, error) {
 			return &gateway.GetResourceResponse{}, fmt.Errorf("error on get resource: %w", err)
 		}
@@ -25,7 +26,7 @@ func CreateGetResourceEndpoint(
 			return handleError(err)
 		}
 		userId := tokenInfo.UserId
-		res, err := serviceFunc(userId)
+		res, err := serviceFunc(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}

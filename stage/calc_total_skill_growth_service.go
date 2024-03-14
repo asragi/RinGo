@@ -12,14 +12,10 @@ type growthApplyResult struct {
 	WasLvUp   bool
 }
 
-type GrowthApplyFunc func([]UserSkillRes, []skillGrowthResult) []growthApplyResult
+type GrowthApplyFunc func([]*UserSkillRes, []*skillGrowthResult) []*growthApplyResult
 
-type growthApplyRes struct {
-	Create GrowthApplyFunc
-}
-
-func calcApplySkillGrowth(userSkills []UserSkillRes, skillGrowth []skillGrowthResult) []growthApplyResult {
-	applySkillGrowth := func(userSkill UserSkillRes, skillGrowth skillGrowthResult) growthApplyResult {
+func CalcApplySkillGrowth(userSkills []*UserSkillRes, skillGrowth []*skillGrowthResult) []*growthApplyResult {
+	applySkillGrowth := func(userSkill *UserSkillRes, skillGrowth *skillGrowthResult) *growthApplyResult {
 		if userSkill.SkillId != skillGrowth.SkillId {
 			panic("invalid apply skill growth!")
 		}
@@ -28,7 +24,7 @@ func calcApplySkillGrowth(userSkills []UserSkillRes, skillGrowth []skillGrowthRe
 		beforeLv := beforeExp.CalcLv()
 		afterLv := afterExp.CalcLv()
 		wasLvUp := beforeLv != afterLv
-		return growthApplyResult{
+		return &growthApplyResult{
 			SkillId:   userSkill.SkillId,
 			GainSum:   skillGrowth.GainSum,
 			BeforeLv:  beforeLv,
@@ -38,19 +34,19 @@ func calcApplySkillGrowth(userSkills []UserSkillRes, skillGrowth []skillGrowthRe
 			WasLvUp:   wasLvUp,
 		}
 	}
-	userSkillMap := func(userSkills []UserSkillRes) map[core.SkillId]UserSkillRes {
-		result := make(map[core.SkillId]UserSkillRes)
+	userSkillMap := func(userSkills []*UserSkillRes) map[core.SkillId]*UserSkillRes {
+		result := make(map[core.SkillId]*UserSkillRes)
 		for _, v := range userSkills {
 			result[v.SkillId] = v
 		}
 		return result
 	}(userSkills)
 
-	result := make([]growthApplyResult, len(skillGrowth))
+	result := make([]*growthApplyResult, len(skillGrowth))
 	for i, v := range skillGrowth {
 		userSkill, ok := userSkillMap[v.SkillId]
 		if !ok {
-			userSkill = UserSkillRes{
+			userSkill = &UserSkillRes{
 				SkillId:  v.SkillId,
 				SkillExp: 0,
 			}

@@ -9,13 +9,13 @@ type skillGrowthResult struct {
 	GainSum GainingPoint
 }
 
-type CalcSkillGrowthFunc func(int, []SkillGrowthData) []skillGrowthResult
+type CalcSkillGrowthFunc func(int, []*SkillGrowthData) []*skillGrowthResult
 
-func calcSkillGrowthService(execCount int, gainingData []SkillGrowthData) []skillGrowthResult {
-	growth := make([]skillGrowthResult, len(gainingData))
+func CalcSkillGrowthService(execCount int, gainingData []*SkillGrowthData) []*skillGrowthResult {
+	growth := make([]*skillGrowthResult, len(gainingData))
 	for i := range gainingData {
 		data := gainingData[i]
-		growth[i] = skillGrowthResult{
+		growth[i] = &skillGrowthResult{
 			SkillId: data.SkillId,
 			GainSum: data.GainingPoint.Multiply(execCount),
 		}

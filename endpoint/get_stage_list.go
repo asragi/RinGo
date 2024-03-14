@@ -1,6 +1,7 @@
 package endpoint
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 
@@ -16,6 +17,7 @@ type GetStageListEndpoint func(
 ) getStageListRes
 
 type getStageListRes func(
+	context.Context,
 	*gateway.GetStageListRequest,
 ) (*gateway.GetStageListResponse, error)
 
@@ -24,7 +26,8 @@ func CreateGetStageList(
 	validateToken auth.ValidateTokenFunc,
 	timer core.GetCurrentTimeFunc,
 ) getStageListRes {
-	get := func(
+	return func(
+		ctx context.Context,
 		req *gateway.GetStageListRequest,
 	) (*gateway.GetStageListResponse, error) {
 		handleError := func(err error) (*gateway.GetStageListResponse, error) {
@@ -33,16 +36,16 @@ func CreateGetStageList(
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		userId := tokenInfo.UserId
-		res, err := getStageList(userId, timer)
+		res, err := getStageList(ctx, userId, timer)
 		if err != nil {
 			return handleError(err)
 		}
 		information := func(
-			res []stage.StageInformation,
+			res []*stage.StageInformation,
 		) []*gateway.StageInformation {
 			result := make([]*gateway.StageInformation, len(res))
 			for i, v := range res {
-				explores := func(exps []stage.UserExplore) []*gateway.UserExplore {
+				explores := func(exps []*stage.UserExplore) []*gateway.UserExplore {
 					result := make([]*gateway.UserExplore, len(exps))
 					for i, v := range exps {
 						result[i] = &gateway.UserExplore{
@@ -69,6 +72,4 @@ func CreateGetStageList(
 			StageInformation: information,
 		}, nil
 	}
-
-	return get
 }

@@ -1,11 +1,12 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 )
 
-type LoginFunc func(*core.UserId, *RowPassword) (*AccessToken, error)
+type LoginFunc func(context.Context, core.UserId, RowPassword) (AccessToken, error)
 type compareHashedPassword func(hash, password string) error
 
 func CreateLoginFunc(
@@ -13,15 +14,15 @@ func CreateLoginFunc(
 	comparePassword compareHashedPassword,
 	createToken createTokenFunc,
 ) LoginFunc {
-	return func(userId *core.UserId, rowPass *RowPassword) (*AccessToken, error) {
-		handleError := func(err error) (*AccessToken, error) {
-			return nil, fmt.Errorf("login: %w", err)
+	return func(ctx context.Context, userId core.UserId, rowPass RowPassword) (AccessToken, error) {
+		handleError := func(err error) (AccessToken, error) {
+			return "", fmt.Errorf("login: %w", err)
 		}
-		hashedPass, err := fetchHashedPassword(userId)
+		hashedPass, err := fetchHashedPassword(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}
-		err = comparePassword(string(*hashedPass), string(*rowPass))
+		err = comparePassword(string(hashedPass), string(rowPass))
 		if err != nil {
 			return handleError(err)
 		}

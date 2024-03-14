@@ -1,18 +1,19 @@
 package stage
 
 import (
+	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 )
 
-type StaminaReductionFunc func(core.Stamina, StaminaReducibleRate, []UserSkillRes) core.Stamina
+type StaminaReductionFunc func(core.Stamina, StaminaReducibleRate, []*UserSkillRes) core.Stamina
 
-func calcStaminaReduction(
+func CalcStaminaReduction(
 	baseStamina core.Stamina,
 	reducibleRate StaminaReducibleRate,
-	reductionSkills []UserSkillRes,
+	reductionSkills []*UserSkillRes,
 ) core.Stamina {
-	skillLvs := func(skills []UserSkillRes) []core.SkillLv {
+	skillLvs := func(skills []*UserSkillRes) []core.SkillLv {
 		result := make([]core.SkillLv, len(skills))
 		for i, v := range skills {
 			result[i] = v.SkillExp.CalcLv()
@@ -36,10 +37,11 @@ type ExploreStaminaPair struct {
 }
 
 type CalcBatchConsumingStaminaFunc func(
+	context.Context,
 	core.UserId,
 	[]ExploreId,
 ) (
-	[]ExploreStaminaPair,
+	[]*ExploreStaminaPair,
 	error,
 )
 
@@ -48,66 +50,57 @@ func CreateCalcConsumingStaminaService(
 	fetchExploreMaster FetchExploreMasterFunc,
 	fetchReductionSkills FetchReductionStaminaSkillFunc,
 ) CalcBatchConsumingStaminaFunc {
-	batchCalc := func(userId core.UserId, exploreIds []ExploreId) (
-		[]ExploreStaminaPair,
+	return func(ctx context.Context, userId core.UserId, exploreIds []ExploreId) (
+		[]*ExploreStaminaPair,
 		error,
 	) {
-		handleError := func(err error) ([]ExploreStaminaPair, error) {
+		handleError := func(err error) ([]*ExploreStaminaPair, error) {
 			return nil, fmt.Errorf("error on batch calc mockReducedStamina: %w", err)
 		}
-		explores, err := fetchExploreMaster(exploreIds)
+		explores, err := fetchExploreMaster(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
-		exploreMap := func(explores []GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
+		exploreMap := func(explores []*GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
 			result := map[ExploreId]GetExploreMasterRes{}
 			for _, v := range explores {
-				result[v.ExploreId] = v
+				result[v.ExploreId] = *v
 			}
 			return result
 		}(explores)
-		reductionStaminaSkills, err := fetchReductionSkills(exploreIds)
+		reductionStaminaSkills, err := fetchReductionSkills(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
-		reductionSkillMap := func(reductionSkills []BatchGetReductionStaminaSkill) map[ExploreId][]core.SkillId {
+		reductionSkillMap := func(reductionSkills []*StaminaReductionSkillPair) map[ExploreId][]core.SkillId {
 			result := map[ExploreId][]core.SkillId{}
 			for _, v := range reductionSkills {
-				skillIds := func(pair []StaminaReductionSkillPair) []core.SkillId {
-					skillIdArr := make([]core.SkillId, len(pair))
-					for i, v := range pair {
-						skillIdArr[i] = v.SkillId
-					}
-					return skillIdArr
-				}(v.Skills)
-				result[v.ExploreId] = skillIds
+				result[v.ExploreId] = append(result[v.ExploreId], v.SkillId)
 			}
 			return result
 		}(reductionStaminaSkills)
 
-		allRequiredSkill := func(skills []BatchGetReductionStaminaSkill) []core.SkillId {
+		allRequiredSkill := func(skills []*StaminaReductionSkillPair) []core.SkillId {
 			check := map[core.SkillId]bool{}
 			var result []core.SkillId
 			for _, v := range skills {
-				for _, w := range v.Skills {
-					skillId := w.SkillId
-					if _, ok := check[skillId]; ok {
-						continue
-					}
-					check[skillId] = true
-					result = append(result, skillId)
+				skillId := v.SkillId
+				if _, ok := check[skillId]; ok {
+					continue
 				}
+				check[skillId] = true
+				result = append(result, skillId)
 			}
 			return result
 		}(reductionStaminaSkills)
 
-		allSkills, err := fetchUserSkills(userId, allRequiredSkill)
+		allSkills, err := fetchUserSkills(ctx, userId, allRequiredSkill)
 		if err != nil {
 			return handleError(err)
 		}
 
-		allSkillsMap := func(skills []UserSkillRes) map[core.SkillId]UserSkillRes {
-			result := map[core.SkillId]UserSkillRes{}
+		allSkillsMap := func(skills []*UserSkillRes) map[core.SkillId]*UserSkillRes {
+			result := map[core.SkillId]*UserSkillRes{}
 			for _, v := range skills {
 				result[v.SkillId] = v
 			}
@@ -115,14 +108,14 @@ func CreateCalcConsumingStaminaService(
 		}(allSkills.Skills)
 
 		reductionSkillResMap := func(
-			allSkillsMap map[core.SkillId]UserSkillRes,
+			allSkillsMap map[core.SkillId]*UserSkillRes,
 			reductionSkills map[ExploreId][]core.SkillId,
-		) map[ExploreId][]UserSkillRes {
-			result := map[ExploreId][]UserSkillRes{}
+		) map[ExploreId][]*UserSkillRes {
+			result := map[ExploreId][]*UserSkillRes{}
 			for k, v := range reductionSkills {
 				for _, w := range v {
 					if _, ok := result[k]; !ok {
-						result[k] = []UserSkillRes{}
+						result[k] = []*UserSkillRes{}
 					}
 					result[k] = append(result[k], allSkillsMap[w])
 				}
@@ -132,16 +125,16 @@ func CreateCalcConsumingStaminaService(
 
 		result := func(
 			exploreMap map[ExploreId]GetExploreMasterRes,
-			reductionSkillMap map[ExploreId][]UserSkillRes,
-		) []ExploreStaminaPair {
-			result := make([]ExploreStaminaPair, len(exploreMap))
+			reductionSkillMap map[ExploreId][]*UserSkillRes,
+		) []*ExploreStaminaPair {
+			result := make([]*ExploreStaminaPair, len(exploreMap))
 			index := 0
 			for k, v := range exploreMap {
 				explore := v
 				baseStamina := explore.ConsumingStamina
 				reducibleRate := explore.StaminaReducibleRate
-				stamina := calcStaminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
-				result[index] = ExploreStaminaPair{
+				stamina := CalcStaminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
+				result[index] = &ExploreStaminaPair{
 					ExploreId:      k,
 					ReducedStamina: stamina,
 				}
@@ -152,5 +145,4 @@ func CreateCalcConsumingStaminaService(
 		return result, nil
 	}
 
-	return batchCalc
 }
