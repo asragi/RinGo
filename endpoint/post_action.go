@@ -10,11 +10,11 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreatePostActionEndpoint func(application.CreatePostActionRes, auth.ValidateTokenFunc) postActionEndpoint
+type CreatePostActionEndpoint func(application.CreatePostActionFunc, auth.ValidateTokenFunc) postActionEndpoint
 type postActionEndpoint func(context.Context, *gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
-	postAction application.CreatePostActionRes,
+	postAction application.CreatePostActionFunc,
 	validateToken auth.ValidateTokenFunc,
 ) postActionEndpoint {
 	post := func(ctx context.Context, req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {

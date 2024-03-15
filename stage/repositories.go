@@ -28,12 +28,7 @@ type GetItemMasterRes struct {
 
 type FetchItemMasterFunc func(context.Context, []core.ItemId) ([]*GetItemMasterRes, error)
 
-type GetItemStorageRes struct {
-	UserId core.UserId
-	Stock  core.Stock
-}
-
-type ItemData struct {
+type StorageData struct {
 	UserId  core.UserId  `db:"user_id"`
 	ItemId  core.ItemId  `db:"item_id"`
 	Stock   core.Stock   `db:"stock"`
@@ -42,12 +37,12 @@ type ItemData struct {
 
 type BatchGetStorageRes struct {
 	UserId   core.UserId
-	ItemData []*ItemData
+	ItemData []*StorageData
 }
 
 type FetchStorageFunc func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
 
-type FetchAllStorageFunc func(context.Context, core.UserId) ([]*ItemData, error)
+type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)
 
 type ItemStock struct {
 	ItemId     core.ItemId

@@ -26,7 +26,7 @@ type CompensatedMakeUserExploreArgs struct {
 	actionsRes       GetActionsRes
 	requiredSkillRes []*RequiredSkill
 	consumingItemRes []*ConsumingItem
-	itemData         []*ItemData
+	itemData         []*StorageData
 	batchGetSkillRes BatchGetUserSkillRes
 }
 
@@ -131,7 +131,7 @@ type makeUserExploreArrayArgs struct {
 	actionsRes        GetActionsRes
 	requiredSkillRes  []*RequiredSkill
 	consumingItemRes  []*ConsumingItem
-	itemData          []*ItemData
+	itemData          []*StorageData
 	batchGetSkillRes  BatchGetUserSkillRes
 	exploreIds        []ExploreId
 	calculatedStamina map[ExploreId]core.Stamina
@@ -183,7 +183,7 @@ func MakeUserExplore(
 		return result
 	}(args.consumingItemRes)
 
-	itemStockList := func(arr []*ItemData) map[core.ItemId]core.Stock {
+	itemStockList := func(arr []*StorageData) map[core.ItemId]core.Stock {
 		result := make(map[core.ItemId]core.Stock)
 		for _, v := range arr {
 			result[v.ItemId] = v.Stock

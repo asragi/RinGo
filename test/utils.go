@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"reflect"
 	"time"
 )
@@ -9,8 +10,20 @@ type TestRandom struct {
 	Value float32
 }
 
-func (t *TestRandom) Emit() float32 {
-	return t.Value
+func MockEmitRandom() float32 {
+	return 0.5
+}
+
+func MockCreateContext() context.Context {
+	return context.Background()
+}
+
+func MockTransaction(ctx context.Context, f func(context.Context) error) error {
+	return f(ctx)
+}
+
+func MockTime() time.Time {
+	return time.Unix(100000, 0)
 }
 
 type MockTimer struct {
@@ -19,10 +32,6 @@ type MockTimer struct {
 
 func (m *MockTimer) Get() time.Time {
 	return m.Date
-}
-
-func createMockTimer(constDate time.Time) *MockTimer {
-	return &MockTimer{Date: constDate}
 }
 
 func DeepEqual(a any, b any) bool {

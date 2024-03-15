@@ -1,6 +1,9 @@
 package stage
 
 import (
+	"context"
+	"errors"
+	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
 
@@ -30,14 +33,14 @@ func TestCreateGetUserResourceService(t *testing.T) {
 		var passedUserId core.UserId
 
 		var passedUserIdToResource core.UserId
-		getResource := func(id core.UserId) (GetResourceRes, error) {
+		getResource := func(ctx context.Context, id core.UserId) (*GetResourceRes, error) {
 			passedUserIdToResource = id
-			return v.res, v.getResourceError
+			return &v.res, v.getResourceError
 		}
-
 		getFunc := CreateGetUserResourceService(getResource)
-		res, err := getFunc(v.userId)
-		if err != v.expectedError {
+		ctx := test.MockCreateContext()
+		res, err := getFunc(ctx, v.userId)
+		if !errors.Is(err, v.expectedError) {
 			t.Errorf("expected err: %s, got: %s", v.expectedError, err)
 		}
 		if !reflect.DeepEqual(v.res, res) {

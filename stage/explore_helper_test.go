@@ -8,8 +8,8 @@ import (
 
 func TestCheckIsExplorePossible(t *testing.T) {
 	type request struct {
-		requiredItems   []ConsumingItem
-		requiredSkill   []RequiredSkill
+		requiredItems   []*ConsumingItem
+		requiredSkill   []*RequiredSkill
 		itemStockList   map[core.ItemId]core.Stock
 		skillLvList     map[core.SkillId]core.SkillLv
 		requiredStamina core.Stamina
@@ -36,25 +36,25 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		skillId: 10,
 	}
 
-	consumingJustApple := ConsumingItem{
+	consumingJustApple := &ConsumingItem{
 		ItemId:          appleId,
 		MaxCount:        100,
 		ConsumptionProb: 1,
 	}
 
-	consumingApple := ConsumingItem{
+	consumingApple := &ConsumingItem{
 		ItemId:          appleId,
 		MaxCount:        50,
 		ConsumptionProb: 1,
 	}
 
-	consumingOverApple := ConsumingItem{
+	consumingOverApple := &ConsumingItem{
 		ItemId:          appleId,
 		MaxCount:        101,
 		ConsumptionProb: 1,
 	}
 
-	requiredJustSkill := RequiredSkill{
+	requiredJustSkill := &RequiredSkill{
 		SkillId:    skillId,
 		RequiredLv: 10,
 	}
@@ -62,10 +62,10 @@ func TestCheckIsExplorePossible(t *testing.T) {
 	testCases := []testCase{
 		{
 			request: request{
-				requiredItems: []ConsumingItem{
+				requiredItems: []*ConsumingItem{
 					consumingJustApple,
 				},
-				requiredSkill:   []RequiredSkill{},
+				requiredSkill:   []*RequiredSkill{},
 				itemStockList:   itemStockList,
 				skillLvList:     skillLvList,
 				requiredStamina: 100,
@@ -77,10 +77,10 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		},
 		{
 			request: request{
-				requiredItems: []ConsumingItem{
+				requiredItems: []*ConsumingItem{
 					consumingOverApple,
 				},
-				requiredSkill:   []RequiredSkill{},
+				requiredSkill:   []*RequiredSkill{},
 				itemStockList:   itemStockList,
 				skillLvList:     skillLvList,
 				requiredStamina: 100,
@@ -92,10 +92,10 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		},
 		{
 			request: request{
-				requiredItems: []ConsumingItem{
+				requiredItems: []*ConsumingItem{
 					consumingApple,
 				},
-				requiredSkill: []RequiredSkill{
+				requiredSkill: []*RequiredSkill{
 					requiredJustSkill,
 				},
 				itemStockList:   itemStockList,
@@ -109,10 +109,10 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		},
 		{
 			request: request{
-				requiredItems: []ConsumingItem{
+				requiredItems: []*ConsumingItem{
 					consumingApple,
 				},
-				requiredSkill: []RequiredSkill{
+				requiredSkill: []*RequiredSkill{
 					requiredJustSkill,
 				},
 				itemStockList:   itemStockList,
@@ -126,10 +126,10 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		},
 		{
 			request: request{
-				requiredItems: []ConsumingItem{
+				requiredItems: []*ConsumingItem{
 					consumingApple,
 				},
-				requiredSkill: []RequiredSkill{
+				requiredSkill: []*RequiredSkill{
 					requiredJustSkill,
 				},
 				itemStockList:   itemStockList,
@@ -156,7 +156,7 @@ func TestCheckIsExplorePossible(t *testing.T) {
 			skillLvList:     req.skillLvList,
 			execNum:         1,
 		}
-		actual := checkIsExplorePossible(args)[core.PossibleTypeAll]
+		actual := CheckIsExplorePossible(args)[core.PossibleTypeAll]
 		if v.expect != bool(actual) {
 			t.Errorf("expect %t, got %t", v.expect, actual)
 		}

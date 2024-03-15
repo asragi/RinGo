@@ -24,7 +24,7 @@ type getUserItemDetailRes struct {
 
 type getItemDetailArgs struct {
 	masterRes          *GetItemMasterRes
-	storageRes         *GetItemStorageRes
+	storageRes         *StorageData
 	exploreStaminaPair []*ExploreStaminaPair
 	explores           []*GetExploreMasterRes
 }
@@ -87,7 +87,7 @@ func CreateGetItemDetailService(
 
 		return func(
 			masterRes *GetItemMasterRes,
-			storageRes *GetItemStorageRes,
+			storageRes *StorageData,
 			explores []*UserExplore,
 		) getUserItemDetailRes {
 			return getUserItemDetailRes{
@@ -192,10 +192,7 @@ func FetchGetItemDetailArgs(
 	if len(itemData) <= 0 {
 		return handleError(&InvalidResponseFromInfrastructureError{Message: "Item Storage Data"})
 	}
-	storage := &GetItemStorageRes{
-		UserId: itemData[0].UserId,
-		Stock:  itemData[0].Stock,
-	}
+	storage := itemData[0]
 
 	return getItemDetailArgs{
 		masterRes:          itemMaster,

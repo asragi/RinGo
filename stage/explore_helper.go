@@ -24,7 +24,7 @@ func createIsPossibleArgs(
 	requiredItems []*ConsumingItem,
 	requiredSkills []*RequiredSkill,
 	userSkills []*UserSkillRes,
-	storage []*ItemData,
+	storage []*StorageData,
 	execNum int,
 	staminaReductionFunc StaminaReductionFunc,
 	currentTime time.Time,
@@ -37,7 +37,7 @@ func createIsPossibleArgs(
 	currentStamina := userResources.StaminaRecoverTime.CalcStamina(
 		currentTime, userResources.MaxStamina,
 	)
-	itemStockList := func(storage []*ItemData) map[core.ItemId]core.Stock {
+	itemStockList := func(storage []*StorageData) map[core.ItemId]core.Stock {
 		result := map[core.ItemId]core.Stock{}
 		for _, v := range storage {
 			result[v.ItemId] = v.Stock

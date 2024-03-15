@@ -1,6 +1,8 @@
 package application
 
 import (
+	"github.com/asragi/RinGo/test"
+	"github.com/asragi/RinGo/utils"
 	"testing"
 	"time"
 
@@ -8,9 +10,9 @@ import (
 	"github.com/asragi/RinGo/stage"
 )
 
-func testCompensatePostFunction(t *testing.T) {
+func TestCompensatePostFunction(t *testing.T) {
 	postActionFunc := func(
-		args stage.PostActionArgs,
+		args *stage.PostActionArgs,
 		validateAction stage.ValidateActionFunc,
 		calcSkillGrowth stage.CalcSkillGrowthFunc,
 		calcGrowthApply stage.GrowthApplyFunc,
@@ -22,13 +24,15 @@ func testCompensatePostFunction(t *testing.T) {
 		updateStamina stage.UpdateStaminaFunc,
 		updateFund stage.UpdateFundFunc,
 		staminaReductionFunc stage.StaminaReductionFunc,
-		random core.IRandom,
+		random core.EmitRandomFunc,
 		currentTime time.Time,
+		createContext utils.CreateContextFunc,
+		transaction stage.TransactionFunc,
 	) (stage.PostActionResult, error) {
 		return stage.PostActionResult{}, nil
 	}
 
-	compensateRepo := CompensatePostActionArgs{
+	compensateRepo := CreatePostActionRepositories{
 		ValidateAction:       nil,
 		CalcSkillGrowth:      nil,
 		CalcGrowthApply:      nil,
@@ -42,15 +46,17 @@ func testCompensatePostFunction(t *testing.T) {
 		UpdateFund:           nil,
 	}
 
-	compensatedPostFunc := CompensatePostActionFunctions(
+	compensatedPostFunc := CreatePostAction(
 		compensateRepo,
-		nil,
+		test.MockEmitRandom,
 		postActionFunc,
+		test.MockCreateContext,
+		test.MockTransaction,
 	)
 
 	args := stage.PostActionArgs{}
 
-	_, err := compensatedPostFunc(args, time.Time{})
+	_, err := compensatedPostFunc(&args, time.Time{})
 
 	if err != nil {
 		t.Fatalf("error occurred: %s", err.Error())

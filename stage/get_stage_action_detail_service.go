@@ -90,8 +90,8 @@ func CreateCommonGetActionDetail(
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItemMap := func(itemStorage []*ItemData) map[core.ItemId]*ItemData {
-			result := make(map[core.ItemId]*ItemData)
+		consumingItemMap := func(itemStorage []*StorageData) map[core.ItemId]*StorageData {
+			result := make(map[core.ItemId]*StorageData)
 			for _, v := range itemStorage {
 				result[v.ItemId] = v
 			}

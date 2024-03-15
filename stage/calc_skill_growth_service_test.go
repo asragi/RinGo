@@ -9,7 +9,7 @@ import (
 func TestCalcSkillGrowthService(t *testing.T) {
 	type testRequest struct {
 		execCount  int
-		growthData []SkillGrowthData
+		growthData []*SkillGrowthData
 	}
 	type testCase struct {
 		request testRequest
@@ -19,7 +19,7 @@ func TestCalcSkillGrowthService(t *testing.T) {
 	skills := []core.SkillId{
 		"skillA", "skillB",
 	}
-	growthData := []SkillGrowthData{
+	growthData := []*SkillGrowthData{
 		{
 			SkillId:      skills[0],
 			GainingPoint: 10,
@@ -51,7 +51,7 @@ func TestCalcSkillGrowthService(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		res := calcSkillGrowthService(req.execCount, req.growthData)
+		res := CalcSkillGrowthService(req.execCount, req.growthData)
 		if len(v.expect) != len(res) {
 			t.Errorf("expect: %d, got: %d", len(v.expect), len(res))
 		}

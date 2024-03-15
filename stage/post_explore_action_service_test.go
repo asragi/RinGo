@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"testing"
@@ -13,15 +14,15 @@ import (
 func TestPostAction(t *testing.T) {
 	type request struct {
 		execCount           int
-		userResources       GetResourceRes
-		exploreMaster       GetExploreMasterRes
-		skillGrowthList     []SkillGrowthData
+		userResources       *GetResourceRes
+		exploreMaster       *GetExploreMasterRes
+		skillGrowthList     []*SkillGrowthData
 		skillsRes           BatchGetUserSkillRes
-		earningItemData     []EarningItem
-		consumingItemData   []ConsumingItem
-		requiredSkills      []RequiredSkill
-		allStorageItems     BatchGetStorageRes
-		allItemMasterRes    []GetItemMasterRes
+		earningItemData     []*EarningItem
+		consumingItemData   []*ConsumingItem
+		requiredSkills      []*RequiredSkill
+		allStorageItems     []*StorageData
+		allItemMasterRes    []*GetItemMasterRes
 		checkIsPossibleArgs CheckIsPossibleArgs
 		randomValue         float32
 	}
@@ -40,13 +41,13 @@ func TestPostAction(t *testing.T) {
 
 	req := request{
 		execCount: 2,
-		userResources: GetResourceRes{
+		userResources: &GetResourceRes{
 			UserId:             userId,
 			MaxStamina:         300,
 			StaminaRecoverTime: core.StaminaRecoverTime(time.Unix(100000, 0)),
 			Fund:               100000,
 		},
-		exploreMaster: GetExploreMasterRes{
+		exploreMaster: &GetExploreMasterRes{
 			ExploreId:            exploreId,
 			DisplayName:          "explore-display-name",
 			Description:          "explore-description",
@@ -54,7 +55,7 @@ func TestPostAction(t *testing.T) {
 			RequiredPayment:      10000,
 			StaminaReducibleRate: 0.5,
 		},
-		skillGrowthList: []SkillGrowthData{
+		skillGrowthList: []*SkillGrowthData{
 			{
 				ExploreId:    exploreId,
 				SkillId:      "skillA",
@@ -68,7 +69,7 @@ func TestPostAction(t *testing.T) {
 		},
 		skillsRes: BatchGetUserSkillRes{
 			UserId: userId,
-			Skills: []UserSkillRes{
+			Skills: []*UserSkillRes{
 				{
 					UserId:   userId,
 					SkillId:  "skillA",
@@ -81,7 +82,7 @@ func TestPostAction(t *testing.T) {
 				},
 			},
 		},
-		earningItemData: []EarningItem{
+		earningItemData: []*EarningItem{
 			{
 				ItemId:   "itemA",
 				MinCount: 1,
@@ -90,11 +91,8 @@ func TestPostAction(t *testing.T) {
 		},
 		consumingItemData: nil,
 		requiredSkills:    nil,
-		allStorageItems: BatchGetStorageRes{
-			UserId:   "",
-			ItemData: nil,
-		},
-		allItemMasterRes: nil,
+		allStorageItems:   nil,
+		allItemMasterRes:  nil,
 		checkIsPossibleArgs: CheckIsPossibleArgs{
 			requiredStamina: 0,
 			requiredPrice:   0,
@@ -121,7 +119,7 @@ func TestPostAction(t *testing.T) {
 			expectedError:          invalidActionError{},
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				SkillGrowth: []SkillGrowthPostRow{},
+				SkillGrowth: []*SkillGrowthPostRow{},
 			},
 		},
 		{
@@ -131,7 +129,7 @@ func TestPostAction(t *testing.T) {
 			reducedStamina:         reducedStamina,
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				SkillGrowth: []SkillGrowthPostRow{},
+				SkillGrowth: []*SkillGrowthPostRow{},
 			},
 		},
 		{
@@ -141,7 +139,7 @@ func TestPostAction(t *testing.T) {
 			request:                req,
 			expectedUpdatedSkillGrowth: SkillGrowthPost{
 				UserId:      userId,
-				SkillGrowth: []SkillGrowthPostRow{},
+				SkillGrowth: []*SkillGrowthPostRow{},
 			},
 		},
 	}
@@ -151,44 +149,43 @@ func TestPostAction(t *testing.T) {
 		mockValidateAction := func(CheckIsPossibleArgs) core.IsPossible {
 			return core.IsPossible(v.validateActionResult)
 		}
-		mockSkillGrowth := func(int, []SkillGrowthData) []skillGrowthResult {
+		mockSkillGrowth := func(int, []*SkillGrowthData) []*skillGrowthResult {
 			return nil
 		}
-		mockGrowthApply := func([]UserSkillRes, []skillGrowthResult) []growthApplyResult {
+		mockGrowthApply := func([]*UserSkillRes, []*skillGrowthResult) []*growthApplyResult {
 			return nil
 		}
-		mockEarned := func(int, []EarningItem, core.IRandom) []earnedItem {
+		mockEarned := func(int, []*EarningItem, core.EmitRandomFunc) []*earnedItem {
 			return nil
 		}
-		mockConsumed := func(int, []ConsumingItem, core.IRandom) []consumedItem {
+		mockConsumed := func(int, []*ConsumingItem, core.EmitRandomFunc) []*consumedItem {
 			return nil
 		}
-		mockTotal := func([]ItemData, []GetItemMasterRes, []earnedItem, []consumedItem) []totalItem {
+		mockTotal := func([]*StorageData, []*GetItemMasterRes, []*earnedItem, []*consumedItem) []*totalItem {
 			return nil
 		}
-		mockItemUpdate := func(core.UserId, []ItemStock) error {
+		mockItemUpdate := func(context.Context, core.UserId, []*ItemStock) error {
 			return nil
 		}
 		var updatedSkillGrowth SkillGrowthPost
-		mockSkillUpdate := func(skillGrowth SkillGrowthPost) error {
+		mockSkillUpdate := func(ctx context.Context, skillGrowth SkillGrowthPost) error {
 			updatedSkillGrowth = skillGrowth
 			return nil
 		}
-		mockStaminaReduction := func(core.Stamina, StaminaReducibleRate, []UserSkillRes) core.Stamina {
+		mockStaminaReduction := func(core.Stamina, StaminaReducibleRate, []*UserSkillRes) core.Stamina {
 			return v.reducedStamina
 		}
 		var updatedStaminaRecoverTime core.StaminaRecoverTime
-		mockUpdateStamina := func(id core.UserId, recoverTime core.StaminaRecoverTime) error {
+		mockUpdateStamina := func(ctx context.Context, id core.UserId, recoverTime core.StaminaRecoverTime) error {
 			updatedStaminaRecoverTime = recoverTime
 			return nil
 		}
-		mockUpdateFund := func(id core.UserId, afterFund core.Fund) error {
+		mockUpdateFund := func(ctx context.Context, id core.UserId, afterFund core.Fund) error {
 			return nil
 		}
 
-		random := test.TestRandom{Value: v.request.randomValue}
 		currentTime := time.Unix(100000, 0)
-		args := PostActionArgs{
+		args := &PostActionArgs{
 			userId:            userId,
 			execCount:         req.execCount,
 			userResources:     req.userResources,
@@ -214,8 +211,10 @@ func TestPostAction(t *testing.T) {
 			mockUpdateStamina,
 			mockUpdateFund,
 			mockStaminaReduction,
-			&random,
+			test.MockEmitRandom,
 			currentTime,
+			test.MockCreateContext,
+			test.MockTransaction,
 		)
 
 		if !errors.Is(v.expectedError, err) {

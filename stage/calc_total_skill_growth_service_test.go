@@ -8,18 +8,18 @@ import (
 
 func TestCalcSkillGrowthApplyResult(t *testing.T) {
 	type request struct {
-		skillGrowth []skillGrowthResult
-		userSkills  []UserSkillRes
+		skillGrowth []*skillGrowthResult
+		userSkills  []*UserSkillRes
 	}
 
 	type testCase struct {
 		request request
-		expect  []growthApplyResult
+		expect  []*growthApplyResult
 	}
 
 	skillId := core.SkillId("A")
 
-	userSkill := []UserSkillRes{
+	userSkill := []*UserSkillRes{
 		{
 			SkillId:  skillId,
 			SkillExp: 100,
@@ -29,7 +29,7 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 	testCases := []testCase{
 		{
 			request: request{
-				skillGrowth: []skillGrowthResult{
+				skillGrowth: []*skillGrowthResult{
 					{
 						SkillId: skillId,
 						GainSum: 30,
@@ -37,7 +37,7 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 				},
 				userSkills: userSkill,
 			},
-			expect: []growthApplyResult{
+			expect: []*growthApplyResult{
 				{
 					SkillId:  skillId,
 					AfterExp: 130,
@@ -46,7 +46,7 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 		},
 		{
 			request: request{
-				skillGrowth: []skillGrowthResult{
+				skillGrowth: []*skillGrowthResult{
 					{
 						SkillId: skillId,
 						GainSum: 30,
@@ -54,7 +54,7 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 				},
 				userSkills: nil,
 			},
-			expect: []growthApplyResult{
+			expect: []*growthApplyResult{
 				{
 					SkillId:  skillId,
 					AfterExp: 30,
@@ -65,7 +65,7 @@ func TestCalcSkillGrowthApplyResult(t *testing.T) {
 
 	for _, v := range testCases {
 		req := v.request
-		res := calcApplySkillGrowth(req.userSkills, req.skillGrowth)
+		res := CalcApplySkillGrowth(req.userSkills, req.skillGrowth)
 		if len(v.expect) != len(res) {
 			t.Errorf("expect: %d, got: %d", len(v.expect), len(res))
 		}

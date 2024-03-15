@@ -11,7 +11,7 @@ func TestCreateTotalItemService(t *testing.T) {
 	itemId := []core.ItemId{
 		"A", "B", "C",
 	}
-	items := []ItemData{
+	items := []*StorageData{
 		{
 			UserId: userId,
 			ItemId: itemId[0],
@@ -28,7 +28,7 @@ func TestCreateTotalItemService(t *testing.T) {
 			Stock:  10,
 		},
 	}
-	itemMaster := []GetItemMasterRes{
+	itemMaster := []*GetItemMasterRes{
 		{
 			ItemId:   itemId[0],
 			MaxStock: 20,
@@ -44,10 +44,10 @@ func TestCreateTotalItemService(t *testing.T) {
 	}
 
 	type request struct {
-		earnedItems  []earnedItem
-		consumedItem []consumedItem
-		storageItem  []ItemData
-		itemMaster   []GetItemMasterRes
+		earnedItems  []*earnedItem
+		consumedItem []*consumedItem
+		storageItem  []*StorageData
+		itemMaster   []*GetItemMasterRes
 	}
 
 	type expect struct {
@@ -62,7 +62,7 @@ func TestCreateTotalItemService(t *testing.T) {
 	testCases := []testCase{
 		{
 			request: request{
-				earnedItems: []earnedItem{
+				earnedItems: []*earnedItem{
 					{
 						ItemId: itemId[0],
 						Count:  core.Count(30),
@@ -76,7 +76,7 @@ func TestCreateTotalItemService(t *testing.T) {
 						Count:  core.Count(30),
 					},
 				},
-				consumedItem: []consumedItem{
+				consumedItem: []*consumedItem{
 					{
 						ItemId: itemId[0],
 						Count:  core.Count(10),
@@ -104,7 +104,7 @@ func TestCreateTotalItemService(t *testing.T) {
 		},
 		{
 			request: request{
-				earnedItems: []earnedItem{
+				earnedItems: []*earnedItem{
 					{
 						ItemId: itemId[0],
 						Count:  core.Count(30),
@@ -118,8 +118,8 @@ func TestCreateTotalItemService(t *testing.T) {
 						Count:  core.Count(30),
 					},
 				},
-				consumedItem: []consumedItem{},
-				storageItem:  []ItemData{},
+				consumedItem: []*consumedItem{},
+				storageItem:  []*StorageData{},
 				itemMaster:   itemMaster,
 			},
 			expect: expect{
@@ -143,7 +143,7 @@ func TestCreateTotalItemService(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		res := calcTotalItem(req.storageItem, req.itemMaster, v.request.earnedItems, v.request.consumedItem)
+		res := CalcTotalItem(req.storageItem, req.itemMaster, v.request.earnedItems, v.request.consumedItem)
 		if len(v.expect.totalItem) != len(res) {
 			t.Errorf("case: %d, expect: %d, got: %d", i, len(v.expect.totalItem), len(res))
 		}

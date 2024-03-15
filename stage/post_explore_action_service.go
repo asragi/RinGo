@@ -26,7 +26,7 @@ type PostActionArgs struct {
 	earningItemData   []*EarningItem
 	consumingItemData []*ConsumingItem
 	requiredSkills    []*RequiredSkill
-	allStorageItems   []*ItemData
+	allStorageItems   []*StorageData
 	allItemMasterRes  []*GetItemMasterRes
 }
 

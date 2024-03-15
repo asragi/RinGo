@@ -473,10 +473,10 @@ func CreateGetStorage(queryFunc queryFunc) stage.FetchStorageFunc {
 		}
 		req := &itemIdReq{ItemId: itemId[0]}
 		res, err := g(ctx, userId, []*itemIdReq{req})
-		result := func() []*stage.ItemData {
-			r := make([]*stage.ItemData, len(res))
+		result := func() []*stage.StorageData {
+			r := make([]*stage.StorageData, len(res))
 			for i, v := range res {
-				r[i] = &stage.ItemData{
+				r[i] = &stage.StorageData{
 					UserId:  v.UserId,
 					ItemId:  v.ItemId,
 					Stock:   v.Stock,
@@ -493,8 +493,8 @@ func CreateGetStorage(queryFunc queryFunc) stage.FetchStorageFunc {
 }
 
 func CreateGetAllStorage(queryFunc queryFunc) stage.FetchAllStorageFunc {
-	return func(ctx context.Context, userId core.UserId) ([]*stage.ItemData, error) {
-		handleError := func(err error) ([]*stage.ItemData, error) {
+	return func(ctx context.Context, userId core.UserId) ([]*stage.StorageData, error) {
+		handleError := func(err error) ([]*stage.StorageData, error) {
 			return nil, fmt.Errorf("get all storage from mysql: %w", err)
 		}
 		query := fmt.Sprintf(
@@ -505,9 +505,9 @@ func CreateGetAllStorage(queryFunc queryFunc) stage.FetchAllStorageFunc {
 		if err != nil {
 			return handleError(err)
 		}
-		var result []*stage.ItemData
+		var result []*stage.StorageData
 		for rows.Next() {
-			var res stage.ItemData
+			var res stage.StorageData
 			err = rows.Scan(&res.UserId, &res.ItemId, &res.Stock, &res.IsKnown)
 			if err != nil {
 				return handleError(err)
@@ -515,7 +515,7 @@ func CreateGetAllStorage(queryFunc queryFunc) stage.FetchAllStorageFunc {
 			result = append(result, &res)
 		}
 		if result == nil || len(result) == 0 {
-			return []*stage.ItemData{}, sql.ErrNoRows
+			return []*stage.StorageData{}, sql.ErrNoRows
 		}
 		return result, nil
 	}

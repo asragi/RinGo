@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"context"
+	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
 
@@ -12,9 +14,10 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 	type testCase struct {
 		mockReducedStamina core.Stamina
 		mockExplore        GetExploreMasterRes
-		mockConsumingItems []ConsumingItem
-		mockEarningItem    []EarningItem
-		mockRequiredSkill  []RequiredSkillRow
+		mockUserSkills     []*UserSkillRes
+		mockConsumingItems []*ConsumingItem
+		mockEarningItem    []*EarningItem
+		mockRequiredSkill  []*RequiredSkill
 	}
 	testCases := []testCase{
 		{
@@ -27,9 +30,9 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 				RequiredPayment:      200,
 				StaminaReducibleRate: 0.4,
 			},
-			mockConsumingItems: []ConsumingItem{},
-			mockEarningItem:    []EarningItem{},
-			mockRequiredSkill:  []RequiredSkillRow{},
+			mockConsumingItems: []*ConsumingItem{},
+			mockEarningItem:    []*EarningItem{},
+			mockRequiredSkill:  []*RequiredSkill{},
 		},
 	}
 
@@ -45,12 +48,12 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			RequiredSkills:    []RequiredSkillsRes{},
 		}
 
-		calcConsumingStamina := func(_ core.UserId, exploreIds []ExploreId) (
-			[]ExploreStaminaPair,
+		calcConsumingStamina := func(ctx context.Context, _ core.UserId, exploreIds []ExploreId) (
+			[]*ExploreStaminaPair,
 			error,
 		) {
 			exploreId := exploreIds[0]
-			return []ExploreStaminaPair{
+			return []*ExploreStaminaPair{
 				{
 					ExploreId:      exploreId,
 					ReducedStamina: v.mockReducedStamina,
@@ -58,71 +61,73 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			}, nil
 		}
 
-		fetchItemStorage := fetchItemStorageTester{
-			returnVal: BatchGetStorageRes{},
-			returnErr: nil,
+		var storagePassedId []core.ItemId
+		fetchItem := func(ctx context.Context, id core.UserId, items []core.ItemId) (BatchGetStorageRes, error) {
+			storagePassedId = items
+			return BatchGetStorageRes{}, nil
 		}
 
-		fetchExploreMaster := fetchExploreTester{
-			returnVal: []GetExploreMasterRes{v.mockExplore},
-			returnErr: nil,
+		var explorePassedId []ExploreId
+		fetchExplore := func(ctx context.Context, exploreIds []ExploreId) ([]*GetExploreMasterRes, error) {
+			explorePassedId = exploreIds
+			return []*GetExploreMasterRes{}, nil
 		}
 
-		fetchEarningItem := fetchEarningItemTester{
-			returnVal: v.mockEarningItem,
-			returnErr: nil,
+		fetchEarnings := func(ctx context.Context, exploreId ExploreId) ([]*EarningItem, error) {
+			return v.mockEarningItem, nil
 		}
 
-		fetchConsuming := fetchConsumingTester{
-			returnVal: []BatchGetConsumingItemRes{
-				{
-					ExploreId:      req,
-					ConsumingItems: v.mockConsumingItems,
-				},
-			},
-			returnErr: nil,
+		fetchConsuming := func(ctx context.Context, exploreIds []ExploreId) ([]*ConsumingItem, error) {
+			return v.mockConsumingItems, nil
 		}
 
-		fetchSkillMaster := fetchSkillMasterTester{
-			returnVal: []SkillMaster{},
-			returnErr: nil,
+		fetchSkill := func(ctx context.Context, skillIds []core.SkillId) ([]*SkillMaster, error) {
+			return nil, nil
 		}
-		fetchUserSkill := fetchUserSkillTester{
-			returnValue: BatchGetUserSkillRes{},
-			returnErr:   nil,
+
+		fetchUserSkill := func(
+			ctx context.Context,
+			userId core.UserId,
+			skillIds []core.SkillId,
+		) (BatchGetUserSkillRes, error) {
+			return BatchGetUserSkillRes{
+				UserId: userId,
+				Skills: v.mockUserSkills,
+			}, nil
 		}
-		fetchRequiredSkills := fetchRequiredSkillTester{
-			returnVal: v.mockRequiredSkill,
-			returnErr: nil,
+
+		fetchRequiredSkills := func(ctx context.Context, exploreId []ExploreId) ([]*RequiredSkill, error) {
+			return v.mockRequiredSkill, nil
 		}
 
 		service := CreateCommonGetActionDetail(
 			calcConsumingStamina,
 			CreateCommonGetActionDetailRepositories{
-				FetchItemStorage:        fetchItemStorage.BatchGet,
-				FetchExploreMaster:      fetchExploreMaster.BatchGet,
-				FetchEarningItem:        fetchEarningItem.Get,
-				FetchConsumingItem:      fetchConsuming.BatchGet,
-				FetchSkillMaster:        fetchSkillMaster.BatchGet,
-				FetchUserSkill:          fetchUserSkill.BatchGet,
-				FetchRequiredSkillsFunc: fetchRequiredSkills.BatchGet,
+				FetchItemStorage:        fetchItem,
+				FetchExploreMaster:      fetchExplore,
+				FetchEarningItem:        fetchEarnings,
+				FetchConsumingItem:      fetchConsuming,
+				FetchSkillMaster:        fetchSkill,
+				FetchUserSkill:          fetchUserSkill,
+				FetchRequiredSkillsFunc: fetchRequiredSkills,
 			},
 		)
 
-		res, _ := service(userId, req)
+		ctx := test.MockCreateContext()
+		res, _ := service(ctx, userId, req)
 
-		if req != fetchExploreMaster.passedArgs[0] {
-			t.Errorf("case: %d, expect: %s, got: %s", i, req, fetchExploreMaster.passedArgs[0])
+		if req != explorePassedId[0] {
+			t.Errorf("case: %d, expect: %s, got: %s", i, req, explorePassedId[0])
 		}
-		consumingItemIds := func(items []ConsumingItem) []core.ItemId {
+		consumingItemIds := func(items []*ConsumingItem) []core.ItemId {
 			result := make([]core.ItemId, len(items))
 			for i, v := range items {
 				result[i] = v.ItemId
 			}
 			return result
 		}(v.mockConsumingItems)
-		if !reflect.DeepEqual(fetchItemStorage.passedItemIds, consumingItemIds) {
-			t.Errorf("case %d, expect %+v, got %+v", i, consumingItemIds, fetchItemStorage.passedItemIds)
+		if !reflect.DeepEqual(storagePassedId, consumingItemIds) {
+			t.Errorf("case %d, expect %+v, got %+v", i, consumingItemIds, storagePassedId)
 		}
 		if !reflect.DeepEqual(expect, res) {
 			t.Errorf("case: %d, expect: %+v, got: %+v", i, expect, res)

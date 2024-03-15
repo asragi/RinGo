@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"errors"
 	"github.com/asragi/RinGo/test"
 	"reflect"
@@ -15,15 +16,36 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		req                 GetUserItemDetailReq
 		expectedErr         error
 		mockTime            time.Time
-		mockExplore         []UserExplore
+		mockExplore         []*UserExplore
 		mockArgs            getItemDetailArgs
-		mockCompensatedArgs CompensatedMakeUserExploreArgs
+		mockCompensatedArgs *CompensatedMakeUserExploreArgs
 	}
 
 	testCases := []testCase{
 		{
-			req:         GetUserItemDetailReq{},
+			req: GetUserItemDetailReq{
+				UserId: "",
+				ItemId: "",
+			},
 			expectedErr: nil,
+			mockTime:    test.MockTime(),
+			mockExplore: nil,
+			mockArgs: getItemDetailArgs{
+				masterRes: &GetItemMasterRes{
+					ItemId:      "",
+					Price:       0,
+					DisplayName: "",
+					Description: "",
+					MaxStock:    0,
+				},
+				storageRes: &StorageData{
+					UserId: "",
+					Stock:  0,
+				},
+				exploreStaminaPair: nil,
+				explores:           nil,
+			},
+			mockCompensatedArgs: nil,
 		},
 	}
 
@@ -32,35 +54,37 @@ func TestCreateGetItemDetailService(t *testing.T) {
 			return v.mockTime
 		}
 		createArgs := func(
+			context.Context,
 			GetUserItemDetailReq,
 		) (getItemDetailArgs, error) {
 			return v.mockArgs, nil
 		}
 		getAllItem := func(
-			[]ExploreStaminaPair,
-			[]GetExploreMasterRes,
+			[]*ExploreStaminaPair,
+			[]*GetExploreMasterRes,
 			compensatedMakeUserExploreFunc,
-		) []UserExplore {
+		) []*UserExplore {
 			return v.mockExplore
 		}
-		makeUserExplore := func(args makeUserExploreArrayArgs) []UserExplore {
+		makeUserExplore := func(args *makeUserExploreArrayArgs) []*UserExplore {
 			return v.mockExplore
 		}
 		var passedExploreIds []ExploreId
 		fetchUserExploreArgs := func(
+			ctx context.Context,
 			id core.UserId,
 			ids []ExploreId,
-		) (CompensatedMakeUserExploreArgs, error) {
+		) (*CompensatedMakeUserExploreArgs, error) {
 			passedExploreIds = ids
 			return v.mockCompensatedArgs, nil
 		}
 		compensatedMakeUserExplore := func(
-			repoArgs CompensatedMakeUserExploreArgs,
+			repoArgs *CompensatedMakeUserExploreArgs,
 			currentTimer core.GetCurrentTimeFunc,
 			execNum int,
 			makeUserExplore MakeUserExploreArrayFunc,
 		) compensatedMakeUserExploreFunc {
-			return func(args makeUserExploreArgs) []UserExplore {
+			return func(*makeUserExploreArgs) []*UserExplore {
 				return v.mockExplore
 			}
 		}
@@ -83,7 +107,8 @@ func TestCreateGetItemDetailService(t *testing.T) {
 			Stock:        v.mockArgs.storageRes.Stock,
 			UserExplores: v.mockExplore,
 		}
-		res, err := getItemDetail(v.req)
+		ctx := test.MockCreateContext()
+		res, err := getItemDetail(ctx, v.req)
 		if !errors.Is(err, v.expectedErr) {
 			t.Errorf("expect: %s, got: %s", v.expectedErr.Error(), err.Error())
 		}
@@ -100,11 +125,11 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 	type testCase struct {
 		request                GetUserItemDetailReq
 		expectedError          error
-		mockGetItemMasterRes   GetItemMasterRes
-		mockGetItemStorageRes  ItemData
-		mockGetExploreRes      []GetExploreMasterRes
+		mockGetItemMasterRes   *GetItemMasterRes
+		mockGetItemStorageRes  *StorageData
+		mockGetExploreRes      []*GetExploreMasterRes
 		mockItemExplore        []ExploreId
-		mockExploreStaminaPair []ExploreStaminaPair
+		mockExploreStaminaPair []*ExploreStaminaPair
 	}
 
 	userId := core.UserId("user")
@@ -117,14 +142,14 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 				ItemId: itemId,
 			},
 			expectedError: nil,
-			mockGetItemMasterRes: GetItemMasterRes{
+			mockGetItemMasterRes: &GetItemMasterRes{
 				ItemId:      itemId,
 				Price:       300,
 				DisplayName: "TestItem",
 				Description: "TestDesc",
 				MaxStock:    100,
 			},
-			mockGetItemStorageRes: ItemData{
+			mockGetItemStorageRes: &StorageData{
 				UserId:  userId,
 				ItemId:  itemId,
 				Stock:   50,
@@ -138,51 +163,51 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 
 	for i, v := range testCases {
 		expectedRes := getItemDetailArgs{
-			masterRes: v.mockGetItemMasterRes,
-			storageRes: GetItemStorageRes{
-				UserId: userId,
-				Stock:  v.mockGetItemStorageRes.Stock,
-			},
+			masterRes:          v.mockGetItemMasterRes,
+			storageRes:         v.mockGetItemStorageRes,
 			exploreStaminaPair: v.mockExploreStaminaPair,
 			explores:           v.mockGetExploreRes,
 		}
 		var mockGetItemArgs core.ItemId
-		mockGetItemMaster := func(itemId []core.ItemId) ([]GetItemMasterRes, error) {
+		mockGetItemMaster := func(_ context.Context, itemId []core.ItemId) ([]*GetItemMasterRes, error) {
 			mockGetItemArgs = itemId[0]
-			return []GetItemMasterRes{v.mockGetItemMasterRes}, nil
+			return []*GetItemMasterRes{v.mockGetItemMasterRes}, nil
 		}
 
 		var passedStorageArg core.ItemId
-		mockGetItemStorage := func(userId core.UserId, itemId []core.ItemId) (
+		mockGetItemStorage := func(_ context.Context, userId core.UserId, itemId []core.ItemId) (
 			BatchGetStorageRes,
 			error,
 		) {
 			passedStorageArg = itemId[0]
 			return BatchGetStorageRes{
 				UserId:   userId,
-				ItemData: []ItemData{v.mockGetItemStorageRes},
+				ItemData: []*StorageData{v.mockGetItemStorageRes},
 			}, nil
 		}
 		var passedExploreArgs []ExploreId
-		mockExploreMaster := func(exploreIds []ExploreId) ([]GetExploreMasterRes, error) {
+		mockExploreMaster := func(_ context.Context, exploreIds []ExploreId) ([]*GetExploreMasterRes, error) {
 			passedExploreArgs = exploreIds
 			return v.mockGetExploreRes, nil
 		}
 		var passedStaminaArgs []ExploreId
 		consumingStamina := func(
+			ctx context.Context,
 			userId core.UserId,
 			ids []ExploreId,
-		) ([]ExploreStaminaPair, error) {
+		) ([]*ExploreStaminaPair, error) {
 			passedStaminaArgs = ids
 			return v.mockExploreStaminaPair, nil
 		}
 		var passedItemRelationArg core.ItemId
-		mockItemExplore := func(itemId core.ItemId) ([]ExploreId, error) {
+		mockItemExplore := func(ctx context.Context, itemId core.ItemId) ([]ExploreId, error) {
 			passedItemRelationArg = itemId
 			return v.mockItemExplore, nil
 		}
 		req := v.request
+		ctx := test.MockCreateContext()
 		res, err := FetchGetItemDetailArgs(
+			ctx,
 			v.request,
 			mockGetItemMaster,
 			mockGetItemStorage,

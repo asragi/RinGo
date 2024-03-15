@@ -4,23 +4,22 @@ import (
 	"testing"
 
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/test"
 )
 
 func TestCreateCalcConsumingItemService(t *testing.T) {
 	type testRequest struct {
-		consumingItem []ConsumingItem
+		consumingItem []*ConsumingItem
 		execCount     int
 		randomValue   float32
 	}
 	type testCase struct {
 		request testRequest
-		expect  []consumedItem
+		expect  []*consumedItem
 	}
 
 	itemIds := []core.ItemId{"A", "B"}
 
-	consumingData := []ConsumingItem{
+	consumingData := []*ConsumingItem{
 		{
 			ItemId:          itemIds[0],
 			ConsumptionProb: 1,
@@ -40,7 +39,7 @@ func TestCreateCalcConsumingItemService(t *testing.T) {
 				randomValue:   0.4,
 				consumingItem: consumingData,
 			},
-			expect: []consumedItem{
+			expect: []*consumedItem{
 				{
 					ItemId: itemIds[0],
 					Count:  30,
@@ -54,9 +53,11 @@ func TestCreateCalcConsumingItemService(t *testing.T) {
 	}
 
 	for i, v := range testCases {
-		random := test.TestRandom{Value: v.request.randomValue}
+		emitRandom := func() float32 {
+			return v.request.randomValue
+		}
 		req := v.request
-		res := calcConsumedItem(req.execCount, req.consumingItem, &random)
+		res := CalcConsumedItem(req.execCount, req.consumingItem, emitRandom)
 		if len(v.expect) != len(res) {
 			t.Fatalf("case: %d, expect: %d, got: %d", i, len(v.expect), len(res))
 		}

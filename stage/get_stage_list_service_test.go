@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"context"
+	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
 
@@ -9,14 +11,14 @@ import (
 
 func TestGetStageList(t *testing.T) {
 	type testCase struct {
-		mockExplore     []UserExplore
-		mockInformation []StageInformation
+		mockExplore     []*UserExplore
+		mockInformation []*StageInformation
 	}
 
 	testCases := []testCase{
 		{
-			mockExplore: []UserExplore{},
-			mockInformation: []StageInformation{
+			mockExplore: []*UserExplore{},
+			mockInformation: []*StageInformation{
 				{
 					StageId: "A",
 				},
@@ -28,31 +30,31 @@ func TestGetStageList(t *testing.T) {
 		userId := core.UserId("passedId")
 
 		createCompensatedMakeUserExplore := func(
-			_ CompensatedMakeUserExploreArgs,
+			_ *CompensatedMakeUserExploreArgs,
 			_ core.GetCurrentTimeFunc,
 			_ int,
 			makeUserExplore MakeUserExploreArrayFunc,
 		) compensatedMakeUserExploreFunc {
-			f := func(makeUserExploreArgs) []UserExplore {
-				return makeUserExplore(makeUserExploreArrayArgs{})
+			f := func(*makeUserExploreArgs) []*UserExplore {
+				return makeUserExplore(&makeUserExploreArrayArgs{})
 			}
 
 			return f
 		}
-		fetchMakeUserExploreArgs := func(core.UserId, []ExploreId) (
-			CompensatedMakeUserExploreArgs,
+		fetchMakeUserExploreArgs := func(context.Context, core.UserId, []ExploreId) (
+			*CompensatedMakeUserExploreArgs,
 			error,
 		) {
-			return CompensatedMakeUserExploreArgs{}, nil
+			return &CompensatedMakeUserExploreArgs{}, nil
 		}
-		makeUserExploreFunc := func(makeUserExploreArrayArgs) []UserExplore {
+		makeUserExploreFunc := func(*makeUserExploreArrayArgs) []*UserExplore {
 			return v.mockExplore
 		}
-		getAllStageFunc := func(getAllStageArgs, compensatedMakeUserExploreFunc) []StageInformation {
+		getAllStageFunc := func(*getAllStageArgs, compensatedMakeUserExploreFunc) []*StageInformation {
 			return v.mockInformation
 		}
-		fetchStageData := func(core.UserId) (getAllStageArgs, error) {
-			return getAllStageArgs{}, nil
+		fetchStageData := func(context.Context, core.UserId) (*getAllStageArgs, error) {
+			return &getAllStageArgs{}, nil
 		}
 		getStageListFunc := GetStageList(
 			createCompensatedMakeUserExplore,
@@ -62,7 +64,8 @@ func TestGetStageList(t *testing.T) {
 			fetchStageData,
 		)
 
-		res, _ := getStageListFunc(userId, nil)
+		ctx := test.MockCreateContext()
+		res, _ := getStageListFunc(ctx, userId, nil)
 		if !reflect.DeepEqual(v.mockInformation, res) {
 			t.Errorf("expect: %+v, got: %+v", v.mockInformation, res)
 		}
@@ -72,11 +75,11 @@ func TestGetStageList(t *testing.T) {
 func TestGetAllStage(t *testing.T) {
 	type request struct {
 		stageIds           []StageId
-		stageMaster        GetAllStagesRes
-		userStageData      GetAllUserStagesRes
-		stageExplores      []StageExploreIdPair
+		stageMaster        []*StageMaster
+		userStageData      []*UserStage
+		stageExplores      []*StageExploreIdPairRow
 		exploreStaminaPair []ExploreStaminaPair
-		explores           []GetExploreMasterRes
+		explores           []*GetExploreMasterRes
 		makeUserExplore    compensatedMakeUserExploreFunc
 	}
 
@@ -86,7 +89,7 @@ func TestGetAllStage(t *testing.T) {
 		expectPassedArgs makeUserExploreArgs
 	}
 	stageIds := []StageId{"stageA", "stageB"}
-	stageMasters := []StageMaster{
+	stageMasters := []*StageMaster{
 		{
 			StageId:     stageIds[0],
 			DisplayName: "StageA",
@@ -96,7 +99,7 @@ func TestGetAllStage(t *testing.T) {
 			DisplayName: "StageB",
 		},
 	}
-	userStageData := []UserStage{
+	userStageData := []*UserStage{
 		{
 			StageId: stageIds[0],
 			IsKnown: true,
@@ -112,23 +115,18 @@ func TestGetAllStage(t *testing.T) {
 		"B",
 	}
 
-	stageExplores := []StageExploreIdPair{
+	stageExplores := []*StageExploreIdPairRow{
 		{
-			StageId: stageIds[0],
-			ExploreIds: []StageExploreIdPairRow{
-				{
-					StageId:   stageIds[0],
-					ExploreId: exploreIds[0],
-				},
-				{
-					StageId:   stageIds[0],
-					ExploreId: exploreIds[1],
-				},
-			},
+			StageId:   stageIds[0],
+			ExploreId: exploreIds[0],
+		},
+		{
+			StageId:   stageIds[0],
+			ExploreId: exploreIds[1],
 		},
 	}
 
-	exploreMasters := []GetExploreMasterRes{
+	exploreMasters := []*GetExploreMasterRes{
 		{
 			ExploreId:            exploreIds[0],
 			DisplayName:          "ExpA",
@@ -161,12 +159,12 @@ func TestGetAllStage(t *testing.T) {
 		IsPossible:  true,
 	}
 
-	var passedArgs makeUserExploreArgs
-	mockMakeUserExplores := func(args makeUserExploreArgs) []UserExplore {
+	var passedArgs *makeUserExploreArgs
+	mockMakeUserExplores := func(args *makeUserExploreArgs) []*UserExplore {
 		passedArgs = args
-		result := make([]UserExplore, len(args.exploreIds))
+		result := make([]*UserExplore, len(args.exploreIds))
 		for i, v := range args.exploreIds {
-			result[i] = UserExplore{
+			result[i] = &UserExplore{
 				ExploreId:   v,
 				DisplayName: mockUserExplore.DisplayName,
 				IsKnown:     mockUserExplore.IsKnown,
@@ -180,8 +178,8 @@ func TestGetAllStage(t *testing.T) {
 		{
 			request: request{
 				stageIds:           stageIds,
-				stageMaster:        GetAllStagesRes{stageMasters},
-				userStageData:      GetAllUserStagesRes{UserStage: userStageData},
+				stageMaster:        stageMasters,
+				userStageData:      userStageData,
 				stageExplores:      stageExplores,
 				exploreStaminaPair: exploreStaminaPair,
 				explores:           exploreMasters,
@@ -191,7 +189,7 @@ func TestGetAllStage(t *testing.T) {
 				{
 					StageId: stageIds[0],
 					IsKnown: true,
-					UserExplores: []UserExplore{
+					UserExplores: []*UserExplore{
 						{
 							ExploreId:   exploreIds[0],
 							DisplayName: mockUserExplore.DisplayName,
@@ -209,7 +207,7 @@ func TestGetAllStage(t *testing.T) {
 				{
 					StageId:      stageIds[1],
 					IsKnown:      false,
-					UserExplores: []UserExplore{},
+					UserExplores: []*UserExplore{},
 				},
 			},
 			expectPassedArgs: makeUserExploreArgs{
@@ -220,17 +218,15 @@ func TestGetAllStage(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		exploreIds := func(explores []GetExploreMasterRes) []ExploreId {
+		exploreIds := func(explores []*GetExploreMasterRes) []ExploreId {
 			result := make([]ExploreId, len(explores))
-			for i, v := range explores {
-				result[i] = v.ExploreId
+			for j, w := range explores {
+				result[j] = w.ExploreId
 			}
 			return result
-		}(
-			req.explores,
-		)
+		}(req.explores)
 		res := getAllStage(
-			getAllStageArgs{
+			&getAllStageArgs{
 				req.stageIds,
 				req.stageMaster,
 				req.userStageData,

@@ -39,7 +39,7 @@ func CreateGetItemListService(
 		if err != nil {
 			return handleError(err)
 		}
-		itemIds := func(storages []*ItemData) []core.ItemId {
+		itemIds := func(storages []*StorageData) []core.ItemId {
 			result := make([]core.ItemId, len(storages))
 			for i, v := range storages {
 				result[i] = v.ItemId
@@ -50,8 +50,8 @@ func CreateGetItemListService(
 		if err != nil {
 			return handleError(err)
 		}
-		storageMap := func(storages []*ItemData) map[core.ItemId]*ItemData {
-			result := map[core.ItemId]*ItemData{}
+		storageMap := func(storages []*StorageData) map[core.ItemId]*StorageData {
+			result := map[core.ItemId]*StorageData{}
 			for _, v := range storages {
 				result[v.ItemId] = v
 			}
@@ -67,7 +67,7 @@ func CreateGetItemListService(
 		itemList := func(
 			items []core.ItemId,
 			itemMasterMap map[core.ItemId]*GetItemMasterRes,
-			itemStorageMap map[core.ItemId]*ItemData,
+			itemStorageMap map[core.ItemId]*StorageData,
 		) []*ItemListRow {
 			result := make([]*ItemListRow, len(items))
 			for i, v := range items {

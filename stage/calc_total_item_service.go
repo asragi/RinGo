@@ -8,14 +8,14 @@ type totalItem struct {
 }
 
 type CalcTotalItemFunc func(
-	allStorageItems []*ItemData,
+	allStorageItems []*StorageData,
 	allMasterRes []*GetItemMasterRes,
 	earnedItems []*earnedItem,
 	consumedItems []*consumedItem,
 ) []*totalItem
 
 func CalcTotalItem(
-	allStorageItems []*ItemData,
+	allStorageItems []*StorageData,
 	allMasterRes []*GetItemMasterRes,
 	earnedItems []*earnedItem,
 	consumedItems []*consumedItem,
@@ -43,7 +43,7 @@ func CalcTotalItem(
 		return result
 	}(consumedItems)
 
-	storageMap := func(stocks []*ItemData) map[core.ItemId]core.Stock {
+	storageMap := func(stocks []*StorageData) map[core.ItemId]core.Stock {
 		result := make(map[core.ItemId]core.Stock)
 		for _, v := range stocks {
 			result[v.ItemId] = v.Stock

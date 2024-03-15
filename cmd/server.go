@@ -116,8 +116,8 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.fetchReductionSkill,
 	)
 	validateAction := stage.CreateValidateAction(stage.CheckIsExplorePossible)
-	postFunc := application.CompensatePostActionFunctions(
-		application.CompensatePostActionRepositories{
+	postFunc := application.CreatePostAction(
+		application.CreatePostActionRepositories{
 			ValidateAction:       validateAction,
 			CalcSkillGrowth:      stage.CalcSkillGrowthService,
 			CalcGrowthApply:      stage.CalcApplySkillGrowth,

@@ -11,7 +11,7 @@ import (
 	"github.com/asragi/RinGo/stage"
 )
 
-type CreatePostActionRes func(
+type CreatePostActionFunc func(
 	context.Context,
 	core.UserId,
 	auth.AccessToken,
@@ -21,9 +21,9 @@ type CreatePostActionRes func(
 
 type PostFunc func(*stage.PostActionArgs, time.Time) (*stage.PostActionResult, error)
 
-type CompensatePostActionFunc func(CompensatePostActionRepositories, core.IRandom, stage.PostActionFunc) PostFunc
+type CompensatePostActionFunc func(CreatePostActionRepositories, core.IRandom, stage.PostActionFunc) PostFunc
 
-type CompensatePostActionRepositories struct {
+type CreatePostActionRepositories struct {
 	ValidateAction       stage.ValidateActionFunc
 	CalcSkillGrowth      stage.CalcSkillGrowthFunc
 	CalcGrowthApply      stage.GrowthApplyFunc
@@ -37,8 +37,8 @@ type CompensatePostActionRepositories struct {
 	UpdateFund           stage.UpdateFundFunc
 }
 
-func CompensatePostActionFunctions(
-	repo CompensatePostActionRepositories,
+func CreatePostAction(
+	repo CreatePostActionRepositories,
 	random core.EmitRandomFunc,
 	postAction stage.PostActionFunc,
 	createContext utils.CreateContextFunc,
@@ -121,13 +121,13 @@ type CreatePostActionServiceFunc func(
 	core.ICurrentTime,
 	PostFunc,
 	emitPostActionArgsFunc,
-) CreatePostActionRes
+) CreatePostActionFunc
 
 func CreatePostActionService(
 	currentTimeEmitter core.ICurrentTime,
 	postFunc PostFunc,
 	emitPostActionArgsFunc emitPostActionArgsFunc,
-) CreatePostActionRes {
+) CreatePostActionFunc {
 	return func(
 		ctx context.Context,
 		userId core.UserId,
