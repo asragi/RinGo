@@ -55,7 +55,7 @@ type functionContainer struct {
 	login                auth.LoginFunc
 	register             auth.RegisterUserFunc
 	getTime              core.GetCurrentTimeFunc
-	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc
+	calcConsumingStamina stage.CalcConsumingStaminaFunc
 	postFunc             application.PostFunc
 }
 

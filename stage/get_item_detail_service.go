@@ -32,7 +32,7 @@ type getItemDetailArgs struct {
 type CreateGetItemDetailServiceFunc func(
 	timer core.GetCurrentTimeFunc,
 	createArgs ICreateGetItemDetailArgs,
-	getAllAction IGetAllItemAction,
+	getAllAction GetAllItemActionFunc,
 	makeUserExploreArray MakeUserExploreArrayFunc,
 	fetchMakeUserExploreArgs fetchMakeUserExploreArgs,
 	createMakeUserExplore CreateCompensateMakeUserExploreFunc,
@@ -42,7 +42,7 @@ type GetItemDetailFunc func(context.Context, GetUserItemDetailReq) (getUserItemD
 func CreateGetItemDetailService(
 	timer core.GetCurrentTimeFunc,
 	createArgs ICreateGetItemDetailArgs,
-	getAllAction IGetAllItemAction,
+	getAllAction GetAllItemActionFunc,
 	makeUserExploreArray MakeUserExploreArrayFunc,
 	fetchMakeUserExploreArgs fetchMakeUserExploreArgs,
 	createMakeUserExplore CreateCompensateMakeUserExploreFunc,
@@ -114,7 +114,7 @@ type CreateGetItemDetailRepositories struct {
 	GetItemStorage                FetchStorageFunc
 	GetExploreMaster              FetchExploreMasterFunc
 	GetItemExploreRelation        FetchItemExploreRelationFunc
-	CalcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc
+	CalcBatchConsumingStaminaFunc CalcConsumingStaminaFunc
 	CreateArgs                    ICreateFetchItemDetailArgs
 }
 type CreateGetItemDetailArgsFunc func(
@@ -147,7 +147,7 @@ type ICreateFetchItemDetailArgs func(
 	FetchStorageFunc,
 	FetchExploreMasterFunc,
 	FetchItemExploreRelationFunc,
-	CalcBatchConsumingStaminaFunc,
+	CalcConsumingStaminaFunc,
 ) (getItemDetailArgs, error)
 
 // TODO: Separate passing arguments and functions
@@ -158,7 +158,7 @@ func FetchGetItemDetailArgs(
 	getItemStorage FetchStorageFunc,
 	getExploreMaster FetchExploreMasterFunc,
 	getItemExploreRelation FetchItemExploreRelationFunc,
-	calcBatchConsumingStaminaFunc CalcBatchConsumingStaminaFunc,
+	calcBatchConsumingStaminaFunc CalcConsumingStaminaFunc,
 ) (getItemDetailArgs, error) {
 	handleError := func(err error) (getItemDetailArgs, error) {
 		return getItemDetailArgs{}, fmt.Errorf("error on create get item detail args: %w", err)
@@ -202,7 +202,7 @@ func FetchGetItemDetailArgs(
 	}, nil
 }
 
-type IGetAllItemAction func(
+type GetAllItemActionFunc func(
 	[]*ExploreStaminaPair,
 	[]*GetExploreMasterRes,
 	compensatedMakeUserExploreFunc,

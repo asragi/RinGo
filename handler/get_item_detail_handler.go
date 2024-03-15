@@ -17,7 +17,7 @@ func CreateGetItemDetailHandler(
 	createMakeUserExploreFunc stage.ICreateMakeUserExploreFunc,
 	makeUserExplore stage.MakeUserExploreArrayFunc,
 	createCompensatedMakeUserExplore stage.CreateCompensateMakeUserExploreFunc,
-	getAllItemAction stage.IGetAllItemAction,
+	getAllItemAction stage.GetAllItemActionFunc,
 	repositories stage.CreateGetItemDetailRepositories,
 	createGetItemDetailArgs stage.CreateGetItemDetailArgsFunc,
 	createGetItemDetailFunc stage.CreateGetItemDetailServiceFunc,

@@ -36,20 +36,18 @@ type ExploreStaminaPair struct {
 	ReducedStamina core.Stamina
 }
 
-type CalcBatchConsumingStaminaFunc func(
+type CalcConsumingStaminaFunc func(
 	context.Context,
 	core.UserId,
 	[]ExploreId,
-) (
-	[]*ExploreStaminaPair,
-	error,
-)
+) ([]*ExploreStaminaPair, error)
 
+// TODO: separate fetch functions and calc functions
 func CreateCalcConsumingStaminaService(
 	fetchUserSkills FetchUserSkillFunc,
 	fetchExploreMaster FetchExploreMasterFunc,
 	fetchReductionSkills FetchReductionStaminaSkillFunc,
-) CalcBatchConsumingStaminaFunc {
+) CalcConsumingStaminaFunc {
 	return func(ctx context.Context, userId core.UserId, exploreIds []ExploreId) (
 		[]*ExploreStaminaPair,
 		error,
@@ -144,5 +142,4 @@ func CreateCalcConsumingStaminaService(
 		}(exploreMap, reductionSkillResMap)
 		return result, nil
 	}
-
 }

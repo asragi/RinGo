@@ -18,7 +18,7 @@ type CheckIsPossibleArgs struct {
 	execNum         int
 }
 
-func createIsPossibleArgs(
+func createIsExplorePossibleArgs(
 	exploreMaster *GetExploreMasterRes,
 	userResources *GetResourceRes,
 	requiredItems []*ConsumingItem,

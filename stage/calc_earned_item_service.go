@@ -44,11 +44,11 @@ func CalcEarnedItem(
 
 	var result []*earnedItem
 	for _, v := range earningItemData {
-		earnedItem := earnedItem{
+		earnedItemStruct := earnedItem{
 			ItemId: v.ItemId,
 			Count:  execMultipleCalcItemCount(v.MinCount, v.MaxCount, random, execCount),
 		}
-		result = append(result, &earnedItem)
+		result = append(result, &earnedItemStruct)
 	}
 	return result
 }

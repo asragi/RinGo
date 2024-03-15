@@ -11,12 +11,12 @@ import (
 )
 
 func CreateGetItemActionDetailHandler(
-	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc,
+	calcConsumingStamina stage.CalcConsumingStaminaFunc,
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchItemMaster stage.FetchItemMasterFunc,
 	validateToken auth.ValidateTokenFunc,
-	service stage.CreateGetItemActionDetailServiceFunc,
+	service stage.CreateGetItemActionDetailFunc,
 	createEndpoint endpoint.CreateGetItemActionDetailEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger writeLogger,

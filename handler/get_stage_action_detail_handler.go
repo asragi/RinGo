@@ -11,7 +11,7 @@ import (
 )
 
 func CreateGetStageActionDetailHandler(
-	calcConsumingStamina stage.CalcBatchConsumingStaminaFunc,
+	calcConsumingStamina stage.CalcConsumingStaminaFunc,
 	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchStageMaster stage.FetchStageMasterFunc,

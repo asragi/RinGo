@@ -53,12 +53,12 @@ type CreateCommonGetActionDetailRepositories struct {
 }
 
 type CreateCommonGetActionDetailFunc func(
-	CalcBatchConsumingStaminaFunc,
+	CalcConsumingStaminaFunc,
 	CreateCommonGetActionDetailRepositories,
 ) commonGetActionFunc
 
 func CreateCommonGetActionDetail(
-	calcConsumingStamina CalcBatchConsumingStaminaFunc,
+	calcConsumingStamina CalcConsumingStaminaFunc,
 	args CreateCommonGetActionDetailRepositories,
 ) commonGetActionFunc {
 	getActionDetail := func(

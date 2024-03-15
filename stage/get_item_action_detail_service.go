@@ -9,6 +9,7 @@ import (
 type GetItemActionDetailFunc func(
 	context.Context, core.UserId, core.ItemId, ExploreId,
 ) (GetItemActionDetailResponse, error)
+
 type GetItemActionDetailResponse struct {
 	UserId            core.UserId
 	ItemId            core.ItemId
@@ -21,7 +22,7 @@ type GetItemActionDetailResponse struct {
 	RequiredSkills    []RequiredSkillsRes
 }
 
-type CreateGetItemActionDetailServiceFunc func(
+type CreateGetItemActionDetailFunc func(
 	commonGetActionFunc,
 	FetchItemMasterFunc,
 ) GetItemActionDetailFunc
@@ -30,7 +31,7 @@ func CreateGetItemActionDetailService(
 	getCommonAction commonGetActionFunc,
 	fetchItemMaster FetchItemMasterFunc,
 ) GetItemActionDetailFunc {
-	get := func(
+	return func(
 		ctx context.Context,
 		userId core.UserId,
 		itemId core.ItemId,
@@ -64,6 +65,4 @@ func CreateGetItemActionDetailService(
 			RequiredSkills:    getCommonActionRes.RequiredSkills,
 		}, nil
 	}
-
-	return get
 }

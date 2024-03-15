@@ -202,7 +202,7 @@ func PostAction(
 		return PostActionResult{}, fmt.Errorf("error on post action: %w", err)
 	}
 	userId := args.userId
-	checkIsPossibleArgs := createIsPossibleArgs(
+	checkIsPossibleArgs := createIsExplorePossibleArgs(
 		args.exploreMaster,
 		args.userResources,
 		args.consumingItemData,
