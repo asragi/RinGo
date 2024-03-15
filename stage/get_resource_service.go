@@ -6,10 +6,16 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type CreateGetUserResourceServiceFunc func(
-	resourceFunc GetResourceFunc,
-) GetUserResourceServiceFunc
-type GetUserResourceServiceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
+type (
+	CreateGetUserResourceServiceFunc func(
+		resourceFunc GetResourceFunc,
+	) GetUserResourceServiceFunc
+
+	GetUserResourceServiceFunc func(
+		context.Context,
+		core.UserId,
+	) (*GetResourceRes, error)
+)
 
 func CreateGetUserResourceService(
 	getResource GetResourceFunc,
