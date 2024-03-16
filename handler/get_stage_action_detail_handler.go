@@ -12,7 +12,7 @@ import (
 
 func CreateGetStageActionDetailHandler(
 	calcConsumingStamina stage.CalcConsumingStaminaFunc,
-	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
+	createCommonGetActionRepositories stage.CreateGetCommonActionRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchStageMaster stage.FetchStageMasterFunc,
 	createService stage.CreateGetStageActionDetailFunc,

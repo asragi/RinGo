@@ -38,14 +38,14 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.mockExplore.ExploreId
-		expect := commonGetActionRes{
+		expect := getCommonActionRes{
 			UserId:            userId,
 			ActionDisplayName: v.mockExplore.DisplayName,
 			RequiredPayment:   v.mockExplore.RequiredPayment,
 			RequiredStamina:   v.mockReducedStamina,
-			RequiredItems:     []RequiredItemsRes{},
-			EarningItems:      []EarningItemRes{},
-			RequiredSkills:    []RequiredSkillsRes{},
+			RequiredItems:     []*RequiredItemsRes{},
+			EarningItems:      []*EarningItemRes{},
+			RequiredSkills:    []*RequiredSkillsRes{},
 		}
 
 		calcConsumingStamina := func(ctx context.Context, _ core.UserId, exploreIds []ExploreId) (
@@ -100,9 +100,9 @@ func TestCreateCommonGetActionDetail(t *testing.T) {
 			return v.mockRequiredSkill, nil
 		}
 
-		service := CreateCommonGetActionDetail(
+		service := CreateGetCommonActionDetail(
 			calcConsumingStamina,
-			CreateCommonGetActionDetailRepositories{
+			CreateGetCommonActionRepositories{
 				FetchItemStorage:        fetchItem,
 				FetchExploreMaster:      fetchExplore,
 				FetchEarningItem:        fetchEarnings,

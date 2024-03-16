@@ -13,7 +13,7 @@ func TestCreateGetItemActionDetailService(t *testing.T) {
 		userId              core.UserId
 		itemId              core.ItemId
 		exploreId           ExploreId
-		mockCommonActionRes commonGetActionRes
+		mockCommonActionRes getCommonActionRes
 		mockItemMaster      *GetItemMasterRes
 		expectedError       error
 	}
@@ -23,22 +23,22 @@ func TestCreateGetItemActionDetailService(t *testing.T) {
 			userId:    "userId",
 			itemId:    "itemId",
 			exploreId: "exploreId",
-			mockCommonActionRes: commonGetActionRes{
+			mockCommonActionRes: getCommonActionRes{
 				ActionDisplayName: "actionDisplayName",
 				RequiredPayment:   100,
 				RequiredStamina:   10,
-				RequiredItems: []RequiredItemsRes{
+				RequiredItems: []*RequiredItemsRes{
 					{
 						ItemId: "requiredItemId",
 						Stock:  1,
 					},
 				},
-				EarningItems: []EarningItemRes{
+				EarningItems: []*EarningItemRes{
 					{
 						ItemId: "earningItemId",
 					},
 				},
-				RequiredSkills: []RequiredSkillsRes{
+				RequiredSkills: []*RequiredSkillsRes{
 					{
 						SkillId:     "requiredSkillId",
 						DisplayName: "requiredSkillDisplayName",
@@ -71,7 +71,7 @@ func TestCreateGetItemActionDetailService(t *testing.T) {
 			ctx context.Context,
 			userId core.UserId,
 			exploreId ExploreId,
-		) (commonGetActionRes, error) {
+		) (getCommonActionRes, error) {
 			return tc.mockCommonActionRes, nil
 		}
 		fetchItemMaster := func(ctx context.Context, itemIds []core.ItemId) ([]*GetItemMasterRes, error) {

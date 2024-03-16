@@ -271,7 +271,7 @@ func main() {
 	)
 	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
 		functions.calcConsumingStamina,
-		stage.CreateCommonGetActionDetailRepositories{
+		stage.CreateGetCommonActionRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
 			FetchEarningItem:        infrastructures.earningItem,
@@ -280,7 +280,7 @@ func main() {
 			FetchUserSkill:          infrastructures.userSkill,
 			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
 		},
-		stage.CreateCommonGetActionDetail,
+		stage.CreateGetCommonActionDetail,
 		infrastructures.stageMaster,
 		stage.CreateGetStageActionDetailService,
 		endpoint.CreateGetStageActionDetail,
@@ -362,7 +362,7 @@ func main() {
 	)
 	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
 		functions.calcConsumingStamina,
-		stage.CreateCommonGetActionDetailRepositories{
+		stage.CreateGetCommonActionRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
 			FetchEarningItem:        infrastructures.earningItem,
@@ -371,7 +371,7 @@ func main() {
 			FetchUserSkill:          infrastructures.userSkill,
 			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
 		},
-		stage.CreateCommonGetActionDetail,
+		stage.CreateGetCommonActionDetail,
 		infrastructures.fetchItemMaster,
 		functions.validateToken,
 		stage.CreateGetItemActionDetailService,

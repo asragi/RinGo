@@ -12,7 +12,7 @@ import (
 
 func CreateGetItemActionDetailHandler(
 	calcConsumingStamina stage.CalcConsumingStaminaFunc,
-	createCommonGetActionRepositories stage.CreateCommonGetActionDetailRepositories,
+	createCommonGetActionRepositories stage.CreateGetCommonActionRepositories,
 	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
 	fetchItemMaster stage.FetchItemMasterFunc,
 	validateToken auth.ValidateTokenFunc,

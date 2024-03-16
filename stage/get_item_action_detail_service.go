@@ -17,18 +17,18 @@ type GetItemActionDetailResponse struct {
 	ActionDisplayName core.DisplayName
 	RequiredPayment   core.Price
 	RequiredStamina   core.Stamina
-	RequiredItems     []RequiredItemsRes
-	EarningItems      []EarningItemRes
-	RequiredSkills    []RequiredSkillsRes
+	RequiredItems     []*RequiredItemsRes
+	EarningItems      []*EarningItemRes
+	RequiredSkills    []*RequiredSkillsRes
 }
 
 type CreateGetItemActionDetailFunc func(
-	commonGetActionFunc,
+	getCommonActionFunc,
 	FetchItemMasterFunc,
 ) GetItemActionDetailFunc
 
 func CreateGetItemActionDetailService(
-	getCommonAction commonGetActionFunc,
+	getCommonAction getCommonActionFunc,
 	fetchItemMaster FetchItemMasterFunc,
 ) GetItemActionDetailFunc {
 	return func(
