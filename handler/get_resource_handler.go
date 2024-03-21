@@ -3,16 +3,17 @@ package handler
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 func CreateGetResourceHandler(
-	getResource stage.GetResourceFunc,
+	getResource game.GetResourceFunc,
 	validateToken auth.ValidateTokenFunc,
-	getUserResourceFunc stage.CreateGetUserResourceServiceFunc,
+	getUserResourceFunc explore.CreateGetUserResourceServiceFunc,
 	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {

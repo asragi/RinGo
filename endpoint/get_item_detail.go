@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -16,13 +17,13 @@ type (
 	) (*gateway.GetItemDetailResponse, error)
 
 	GetItemDetailEndpoint func(
-		stage.GetItemDetailFunc,
+		explore.GetItemDetailFunc,
 		auth.ValidateTokenFunc,
 	) getItemDetailEndpointRes
 )
 
 func CreateGetItemDetail(
-	getItemDetail stage.GetItemDetailFunc,
+	getItemDetail explore.GetItemDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 ) getItemDetailEndpointRes {
 	return func(ctx context.Context, req *gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error) {
@@ -36,17 +37,11 @@ func CreateGetItemDetail(
 			return handleError(err)
 		}
 		userId := tokenInfo.UserId
-		res, err := getItemDetail(
-			ctx,
-			stage.GetUserItemDetailReq{
-				UserId: userId,
-				ItemId: itemId,
-			},
-		)
+		res, err := getItemDetail(ctx, userId, itemId)
 		if err != nil {
 			return handleError(err)
 		}
-		explores := func(explores []*stage.UserExplore) []*gateway.UserExplore {
+		explores := func(explores []*game.UserExplore) []*gateway.UserExplore {
 			result := make([]*gateway.UserExplore, len(explores))
 			for i, v := range explores {
 				result[i] = &gateway.UserExplore{

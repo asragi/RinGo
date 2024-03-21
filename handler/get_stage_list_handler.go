@@ -4,23 +4,19 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 func CreateGetStageListHandler(
-	getAllStage stage.GetAllStageFunc,
-	makeStageUserExplore stage.CreateCompensateMakeUserExploreFunc,
-	makeUserExplore stage.MakeUserExploreArrayFunc,
+	getAllStage explore.GetAllStageFunc,
 	timer core.GetCurrentTimeFunc,
 	getStageListEndpoint endpoint.GetStageListEndpoint,
-	repoArgs stage.CreateMakeUserExploreRepositories,
-	createMakeUserExplores stage.ICreateMakeUserExploreFunc,
-	fetchStageDataArgs stage.CreateFetchStageDataRepositories,
-	createFetchStageData stage.ICreateFetchStageData,
-	getStageList stage.IGetStageList,
+	fetchStageDataArgs explore.FetchStageDataRepositories,
+	createFetchStageData explore.CreateFetchStageDataFunc,
+	getStageList explore.CreateGetStageListFunc,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger writeLogger,
@@ -42,12 +38,8 @@ func CreateGetStageListHandler(
 			Token: token,
 		}, nil
 	}
-	fetchArgs := createMakeUserExplores(repoArgs)
 	fetchStageData := createFetchStageData(fetchStageDataArgs)
 	get := getStageList(
-		makeStageUserExplore,
-		fetchArgs,
-		makeUserExplore,
 		getAllStage,
 		fetchStageData,
 	)

@@ -3,19 +3,20 @@ package handler
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"strings"
 )
 
 func CreateGetStageActionDetailHandler(
-	calcConsumingStamina stage.CalcConsumingStaminaFunc,
-	createCommonGetActionRepositories stage.CreateGetCommonActionRepositories,
-	createCommonGetActionDetail stage.CreateCommonGetActionDetailFunc,
-	fetchStageMaster stage.FetchStageMasterFunc,
-	createService stage.CreateGetStageActionDetailFunc,
+	calcConsumingStamina game.CalcConsumingStaminaFunc,
+	createCommonGetActionRepositories explore.CreateGetCommonActionRepositories,
+	createCommonGetActionDetail explore.CreateCommonGetActionDetailFunc,
+	fetchStageMaster explore.FetchStageMasterFunc,
+	createService explore.CreateGetStageActionDetailFunc,
 	createEndpoint endpoint.CreateGetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,

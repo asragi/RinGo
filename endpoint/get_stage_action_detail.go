@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game"
 
-	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 type CreateGetStageActionDetailFunc func(
-	stage.GetStageActionDetailFunc,
+	explore.GetStageActionDetailFunc,
 	auth.ValidateTokenFunc,
 ) getStageActionEndpointRes
 
@@ -20,7 +21,7 @@ type getStageActionEndpointRes func(
 ) (*gateway.GetStageActionDetailResponse, error)
 
 func CreateGetStageActionDetail(
-	createStageActionDetail stage.GetStageActionDetailFunc,
+	createStageActionDetail explore.GetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 ) getStageActionEndpointRes {
 	get := func(
@@ -33,8 +34,8 @@ func CreateGetStageActionDetail(
 				err,
 			)
 		}
-		exploreId := stage.ExploreId(req.ExploreId)
-		stageId := stage.StageId(req.StageId)
+		exploreId := game.ExploreId(req.ExploreId)
+		stageId := explore.StageId(req.StageId)
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		if err != nil {

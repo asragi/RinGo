@@ -3,24 +3,23 @@ package handler
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
-	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"strings"
 )
 
 func CreateGetItemDetailHandler(
-	timer core.GetCurrentTimeFunc,
-	makeUserExploreRepo stage.CreateMakeUserExploreRepositories,
-	createMakeUserExploreFunc stage.ICreateMakeUserExploreFunc,
-	makeUserExplore stage.MakeUserExploreArrayFunc,
-	createCompensatedMakeUserExplore stage.CreateCompensateMakeUserExploreFunc,
-	getAllItemAction stage.GetAllItemActionFunc,
-	repositories stage.CreateGetItemDetailRepositories,
-	createGetItemDetailArgs stage.CreateGetItemDetailArgsFunc,
-	createGetItemDetailFunc stage.CreateGetItemDetailServiceFunc,
+	fetchItem game.FetchItemMasterFunc,
+	fetchStorage game.FetchStorageFunc,
+	fetchExploreMaster game.FetchExploreMasterFunc,
+	fetchItemRelation explore.FetchItemExploreRelationFunc,
+	calcConsumingStamina game.CalcConsumingStaminaFunc,
+	makeUserExplore game.MakeUserExploreFunc,
+	createGetItemDetailArgs explore.CreateGetItemDetailArgsFunc,
+	createGetItemDetailFunc explore.CreateGetItemDetailServiceFunc,
 	getItemDetailEndpoint endpoint.GetItemDetailEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
@@ -48,16 +47,15 @@ func CreateGetItemDetailHandler(
 			ItemId: itemId,
 		}, nil
 	}
-	createArgsFunc := createGetItemDetailArgs(repositories)
-	fetchMakeUserExploreArgsFunc := createMakeUserExploreFunc(makeUserExploreRepo)
-	getItemDetailFunc := createGetItemDetailFunc(
-		timer,
-		createArgsFunc,
-		getAllItemAction,
+	createArgsFunc := createGetItemDetailArgs(
+		fetchItem,
+		fetchStorage,
+		fetchExploreMaster,
+		fetchItemRelation,
+		calcConsumingStamina,
 		makeUserExplore,
-		fetchMakeUserExploreArgsFunc,
-		createCompensatedMakeUserExplore,
 	)
+	getItemDetailFunc := createGetItemDetailFunc(createArgsFunc)
 	endpointFunc := getItemDetailEndpoint(getItemDetailFunc, validateToken)
 	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

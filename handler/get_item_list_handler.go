@@ -3,16 +3,17 @@ package handler
 import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 func CreateGetItemListHandler(
-	getAllStorage stage.FetchAllStorageFunc,
-	getItemMaster stage.FetchItemMasterFunc,
-	createGetItemList stage.CreateGetItemListFunc,
+	getAllStorage game.FetchAllStorageFunc,
+	getItemMaster game.FetchItemMasterFunc,
+	createGetItemList explore.CreateGetItemListFunc,
 	createEndpoint endpoint.CreateGetItemListEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,

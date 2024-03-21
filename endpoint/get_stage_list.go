@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game"
 
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 type GetStageListEndpoint func(
-	stage.GetStageListFunc,
+	explore.GetStageListFunc,
 	auth.ValidateTokenFunc,
 	core.GetCurrentTimeFunc,
 ) getStageListRes
@@ -22,7 +23,7 @@ type getStageListRes func(
 ) (*gateway.GetStageListResponse, error)
 
 func CreateGetStageList(
-	getStageList stage.GetStageListFunc,
+	getStageList explore.GetStageListFunc,
 	validateToken auth.ValidateTokenFunc,
 	timer core.GetCurrentTimeFunc,
 ) getStageListRes {
@@ -41,11 +42,11 @@ func CreateGetStageList(
 			return handleError(err)
 		}
 		information := func(
-			res []*stage.StageInformation,
+			res []*explore.StageInformation,
 		) []*gateway.StageInformation {
 			result := make([]*gateway.StageInformation, len(res))
 			for i, v := range res {
-				explores := func(exps []*stage.UserExplore) []*gateway.UserExplore {
+				explores := func(exps []*game.UserExplore) []*gateway.UserExplore {
 					result := make([]*gateway.UserExplore, len(exps))
 					for i, v := range exps {
 						result[i] = &gateway.UserExplore{

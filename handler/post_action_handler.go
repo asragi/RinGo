@@ -2,11 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/auth"
-	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/endpoint"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -39,19 +37,12 @@ func GetPostActionParams(
 }
 
 func CreatePostActionHandler(
-	repoArgs stage.GetPostActionRepositories,
-	argsFunc stage.GetPostActionArgsFunc,
-	emitPostActionArgs application.EmitPostActionArgsFunc,
-	createPostAction application.CreatePostActionServiceFunc,
-	postFunc application.PostFunc,
-	currentTime core.ICurrentTime,
+	postAction game.PostActionFunc,
 	createEndpoint endpoint.CreatePostActionEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger writeLogger,
 ) Handler {
-	emitArgsFunc := emitPostActionArgs(repoArgs, argsFunc)
-	postActionApp := createPostAction(currentTime, postFunc, emitArgsFunc)
-	postEndpoint := createEndpoint(postActionApp, validateToken)
+	postEndpoint := createEndpoint(postAction, validateToken)
 	return createHandlerWithParameter(postEndpoint, createContext, GetPostActionParams, logger)
 }

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -15,12 +16,12 @@ type GetItemActionDetailEndpoint func(
 ) (*gateway.GetItemActionDetailResponse, error)
 
 type CreateGetItemActionDetailEndpointFunc func(
-	stage.GetItemActionDetailFunc,
+	explore.GetItemActionDetailFunc,
 	auth.ValidateTokenFunc,
 ) GetItemActionDetailEndpoint
 
 func CreateGetItemActionDetailEndpoint(
-	getItemActionFunc stage.GetItemActionDetailFunc,
+	getItemActionFunc explore.GetItemActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetItemActionDetailEndpoint {
 	return func(ctx context.Context, req *gateway.GetItemActionDetailRequest) (
@@ -37,14 +38,14 @@ func CreateGetItemActionDetailEndpoint(
 		}
 		userId := tokenInformation.UserId
 		itemId := core.ItemId(req.ItemId)
-		exploreId := stage.ExploreId(req.ExploreId)
+		exploreId := game.ExploreId(req.ExploreId)
 		res, err := getItemActionFunc(ctx, userId, itemId, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
-		requiredSkills := stage.RequiredSkillsToGateway(res.RequiredSkills)
-		requiredItems := stage.RequiredItemsToGateway(res.RequiredItems)
-		earningItems := stage.EarningItemsToGateway(res.EarningItems)
+		requiredSkills := explore.RequiredSkillsToGateway(res.RequiredSkills)
+		requiredItems := explore.RequiredItemsToGateway(res.RequiredItems)
+		earningItems := explore.EarningItemsToGateway(res.EarningItems)
 
 		return &gateway.GetItemActionDetailResponse{
 			UserId:            string(res.UserId),

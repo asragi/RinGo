@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
-	"github.com/asragi/RinGo/stage"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"time"
@@ -13,7 +13,7 @@ import (
 type GetResourceFunc func(context.Context, *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error)
 
 func CreateGetResourceEndpoint(
-	serviceFunc stage.GetUserResourceServiceFunc,
+	serviceFunc explore.GetUserResourceServiceFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetResourceFunc {
 	get := func(ctx context.Context, req *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error) {

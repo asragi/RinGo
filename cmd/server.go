@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/asragi/RinGo/application"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/crypto"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/router"
-	"github.com/asragi/RinGo/stage"
 	"github.com/asragi/RinGo/utils"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -24,28 +24,28 @@ type infrastructuresStruct struct {
 	checkUser                 core.CheckDoesUserExist
 	insertNewUser             auth.InsertNewUser
 	fetchPassword             auth.FetchHashedPassword
-	getResource               stage.GetResourceFunc
-	fetchItemMaster           stage.FetchItemMasterFunc
-	fetchStorage              stage.FetchStorageFunc
-	getAllStorage             stage.FetchAllStorageFunc
-	userSkill                 stage.FetchUserSkillFunc
-	stageMaster               stage.FetchStageMasterFunc
-	fetchAllStage             stage.FetchAllStageFunc
-	exploreMaster             stage.FetchExploreMasterFunc
-	skillMaster               stage.FetchSkillMasterFunc
-	earningItem               stage.FetchEarningItemFunc
-	consumingItem             stage.FetchConsumingItemFunc
-	fetchRequiredSkill        stage.FetchRequiredSkillsFunc
-	skillGrowth               stage.FetchSkillGrowthData
-	updateStorage             stage.UpdateItemStorageFunc
-	updateSkill               stage.UpdateUserSkillExpFunc
-	getUserExplore            stage.GetUserExploreFunc
-	fetchStageExploreRelation stage.FetchStageExploreRelation
-	fetchItemExploreRelation  stage.FetchItemExploreRelationFunc
-	fetchUserStage            stage.FetchUserStageFunc
-	fetchReductionSkill       stage.FetchReductionStaminaSkillFunc
-	updateStamina             stage.UpdateStaminaFunc
-	updateFund                stage.UpdateFundFunc
+	getResource               game.GetResourceFunc
+	fetchItemMaster           game.FetchItemMasterFunc
+	fetchStorage              game.FetchStorageFunc
+	getAllStorage             game.FetchAllStorageFunc
+	userSkill                 game.FetchUserSkillFunc
+	stageMaster               explore.FetchStageMasterFunc
+	fetchAllStage             explore.FetchAllStageFunc
+	exploreMaster             game.FetchExploreMasterFunc
+	skillMaster               game.FetchSkillMasterFunc
+	earningItem               game.FetchEarningItemFunc
+	consumingItem             game.FetchConsumingItemFunc
+	fetchRequiredSkill        game.FetchRequiredSkillsFunc
+	skillGrowth               game.FetchSkillGrowthData
+	updateStorage             game.UpdateItemStorageFunc
+	updateSkill               game.UpdateUserSkillExpFunc
+	getUserExplore            game.GetUserExploreFunc
+	fetchStageExploreRelation explore.FetchStageExploreRelation
+	fetchItemExploreRelation  explore.FetchItemExploreRelationFunc
+	fetchUserStage            explore.FetchUserStageFunc
+	fetchReductionSkill       game.FetchReductionStaminaSkillFunc
+	updateStamina             game.UpdateStaminaFunc
+	updateFund                game.UpdateFundFunc
 	getTime                   core.GetCurrentTimeFunc
 }
 
@@ -55,8 +55,9 @@ type functionContainer struct {
 	login                auth.LoginFunc
 	register             auth.RegisterUserFunc
 	getTime              core.GetCurrentTimeFunc
-	calcConsumingStamina stage.CalcConsumingStaminaFunc
-	postFunc             application.PostFunc
+	calcConsumingStamina game.CalcConsumingStaminaFunc
+	postFunc             game.PostActionFunc
+	makeUserExplore      game.MakeUserExploreFunc
 }
 
 func createDB() (*database.DBAccessor, error) {
@@ -110,39 +111,75 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.insertNewUser,
 		initialName,
 	)
-	calcConsumingStamina := stage.CreateCalcConsumingStaminaService(
+	calcConsumingStamina := game.CreateCalcConsumingStaminaService(
 		infra.userSkill,
 		infra.exploreMaster,
 		infra.fetchReductionSkill,
 	)
-	validateAction := stage.CreateValidateAction(stage.CheckIsExplorePossible)
-	postFunc := application.CreatePostAction(
-		application.CreatePostActionRepositories{
-			ValidateAction:       validateAction,
-			CalcSkillGrowth:      stage.CalcSkillGrowthService,
-			CalcGrowthApply:      stage.CalcApplySkillGrowth,
-			CalcEarnedItem:       stage.CalcEarnedItem,
-			CalcConsumedItem:     stage.CalcConsumedItem,
-			CalcTotalItem:        stage.CalcTotalItem,
-			StaminaReductionFunc: stage.CalcStaminaReduction,
-			UpdateItemStorage:    infra.updateStorage,
-			UpdateSkill:          infra.updateSkill,
-			UpdateStamina:        infra.updateStamina,
-			UpdateFund:           infra.updateFund,
-		},
+	validateAction := game.CreateShortValidateActionArgs(
+		infra.getResource,
+		infra.exploreMaster,
+		infra.consumingItem,
+		infra.fetchRequiredSkill,
+		infra.userSkill,
+		infra.fetchStorage,
+		game.CalcStaminaReduction,
+		getTime,
+		game.GenerateIsExplorePossibleArgs,
+	)
+	postFunc := game.CreatePostAction(
+		game.CreateGeneratePostActionArgs(
+			&game.GetPostActionRepositories{
+				FetchResource:        infra.getResource,
+				FetchExploreMaster:   infra.exploreMaster,
+				FetchSkillMaster:     infra.skillMaster,
+				FetchSkillGrowthData: infra.skillGrowth,
+				FetchUserSkill:       infra.userSkill,
+				FetchEarningItem:     infra.earningItem,
+				FetchConsumingItem:   infra.consumingItem,
+				FetchRequiredSkill:   infra.fetchRequiredSkill,
+				FetchStorage:         infra.fetchStorage,
+				FetchItemMaster:      infra.fetchItemMaster,
+			},
+		),
+		validateAction,
+		game.CheckIsExplorePossible,
+		game.CalcSkillGrowthService,
+		game.CalcApplySkillGrowth,
+		game.CalcEarnedItem,
+		game.CalcConsumedItem,
+		game.CalcTotalItem,
+		infra.updateStorage,
+		infra.updateSkill,
+		infra.updateStamina,
+		infra.updateFund,
 		random.Emit,
-		stage.PostAction,
-		utils.CreateContext,
 		db.Transaction,
 	)
+	makeUserExplore := game.CreateMakeUserExplore(
+		game.CreateGenerateMakeUserExploreArgs(
+			&game.CreateMakeUserExploreRepositories{
+				GetResource:          infra.getResource,
+				GetAction:            infra.getUserExplore,
+				GetRequiredSkills:    infra.fetchRequiredSkill,
+				GetConsumingItems:    infra.consumingItem,
+				GetStorage:           infra.fetchStorage,
+				GetUserSkill:         infra.userSkill,
+				CalcConsumingStamina: calcConsumingStamina,
+				GetExploreMaster:     infra.exploreMaster,
+				GetCurrentTime:       infra.getTime,
+			},
+		),
+	)
 	return &functionContainer{
+		createContext:        utils.CreateContext,
 		validateToken:        validateToken,
 		login:                login,
 		register:             register,
 		getTime:              getTime,
 		calcConsumingStamina: calcConsumingStamina,
 		postFunc:             postFunc,
-		createContext:        utils.CreateContext,
+		makeUserExplore:      makeUserExplore,
 	}
 }
 
@@ -242,28 +279,11 @@ func main() {
 	}
 	functions := createFunction(db, infrastructures)
 
-	diContainer := stage.CreateDIContainer()
+	diContainer := explore.CreateDIContainer()
 	writeLogger := handler.LogHttpWrite
-	currentTimeEmitter := core.CurrentTimeEmitter{}
 
 	postActionHandler := handler.CreatePostActionHandler(
-		stage.GetPostActionRepositories{
-			FetchResource:        infrastructures.getResource,
-			FetchExploreMaster:   infrastructures.exploreMaster,
-			FetchSkillMaster:     infrastructures.skillMaster,
-			FetchSkillGrowthData: infrastructures.skillGrowth,
-			FetchUserSkill:       infrastructures.userSkill,
-			FetchEarningItem:     infrastructures.earningItem,
-			FetchConsumingItem:   infrastructures.consumingItem,
-			FetchRequiredSkill:   infrastructures.fetchRequiredSkill,
-			FetchStorage:         infrastructures.fetchStorage,
-			FetchItemMaster:      infrastructures.fetchItemMaster,
-		},
-		stage.GetPostActionArgs,
-		application.EmitPostActionArgs,
-		application.CreatePostActionService,
 		functions.postFunc,
-		&currentTimeEmitter,
 		endpoint.CreatePostAction,
 		functions.validateToken,
 		functions.createContext,
@@ -271,7 +291,7 @@ func main() {
 	)
 	getStageActionDetailHandler := handler.CreateGetStageActionDetailHandler(
 		functions.calcConsumingStamina,
-		stage.CreateGetCommonActionRepositories{
+		explore.CreateGetCommonActionRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
 			FetchEarningItem:        infrastructures.earningItem,
@@ -280,9 +300,9 @@ func main() {
 			FetchUserSkill:          infrastructures.userSkill,
 			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
 		},
-		stage.CreateGetCommonActionDetail,
+		explore.CreateGetCommonActionDetail,
 		infrastructures.stageMaster,
-		stage.CreateGetStageActionDetailService,
+		explore.CreateGetStageActionDetailService,
 		endpoint.CreateGetStageActionDetail,
 		functions.validateToken,
 		functions.createContext,
@@ -290,27 +310,16 @@ func main() {
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
 		diContainer.GetAllStage,
-		diContainer.MakeStageUserExplore,
-		diContainer.MakeUserExplore,
 		infrastructures.getTime,
 		endpoint.CreateGetStageList,
-		stage.CreateMakeUserExploreRepositories{
-			GetResource:       infrastructures.getResource,
-			GetAction:         infrastructures.getUserExplore,
-			GetRequiredSkills: infrastructures.fetchRequiredSkill,
-			GetConsumingItems: infrastructures.consumingItem,
-			GetStorage:        infrastructures.fetchStorage,
-			GetUserSkill:      infrastructures.userSkill,
-		},
-		stage.CreateMakeUserExploreFunc,
-		stage.CreateFetchStageDataRepositories{
+		explore.FetchStageDataRepositories{
 			FetchAllStage:             infrastructures.fetchAllStage,
 			FetchUserStageFunc:        infrastructures.fetchUserStage,
 			FetchStageExploreRelation: infrastructures.fetchStageExploreRelation,
-			FetchExploreMaster:        infrastructures.exploreMaster,
+			MakeUserExplore:           nil,
 		},
-		stage.CreateFetchStageData,
-		stage.GetStageList,
+		explore.CreateFetchStageData,
+		explore.GetStageList,
 		functions.validateToken,
 		functions.createContext,
 		writeLogger,
@@ -323,29 +332,14 @@ func main() {
 		writeLogger,
 	)
 	getItemDetail := handler.CreateGetItemDetailHandler(
-		currentTimeEmitter.Get,
-		stage.CreateMakeUserExploreRepositories{
-			GetResource:       infrastructures.getResource,
-			GetAction:         infrastructures.getUserExplore,
-			GetRequiredSkills: infrastructures.fetchRequiredSkill,
-			GetConsumingItems: infrastructures.consumingItem,
-			GetStorage:        infrastructures.fetchStorage,
-			GetUserSkill:      infrastructures.userSkill,
-		},
-		stage.CreateMakeUserExploreFunc,
-		stage.MakeUserExplore,
-		stage.CompensateMakeUserExplore,
-		stage.GetAllItemAction,
-		stage.CreateGetItemDetailRepositories{
-			GetItemMaster:                 infrastructures.fetchItemMaster,
-			GetItemStorage:                infrastructures.fetchStorage,
-			GetExploreMaster:              infrastructures.exploreMaster,
-			GetItemExploreRelation:        infrastructures.fetchItemExploreRelation,
-			CalcBatchConsumingStaminaFunc: functions.calcConsumingStamina,
-			CreateArgs:                    stage.FetchGetItemDetailArgs,
-		},
-		stage.CreateGetItemDetailArgs,
-		stage.CreateGetItemDetailService,
+		infrastructures.fetchItemMaster,
+		infrastructures.fetchStorage,
+		infrastructures.exploreMaster,
+		infrastructures.fetchItemExploreRelation,
+		functions.calcConsumingStamina,
+		functions.makeUserExplore,
+		explore.CreateGenerateGetItemDetailArgs,
+		explore.CreateGetItemDetailService,
 		endpoint.CreateGetItemDetail,
 		functions.validateToken,
 		functions.createContext,
@@ -354,7 +348,7 @@ func main() {
 	getItemList := handler.CreateGetItemListHandler(
 		infrastructures.getAllStorage,
 		infrastructures.fetchItemMaster,
-		stage.CreateGetItemListService,
+		explore.CreateGetItemListService,
 		endpoint.CreateGetItemService,
 		functions.validateToken,
 		functions.createContext,
@@ -362,7 +356,7 @@ func main() {
 	)
 	getItemActionDetail := handler.CreateGetItemActionDetailHandler(
 		functions.calcConsumingStamina,
-		stage.CreateGetCommonActionRepositories{
+		explore.CreateGetCommonActionRepositories{
 			FetchItemStorage:        infrastructures.fetchStorage,
 			FetchExploreMaster:      infrastructures.exploreMaster,
 			FetchEarningItem:        infrastructures.earningItem,
@@ -371,10 +365,10 @@ func main() {
 			FetchUserSkill:          infrastructures.userSkill,
 			FetchRequiredSkillsFunc: infrastructures.fetchRequiredSkill,
 		},
-		stage.CreateGetCommonActionDetail,
+		explore.CreateGetCommonActionDetail,
 		infrastructures.fetchItemMaster,
 		functions.validateToken,
-		stage.CreateGetItemActionDetailService,
+		explore.CreateGetItemActionDetailService,
 		endpoint.CreateGetItemActionDetailEndpoint,
 		functions.createContext,
 		writeLogger,
