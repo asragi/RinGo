@@ -6,7 +6,6 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/test"
-	"reflect"
 	"testing"
 )
 
@@ -66,14 +65,15 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		getItemDetail := CreateGetItemDetailService(
 			mockGenerateArgs,
 		)
-		expectedRes := getUserItemDetailRes{
-			UserId:      v.mockArgs.storageRes.UserId,
-			ItemId:      v.mockArgs.masterRes.ItemId,
-			Price:       v.mockArgs.masterRes.Price,
-			DisplayName: v.mockArgs.masterRes.DisplayName,
-			Description: v.mockArgs.masterRes.Description,
-			MaxStock:    v.mockArgs.masterRes.MaxStock,
-			Stock:       v.mockArgs.storageRes.Stock,
+		expectedRes := &getUserItemDetailRes{
+			UserId:       v.mockArgs.storageRes.UserId,
+			ItemId:       v.mockArgs.masterRes.ItemId,
+			Price:        v.mockArgs.masterRes.Price,
+			DisplayName:  v.mockArgs.masterRes.DisplayName,
+			Description:  v.mockArgs.masterRes.Description,
+			MaxStock:     v.mockArgs.masterRes.MaxStock,
+			Stock:        v.mockArgs.storageRes.Stock,
+			UserExplores: nil,
 		}
 		ctx := test.MockCreateContext()
 		res, err := getItemDetail(ctx, v.req.UserId, v.req.ItemId)
@@ -82,6 +82,30 @@ func TestCreateGetItemDetailService(t *testing.T) {
 		}
 		if !test.DeepEqual(expectedRes, res) {
 			t.Errorf("expect: %+v, got: %+v", expectedRes, res)
+			if expectedRes.UserId != res.UserId {
+				t.Errorf("expect: %s, got: %s", expectedRes.UserId, res.UserId)
+			}
+			if expectedRes.ItemId != res.ItemId {
+				t.Errorf("expect: %s, got: %s", expectedRes.ItemId, res.ItemId)
+			}
+			if expectedRes.Price != res.Price {
+				t.Errorf("expect: %d, got: %d", expectedRes.Price, res.Price)
+			}
+			if expectedRes.DisplayName != res.DisplayName {
+				t.Errorf("expect: %s, got: %s", expectedRes.DisplayName, res.DisplayName)
+			}
+			if expectedRes.Description != res.Description {
+				t.Errorf("expect: %s, got: %s", expectedRes.Description, res.Description)
+			}
+			if expectedRes.MaxStock != res.MaxStock {
+				t.Errorf("expect: %d, got: %d", expectedRes.MaxStock, res.MaxStock)
+			}
+			if expectedRes.Stock != res.Stock {
+				t.Errorf("expect: %d, got: %d", expectedRes.Stock, res.Stock)
+			}
+			if !test.DeepEqual(expectedRes.UserExplores, res.UserExplores) {
+				t.Errorf("expect: %+v, got: %+v", expectedRes.UserExplores, res.UserExplores)
+			}
 		}
 	}
 }
@@ -128,7 +152,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 	}
 
 	for i, v := range testCases {
-		expectedRes := getItemDetailArgs{
+		expectedRes := &getItemDetailArgs{
 			masterRes:          v.mockGetItemMasterRes,
 			storageRes:         v.mockGetItemStorageRes,
 			exploreStaminaPair: v.mockExploreStaminaPair,
@@ -203,21 +227,37 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		if passedStorageArg != req.ItemId {
 			t.Errorf("expect: %s, got: %s", req.ItemId, passedStorageArg)
 		}
-		if !reflect.DeepEqual(passedExploreArgs, v.mockItemExplore) {
+		if !test.DeepEqual(passedExploreArgs, v.mockItemExplore) {
 			t.Errorf("expect: %s, got: %s", v.mockItemExplore, passedExploreArgs)
 		}
 		if passedItemRelationArg != req.ItemId {
 			t.Errorf("expect: %s, got: %s", req.ItemId, passedItemRelationArg)
 		}
-		if !reflect.DeepEqual(passedStaminaArgs, v.mockItemExplore) {
+		if !test.DeepEqual(passedStaminaArgs, v.mockItemExplore) {
 			t.Errorf(
 				"mockReducedStamina args and explore res not matched: mock args: %+v, res: %+v",
 				v.mockItemExplore,
 				passedStaminaArgs,
 			)
 		}
-		if !reflect.DeepEqual(expectedRes, resArgs) {
+		if !test.DeepEqual(expectedRes, resArgs) {
 			t.Errorf("expect:%+v, got:%+v", expectedRes, resArgs)
+			if !test.DeepEqual(expectedRes.masterRes, resArgs.masterRes) {
+				t.Errorf("masterRes expect: %+v, got: %+v", expectedRes.masterRes, resArgs.masterRes)
+			}
+			if !test.DeepEqual(expectedRes.storageRes, resArgs.storageRes) {
+				t.Errorf("storageRes expect: %+v, got: %+v", expectedRes.storageRes, resArgs.storageRes)
+			}
+			if !test.DeepEqual(expectedRes.exploreStaminaPair, resArgs.exploreStaminaPair) {
+				t.Errorf(
+					"exploreStaminaPair expect: %+v, got: %+v",
+					expectedRes.exploreStaminaPair,
+					resArgs.exploreStaminaPair,
+				)
+			}
+			if !test.DeepEqual(expectedRes.explores, resArgs.explores) {
+				t.Errorf("explores expect: %+v, got: %+v", expectedRes.explores, resArgs.explores)
+			}
 		}
 	}
 }

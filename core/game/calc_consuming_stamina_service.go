@@ -17,7 +17,6 @@ type CalcConsumingStaminaFunc func(
 	[]ExploreId,
 ) ([]*ExploreStaminaPair, error)
 
-// TODO: separate fetch functions and calc functions
 func CreateCalcConsumingStaminaService(
 	fetchUserSkills FetchUserSkillFunc,
 	fetchExploreMaster FetchExploreMasterFunc,
@@ -97,24 +96,25 @@ func CreateCalcConsumingStaminaService(
 		}(allSkillsMap, reductionSkillMap)
 
 		result := func(
+			idArr []ExploreId,
 			exploreMap map[ExploreId]GetExploreMasterRes,
 			reductionSkillMap map[ExploreId][]*UserSkillRes,
 		) []*ExploreStaminaPair {
 			result := make([]*ExploreStaminaPair, len(exploreMap))
 			index := 0
-			for k, v := range exploreMap {
-				explore := v
+			for _, v := range idArr {
+				explore := exploreMap[v]
 				baseStamina := explore.ConsumingStamina
 				reducibleRate := explore.StaminaReducibleRate
-				stamina := CalcStaminaReduction(baseStamina, reducibleRate, reductionSkillMap[k])
+				stamina := CalcStaminaReduction(baseStamina, reducibleRate, reductionSkillMap[v])
 				result[index] = &ExploreStaminaPair{
-					ExploreId:      k,
+					ExploreId:      v,
 					ReducedStamina: stamina,
 				}
 				index++
 			}
 			return result
-		}(exploreMap, reductionSkillResMap)
+		}(exploreIds, exploreMap, reductionSkillResMap)
 		return result, nil
 	}
 }

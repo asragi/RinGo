@@ -130,10 +130,19 @@ func TestGetAllStage(t *testing.T) {
 		},
 	}
 
-	mockUserExplore := game.UserExplore{
-		DisplayName: "MockText",
-		IsKnown:     false,
-		IsPossible:  true,
+	mockUserExplore := []*game.UserExplore{
+		{
+			ExploreId:   exploreIds[0],
+			DisplayName: "MockText",
+			IsKnown:     false,
+			IsPossible:  true,
+		},
+		{
+			ExploreId:   exploreIds[1],
+			DisplayName: "MockText1",
+			IsKnown:     false,
+			IsPossible:  true,
+		},
 	}
 
 	testCases := []testCase{
@@ -145,25 +154,13 @@ func TestGetAllStage(t *testing.T) {
 				stageExplores:      stageExplores,
 				exploreStaminaPair: exploreStaminaPair,
 				explores:           exploreMasters,
+				mockUserExplore:    mockUserExplore,
 			},
 			expect: []StageInformation{
 				{
-					StageId: stageIds[0],
-					IsKnown: true,
-					UserExplores: []*game.UserExplore{
-						{
-							ExploreId:   exploreIds[0],
-							DisplayName: mockUserExplore.DisplayName,
-							IsKnown:     mockUserExplore.IsKnown,
-							IsPossible:  mockUserExplore.IsPossible,
-						},
-						{
-							ExploreId:   exploreIds[1],
-							DisplayName: mockUserExplore.DisplayName,
-							IsKnown:     mockUserExplore.IsKnown,
-							IsPossible:  mockUserExplore.IsPossible,
-						},
-					},
+					StageId:      stageIds[0],
+					IsKnown:      true,
+					UserExplores: mockUserExplore,
 				},
 				{
 					StageId:      stageIds[1],
@@ -202,7 +199,7 @@ func TestGetAllStage(t *testing.T) {
 			if len(exp.UserExplores) != len(w.UserExplores) {
 				t.Fatalf("case: %d-%d, expect: %d, got %d", i, j, len(exp.UserExplores), len(w.UserExplores))
 			}
-			if test.DeepEqual(exp.UserExplores, w.UserExplores) {
+			if !test.DeepEqual(exp.UserExplores, w.UserExplores) {
 				t.Errorf("case: %d-%d, expect: %+v, got: %+v", i, j, exp.UserExplores, w.UserExplores)
 			}
 		}
