@@ -12,8 +12,9 @@ import (
 
 func TestGetStageList(t *testing.T) {
 	type testCase struct {
-		mockExplore     []*game.UserExplore
-		mockInformation []*StageInformation
+		mockExplore         []*game.UserExplore
+		mockInformation     []*StageInformation
+		mockGetAllStageArgs *getAllStageArgs
 	}
 
 	testCases := []testCase{
@@ -30,43 +31,19 @@ func TestGetStageList(t *testing.T) {
 	for _, v := range testCases {
 		userId := core.UserId("passedId")
 
-		createCompensatedMakeUserExplore := func(
-			_ *game.CompensatedMakeUserExploreArgs,
-			_ core.GetCurrentTimeFunc,
-			_ int,
-			makeUserExplore game.OldMakeUserExploreFunc,
-		) game.compensatedMakeUserExploreFunc {
-			f := func(*game.makeUserExploreArgs) []*game.UserExplore {
-				return makeUserExplore(&game.makeUserExploreArrayArgs{})
-			}
-
-			return f
-		}
-		fetchMakeUserExploreArgs := func(context.Context, core.UserId, []game.ExploreId) (
-			*game.CompensatedMakeUserExploreArgs,
-			error,
-		) {
-			return &game.CompensatedMakeUserExploreArgs{}, nil
-		}
-		makeUserExploreFunc := func(*game.makeUserExploreArrayArgs) []*game.UserExplore {
-			return v.mockExplore
-		}
-		getAllStageFunc := func(*getAllStageArgs, game.compensatedMakeUserExploreFunc) []*StageInformation {
+		getAllStageFunc := func(*getAllStageArgs) []*StageInformation {
 			return v.mockInformation
 		}
 		fetchStageData := func(context.Context, core.UserId) (*getAllStageArgs, error) {
-			return &getAllStageArgs{}, nil
+			return v.mockGetAllStageArgs, nil
 		}
 		getStageListFunc := GetStageList(
-			createCompensatedMakeUserExplore,
-			fetchMakeUserExploreArgs,
-			makeUserExploreFunc,
 			getAllStageFunc,
 			fetchStageData,
 		)
 
 		ctx := test.MockCreateContext()
-		res, _ := getStageListFunc(ctx, userId, nil)
+		res, _ := getStageListFunc(ctx, userId, test.MockTime)
 		if !reflect.DeepEqual(v.mockInformation, res) {
 			t.Errorf("expect: %+v, got: %+v", v.mockInformation, res)
 		}
@@ -81,13 +58,12 @@ func TestGetAllStage(t *testing.T) {
 		stageExplores      []*StageExploreIdPairRow
 		exploreStaminaPair []game.ExploreStaminaPair
 		explores           []*game.GetExploreMasterRes
-		makeUserExplore    game.compensatedMakeUserExploreFunc
+		mockUserExplore    []*game.UserExplore
 	}
 
 	type testCase struct {
-		request          request
-		expect           []StageInformation
-		expectPassedArgs game.makeUserExploreArgs
+		request request
+		expect  []StageInformation
 	}
 	stageIds := []StageId{"stageA", "stageB"}
 	stageMasters := []*StageMaster{
@@ -160,21 +136,6 @@ func TestGetAllStage(t *testing.T) {
 		IsPossible:  true,
 	}
 
-	var passedArgs *game.makeUserExploreArgs
-	mockMakeUserExplores := func(args *game.makeUserExploreArgs) []*game.UserExplore {
-		passedArgs = args
-		result := make([]*game.UserExplore, len(args.exploreIds))
-		for i, v := range args.exploreIds {
-			result[i] = &game.UserExplore{
-				ExploreId:   v,
-				DisplayName: mockUserExplore.DisplayName,
-				IsKnown:     mockUserExplore.IsKnown,
-				IsPossible:  mockUserExplore.IsPossible,
-			}
-		}
-		return result
-	}
-
 	testCases := []testCase{
 		{
 			request: request{
@@ -184,7 +145,6 @@ func TestGetAllStage(t *testing.T) {
 				stageExplores:      stageExplores,
 				exploreStaminaPair: exploreStaminaPair,
 				explores:           exploreMasters,
-				makeUserExplore:    mockMakeUserExplores,
 			},
 			expect: []StageInformation{
 				{
@@ -211,9 +171,6 @@ func TestGetAllStage(t *testing.T) {
 					UserExplores: []*game.UserExplore{},
 				},
 			},
-			expectPassedArgs: game.makeUserExploreArgs{
-				exploreIds: exploreIds,
-			},
 		},
 	}
 
@@ -228,15 +185,13 @@ func TestGetAllStage(t *testing.T) {
 		}(req.explores)
 		res := getAllStage(
 			&getAllStageArgs{
-				req.stageIds,
-				req.stageMaster,
-				req.userStageData,
-				req.stageExplores,
-				req.exploreStaminaPair,
-				req.explores,
-				exploreIds,
+				stageId:        req.stageIds,
+				allStageRes:    req.stageMaster,
+				userStageRes:   req.userStageData,
+				stageExploreId: req.stageExplores,
+				exploreId:      exploreIds,
+				userExplore:    req.mockUserExplore,
 			},
-			req.makeUserExplore,
 		)
 
 		for j, w := range res {
@@ -247,21 +202,9 @@ func TestGetAllStage(t *testing.T) {
 			if len(exp.UserExplores) != len(w.UserExplores) {
 				t.Fatalf("case: %d-%d, expect: %d, got %d", i, j, len(exp.UserExplores), len(w.UserExplores))
 			}
-			for k, x := range w.UserExplores {
-				expectedExplore := exp.UserExplores[k]
-				if x.ExploreId != expectedExplore.ExploreId {
-					t.Errorf("case: %d-%d-%d, expect: %s, got: %s", i, j, k, x.ExploreId, expectedExplore.ExploreId)
-				}
-				if x.IsKnown != expectedExplore.IsKnown {
-					t.Errorf("case: %d-%d-%d, expect: %t, got: %t", i, j, k, x.IsKnown, expectedExplore.IsKnown)
-				}
-				if x.IsPossible != expectedExplore.IsPossible {
-					t.Errorf("case: %d-%d-%d, expect: %t, got: %t", i, j, k, x.IsPossible, expectedExplore.IsPossible)
-				}
+			if test.DeepEqual(exp.UserExplores, w.UserExplores) {
+				t.Errorf("case: %d-%d, expect: %+v, got: %+v", i, j, exp.UserExplores, w.UserExplores)
 			}
-		}
-		if len(v.expectPassedArgs.exploreIds) != len(passedArgs.exploreIds) {
-			t.Errorf("case: %d, expect: %d, got: %d", i, len(v.expectPassedArgs.exploreIds), len(passedArgs.exploreIds))
 		}
 	}
 }

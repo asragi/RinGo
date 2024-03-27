@@ -50,6 +50,18 @@ type ItemStock struct {
 	IsKnown    core.IsKnown
 }
 
+func totalItemToItemStock(totalItems []*totalItem) []*ItemStock {
+	result := make([]*ItemStock, len(totalItems))
+	for i, v := range totalItems {
+		result[i] = &ItemStock{
+			ItemId:     v.ItemId,
+			AfterStock: v.Stock,
+			IsKnown:    true,
+		}
+	}
+	return result
+}
+
 type UpdateItemStorageFunc func(context.Context, core.UserId, []*ItemStock) error
 
 type SkillMaster struct {

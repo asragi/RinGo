@@ -3,121 +3,85 @@ package explore
 import (
 	"context"
 	"errors"
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/test"
 	"reflect"
 	"testing"
-	"time"
-
-	"github.com/asragi/RinGo/core"
 )
 
 func TestCreateGetItemDetailService(t *testing.T) {
 	type testCase struct {
-		req                 GetUserItemDetailReq
-		expectedErr         error
-		mockTime            time.Time
-		mockExplore         []*game.UserExplore
-		mockArgs            getItemDetailArgs
-		mockCompensatedArgs *game.CompensatedMakeUserExploreArgs
+		req         GetUserItemDetailReq
+		expectedErr error
+		mockArgs    getItemDetailArgs
 	}
 
+	userId := core.UserId("user")
+	itemId := core.ItemId("item")
+	exploreId := game.ExploreId("explore")
 	testCases := []testCase{
 		{
 			req: GetUserItemDetailReq{
-				UserId: "",
-				ItemId: "",
+				UserId: userId,
+				ItemId: itemId,
 			},
 			expectedErr: nil,
-			mockTime:    test.MockTime(),
-			mockExplore: nil,
 			mockArgs: getItemDetailArgs{
 				masterRes: &game.GetItemMasterRes{
-					ItemId:      "",
-					Price:       0,
-					DisplayName: "",
-					Description: "",
-					MaxStock:    0,
+					ItemId:      itemId,
+					Price:       111,
+					DisplayName: "display_name",
+					Description: "desc",
+					MaxStock:    222,
 				},
 				storageRes: &game.StorageData{
-					UserId: "",
-					Stock:  0,
+					UserId: userId,
+					Stock:  120,
 				},
-				exploreStaminaPair: nil,
-				explores:           nil,
+				exploreStaminaPair: []*game.ExploreStaminaPair{
+					{
+						ExploreId:      exploreId,
+						ReducedStamina: 10,
+					},
+				},
+				explores: []*game.GetExploreMasterRes{
+					{
+						ExploreId:            exploreId,
+						DisplayName:          "explore_name",
+						Description:          "explore_desc",
+						ConsumingStamina:     20,
+						RequiredPayment:      90,
+						StaminaReducibleRate: 0.4,
+					},
+				},
 			},
-			mockCompensatedArgs: nil,
 		},
 	}
 
 	for _, v := range testCases {
-		timer := func() time.Time {
-			return v.mockTime
-		}
-		createArgs := func(
-			context.Context,
-			GetUserItemDetailReq,
-		) (getItemDetailArgs, error) {
-			return v.mockArgs, nil
-		}
-		getAllItem := func(
-			[]*game.ExploreStaminaPair,
-			[]*game.GetExploreMasterRes,
-			game.compensatedMakeUserExploreFunc,
-		) []*game.UserExplore {
-			return v.mockExplore
-		}
-		makeUserExplore := func(args *game.makeUserExploreArrayArgs) []*game.UserExplore {
-			return v.mockExplore
-		}
-		var passedExploreIds []game.ExploreId
-		fetchUserExploreArgs := func(
-			ctx context.Context,
-			id core.UserId,
-			ids []game.ExploreId,
-		) (*game.CompensatedMakeUserExploreArgs, error) {
-			passedExploreIds = ids
-			return v.mockCompensatedArgs, nil
-		}
-		compensatedMakeUserExplore := func(
-			repoArgs *game.CompensatedMakeUserExploreArgs,
-			currentTimer core.GetCurrentTimeFunc,
-			execNum int,
-			makeUserExplore game.OldMakeUserExploreFunc,
-		) game.compensatedMakeUserExploreFunc {
-			return func(*game.makeUserExploreArgs) []*game.UserExplore {
-				return v.mockExplore
-			}
+		mockGenerateArgs := func(ctx context.Context, id core.UserId, itemId core.ItemId) (*getItemDetailArgs, error) {
+			return &v.mockArgs, nil
 		}
 		getItemDetail := CreateGetItemDetailService(
-			timer,
-			createArgs,
-			getAllItem,
-			makeUserExplore,
-			fetchUserExploreArgs,
-			compensatedMakeUserExplore,
+			mockGenerateArgs,
 		)
-		expectedPassedExploreIds := game.UserExploreToIdArray(v.mockExplore)
 		expectedRes := getUserItemDetailRes{
-			UserId:       v.mockArgs.storageRes.UserId,
-			ItemId:       v.mockArgs.masterRes.ItemId,
-			Price:        v.mockArgs.masterRes.Price,
-			DisplayName:  v.mockArgs.masterRes.DisplayName,
-			Description:  v.mockArgs.masterRes.Description,
-			MaxStock:     v.mockArgs.masterRes.MaxStock,
-			Stock:        v.mockArgs.storageRes.Stock,
-			UserExplores: v.mockExplore,
+			UserId:      v.mockArgs.storageRes.UserId,
+			ItemId:      v.mockArgs.masterRes.ItemId,
+			Price:       v.mockArgs.masterRes.Price,
+			DisplayName: v.mockArgs.masterRes.DisplayName,
+			Description: v.mockArgs.masterRes.Description,
+			MaxStock:    v.mockArgs.masterRes.MaxStock,
+			Stock:       v.mockArgs.storageRes.Stock,
 		}
 		ctx := test.MockCreateContext()
-		res, err := getItemDetail(ctx, v.req)
+		res, err := getItemDetail(ctx, v.req.UserId, v.req.ItemId)
 		if !errors.Is(err, v.expectedErr) {
 			t.Errorf("expect: %s, got: %s", v.expectedErr.Error(), err.Error())
 		}
 		if !test.DeepEqual(expectedRes, res) {
 			t.Errorf("expect: %+v, got: %+v", expectedRes, res)
-		}
-		if !test.DeepEqual(passedExploreIds, expectedPassedExploreIds) {
-			t.Errorf("expect: %+v, got: %+v", expectedPassedExploreIds, passedExploreIds)
 		}
 	}
 }
@@ -131,6 +95,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		mockGetExploreRes      []*game.GetExploreMasterRes
 		mockItemExplore        []game.ExploreId
 		mockExploreStaminaPair []*game.ExploreStaminaPair
+		mockUserExplore        []*game.UserExplore
 	}
 
 	userId := core.UserId("user")
@@ -205,17 +170,25 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 			passedItemRelationArg = itemId
 			return v.mockItemExplore, nil
 		}
+		mockMakeUserExplore := func(
+			ctx context.Context,
+			id core.UserId,
+			exploreIds []game.ExploreId,
+			execNum int,
+		) ([]*game.UserExplore, error) {
+			return v.mockUserExplore, nil
+		}
 		req := v.request
 		ctx := test.MockCreateContext()
-		res, err := CreateGenerateGetItemDetailArgs(
-			ctx,
-			v.request,
+		generateGetItemDetailArgs := CreateGenerateGetItemDetailArgs(
 			mockGetItemMaster,
 			mockGetItemStorage,
 			mockExploreMaster,
 			mockItemExplore,
 			consumingStamina,
+			mockMakeUserExplore,
 		)
+		resArgs, err := generateGetItemDetailArgs(ctx, req.UserId, req.ItemId)
 		if !errors.Is(err, v.expectedError) {
 			t.Fatalf(
 				"case: %d, expect error is: %s, got: %s",
@@ -243,8 +216,8 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 				passedStaminaArgs,
 			)
 		}
-		if !reflect.DeepEqual(expectedRes, res) {
-			t.Errorf("expect:%+v, got:%+v", expectedRes, res)
+		if !reflect.DeepEqual(expectedRes, resArgs) {
+			t.Errorf("expect:%+v, got:%+v", expectedRes, resArgs)
 		}
 	}
 }

@@ -193,17 +193,7 @@ func CreatePostAction(
 
 		skillGrowth := calcSkillGrowth(args.execCount, args.skillGrowthList)
 		applySkillGrowth := calcGrowthApply(args.skillsRes.Skills, skillGrowth)
-		skillGrowthReq := func(skillGrowth []*growthApplyResult) []*SkillGrowthPostRow {
-			result := make([]*SkillGrowthPostRow, len(skillGrowth))
-			for i, v := range skillGrowth {
-				result[i] = &SkillGrowthPostRow{
-					UserId:   userId,
-					SkillId:  v.SkillId,
-					SkillExp: v.AfterExp,
-				}
-			}
-			return result
-		}(applySkillGrowth)
+		skillGrowthReq := convertToSkillGrowthPost(userId, applySkillGrowth)
 
 		earnedItems := calcEarnedItem(args.execCount, args.earningItemData, random)
 		consumedItems := calcConsumedItem(args.execCount, args.consumingItemData, random)
@@ -213,17 +203,7 @@ func CreatePostAction(
 			earnedItems,
 			consumedItems,
 		)
-		itemStockReq := func(totalItems []*totalItem) []*ItemStock {
-			result := make([]*ItemStock, len(totalItems))
-			for i, v := range totalItems {
-				result[i] = &ItemStock{
-					ItemId:     v.ItemId,
-					AfterStock: v.Stock,
-					IsKnown:    true,
-				}
-			}
-			return result
-		}(calculatedTotalItem)
+		itemStockReq := totalItemToItemStock(calculatedTotalItem)
 
 		currentStaminaRecoverTime := args.userResources.StaminaRecoverTime
 		requiredStamina := validateActionArgs.requiredStamina
@@ -276,40 +256,7 @@ func CreatePostAction(
 			afterFund core.Fund,
 			afterStamina core.StaminaRecoverTime,
 		) PostActionResult {
-			skillMasterMap := func() map[core.SkillId]*SkillMaster {
-				result := map[core.SkillId]*SkillMaster{}
-				for _, v := range skillMaster {
-					result[v.SkillId] = v
-				}
-				return result
-			}()
-			skillGrowthMap := func() map[core.SkillId]*growthApplyResult {
-				result := map[core.SkillId]*growthApplyResult{}
-				for _, v := range skillGrowth {
-					result[v.SkillId] = v
-				}
-				return result
-			}()
-			idArr := func() map[int]core.SkillId {
-				result := map[int]core.SkillId{}
-				for i, v := range skillMaster {
-					result[i] = v.SkillId
-				}
-				return result
-			}()
-			growthInfo := func() []*skillGrowthInformation {
-				result := make([]*skillGrowthInformation, len(idArr))
-				for i := 0; i < len(idArr); i++ {
-					id := idArr[i]
-					master := skillMasterMap[id]
-					growth := skillGrowthMap[id]
-					result[i] = &skillGrowthInformation{
-						DisplayName:  master.DisplayName,
-						GrowthResult: growth,
-					}
-				}
-				return result
-			}()
+			growthInfo := convertToGrowthInfo(skillMaster, skillGrowth)
 			return PostActionResult{
 				EarnedItems:            earnedItem,
 				ConsumedItems:          consumedItem,
@@ -327,4 +274,54 @@ func CreatePostAction(
 		)
 		return &postResult, nil
 	}
+}
+
+func convertToGrowthInfo(
+	skillMaster []*SkillMaster,
+	skillGrowth []*growthApplyResult,
+) []*skillGrowthInformation {
+	idArr := func(skillMaster []*SkillMaster) map[int]core.SkillId {
+		result := map[int]core.SkillId{}
+		for i, v := range skillMaster {
+			result[i] = v.SkillId
+		}
+		return result
+	}(skillMaster)
+	skillMasterMap := func(skillMaster []*SkillMaster) map[core.SkillId]*SkillMaster {
+		result := map[core.SkillId]*SkillMaster{}
+		for _, v := range skillMaster {
+			result[v.SkillId] = v
+		}
+		return result
+	}(skillMaster)
+	skillGrowthMap := func(skillGrowth []*growthApplyResult) map[core.SkillId]*growthApplyResult {
+		result := map[core.SkillId]*growthApplyResult{}
+		for _, v := range skillGrowth {
+			result[v.SkillId] = v
+		}
+		return result
+	}(skillGrowth)
+	result := make([]*skillGrowthInformation, len(idArr))
+	for i := 0; i < len(idArr); i++ {
+		id := idArr[i]
+		master := skillMasterMap[id]
+		growth := skillGrowthMap[id]
+		result[i] = &skillGrowthInformation{
+			DisplayName:  master.DisplayName,
+			GrowthResult: growth,
+		}
+	}
+	return result
+}
+
+func convertToSkillGrowthPost(userId core.UserId, skillGrowth []*growthApplyResult) []*SkillGrowthPostRow {
+	result := make([]*SkillGrowthPostRow, len(skillGrowth))
+	for i, v := range skillGrowth {
+		result[i] = &SkillGrowthPostRow{
+			UserId:   userId,
+			SkillId:  v.SkillId,
+			SkillExp: v.AfterExp,
+		}
+	}
+	return result
 }
