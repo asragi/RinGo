@@ -26,6 +26,14 @@ type GetItemMasterRes struct {
 	MaxStock    core.MaxStock    `db:"max_stock" json:"max_stock"`
 }
 
+func ItemMasterResToMap(res []*GetItemMasterRes) map[core.ItemId]*GetItemMasterRes {
+	result := make(map[core.ItemId]*GetItemMasterRes)
+	for _, v := range res {
+		result[v.ItemId] = v
+	}
+	return result
+}
+
 type FetchItemMasterFunc func(context.Context, []core.ItemId) ([]*GetItemMasterRes, error)
 
 type StorageData struct {
@@ -40,6 +48,25 @@ type BatchGetStorageRes struct {
 	ItemData []*StorageData
 }
 
+func StorageDataToMap(res []*BatchGetStorageRes) map[core.UserId]map[core.ItemId]*StorageData {
+	result := make(map[core.UserId]map[core.ItemId]*StorageData)
+	for _, v := range res {
+		result[v.UserId] = make(map[core.ItemId]*StorageData)
+		for _, item := range v.ItemData {
+			result[v.UserId][item.ItemId] = item
+		}
+	}
+	return result
+}
+
+type UserItemPair struct {
+	UserId core.UserId `db:"user_id"`
+	ItemId core.ItemId `db:"item_id"`
+}
+
+type FetchBatchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
+
+// Deprecated: use FetchBatchStorageFunc
 type FetchStorageFunc func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
 
 type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)

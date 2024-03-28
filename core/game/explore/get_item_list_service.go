@@ -58,13 +58,7 @@ func CreateGetItemListService(
 			}
 			return result
 		}(storages)
-		masterMap := func(itemMaster []*game.GetItemMasterRes) map[core.ItemId]*game.GetItemMasterRes {
-			result := map[core.ItemId]*game.GetItemMasterRes{}
-			for _, v := range itemMaster {
-				result[v.ItemId] = v
-			}
-			return result
-		}(itemMaster)
+		masterMap := game.ItemMasterResToMap(itemMaster)
 		itemList := func(
 			items []core.ItemId,
 			itemMasterMap map[core.ItemId]*game.GetItemMasterRes,

@@ -17,11 +17,16 @@ func CreateUpdateShelfSize(
 	fetchSizeToAction FetchSizeToActionRepoFunc,
 	updateShelf UpdateShelfSizeRepoFunc,
 	postAction game.PostActionFunc,
+	validateUpdateShelfSize ValidateUpdateShelfSizeFunc,
 	transaction core.TransactionFunc,
 ) UpdateShelfSizeFunc {
 	return func(ctx context.Context, userId core.UserId, targetShelfSize Size) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("updating shelf size: %w", err)
+		}
+		err := validateUpdateShelfSize(ctx, userId, targetShelfSize)
+		if err != nil {
+			return handleError(err)
 		}
 		exploreId, err := fetchSizeToAction(ctx, targetShelfSize)
 		if err != nil {
