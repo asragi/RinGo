@@ -48,6 +48,24 @@ type BatchGetStorageRes struct {
 	ItemData []*StorageData
 }
 
+func FindItemStorageData(data []*StorageData, itemId core.ItemId) *StorageData {
+	for _, v := range data {
+		if v.ItemId == itemId {
+			return v
+		}
+	}
+	return nil
+}
+
+func FindStorageData(res []*BatchGetStorageRes, userId core.UserId) *BatchGetStorageRes {
+	for _, v := range res {
+		if v.UserId == userId {
+			return v
+		}
+	}
+	return nil
+}
+
 func StorageDataToMap(res []*BatchGetStorageRes) map[core.UserId]map[core.ItemId]*StorageData {
 	result := make(map[core.UserId]map[core.ItemId]*StorageData)
 	for _, v := range res {
@@ -170,6 +188,14 @@ type StaminaReductionSkillPair struct {
 }
 
 type FetchReductionStaminaSkillFunc func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error)
+
+func ReductionStaminaSkillToMap(res []*StaminaReductionSkillPair) map[ExploreId][]core.SkillId {
+	result := make(map[ExploreId][]core.SkillId)
+	for _, v := range res {
+		result[v.ExploreId] = append(result[v.ExploreId], v.SkillId)
+	}
+	return result
+}
 
 type EarningItem struct {
 	ItemId      core.ItemId `db:"item_id"`

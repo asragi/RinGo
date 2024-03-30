@@ -23,8 +23,8 @@ type UserName string
 
 type Fund int
 
-func (f Fund) CheckIsFundEnough(price Price) bool {
-	return int(f) >= int(price)
+func (f Fund) CheckIsFundEnough(cost Cost) bool {
+	return int(f) >= int(cost)
 }
 
 func (f Fund) ReduceFund(reducePrice Price) Fund {
@@ -39,6 +39,12 @@ type Stamina int
 
 func (s Stamina) Multiply(value int) Stamina {
 	return Stamina(int(s) * value)
+}
+
+type StaminaCost int
+
+func (s Stamina) CheckIsStaminaEnough(cost StaminaCost) bool {
+	return int(s) >= int(cost)
 }
 
 type MaxStamina int
@@ -81,14 +87,26 @@ func (id ItemId) ToString() string {
 	return string(id)
 }
 
-type Price int
+type current int
+type Price current
 
-func (p Price) Multiply(value int) Price {
-	return Price(int(p) * value)
+func (p Price) Multiply(num PurchaseNum) Cost {
+	return Cost(int(p) * int(num))
 }
+
+type PurchaseNum current
+type Cost current
 
 type MaxStock int
 type Count int
+
+func CheckIsStockEnough(stock Stock, num PurchaseNum) bool {
+	return stock >= Stock(num)
+}
+
+func CheckIsStockOver(stock Stock, num PurchaseNum, maxCount MaxStock) bool {
+	return int(stock)+int(num) > int(maxCount)
+}
 
 // item user
 type Stock int

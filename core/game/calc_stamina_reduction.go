@@ -2,13 +2,13 @@ package game
 
 import "github.com/asragi/RinGo/core"
 
-type CalcStaminaReductionFunc func(core.Stamina, StaminaReducibleRate, []*UserSkillRes) core.Stamina
+type CalcStaminaReductionFunc func(core.StaminaCost, StaminaReducibleRate, []*UserSkillRes) core.StaminaCost
 
 func CalcStaminaReduction(
-	baseStamina core.Stamina,
+	baseStamina core.StaminaCost,
 	reducibleRate StaminaReducibleRate,
 	reductionSkills []*UserSkillRes,
-) core.Stamina {
+) core.StaminaCost {
 	skillLvs := func(skills []*UserSkillRes) []core.SkillLv {
 		result := make([]core.SkillLv, len(skills))
 		for i, v := range skills {

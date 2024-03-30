@@ -32,7 +32,7 @@ type (
 
 func shelvesToItemIds(shelves []*ShelfRepoRow) []core.ItemId {
 	checked := map[core.ItemId]struct{}{}
-	var itemIds = []core.ItemId{}
+	var itemIds []core.ItemId
 	for _, shelf := range shelves {
 		if _, ok := checked[shelf.ItemId]; ok {
 			continue
@@ -65,4 +65,17 @@ func shelfRowToUserItemPair(shelf []*ShelfRepoRow) []*game.UserItemPair {
 		)
 	}
 	return userItemPairs
+}
+
+func findShelfRow(shelves []*ShelfRepoRow, userId core.UserId, index Index) *ShelfRepoRow {
+	for _, shelf := range shelves {
+		if shelf.UserId != userId {
+			continue
+		}
+		if shelf.Index != index {
+			continue
+		}
+		return shelf
+	}
+	return nil
 }

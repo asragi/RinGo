@@ -22,11 +22,11 @@ type ExploreId string
 
 type StaminaReducibleRate float64
 
-func ApplyReduction(s core.Stamina, reductionRate float64, reducibleRate StaminaReducibleRate) core.Stamina {
+func ApplyReduction(s core.StaminaCost, reductionRate float64, reducibleRate StaminaReducibleRate) core.StaminaCost {
 	constStamina := float64(s) * (1.0 - float64(reducibleRate))
 	varyStamina := float64(s) * reductionRate * float64(reducibleRate)
 	staminaRounded := int(math.Max(1, math.Round(constStamina+varyStamina)))
-	return core.Stamina(staminaRounded)
+	return core.StaminaCost(staminaRounded)
 }
 
 type EarningProb float32
