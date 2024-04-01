@@ -29,13 +29,13 @@ func CreateUpdateShelfContent(
 		handleError := func(err error) error {
 			return fmt.Errorf("updating shelf content: %w", err)
 		}
-		err := validateUpdateShelfContent(ctx, userId, itemId, index)
-		if err != nil {
-			return handleError(err)
-		}
-		err = transaction(
+		err := transaction(
 			ctx, func(ctx context.Context) error {
-				txErr := updateShelfContent(ctx, userId, itemId, setPrice, index)
+				txErr := validateUpdateShelfContent(ctx, userId, itemId, index)
+				if txErr != nil {
+					return handleError(txErr)
+				}
+				txErr = updateShelfContent(ctx, userId, itemId, setPrice, index)
 				if txErr != nil {
 					return txErr
 				}

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"time"
 )
@@ -27,9 +28,16 @@ func (f Fund) CheckIsFundEnough(cost Cost) bool {
 	return int(f) >= int(cost)
 }
 
-func (f Fund) ReduceFund(reducePrice Price) Fund {
-	afterValue := int(f) - int(reducePrice)
-	return Fund(int(math.Max(0, float64(afterValue))))
+func (f Fund) AddFund(profit Profit) Fund {
+	return Fund(int(f) + int(profit))
+}
+
+func (f Fund) ReduceFund(cost Cost) (Fund, error) {
+	afterValue := int(f) - int(cost)
+	if afterValue < 0 {
+		return Fund(0), fmt.Errorf("fund will be less than 0: (fund: %d, cost: %d)", int(f), int(cost))
+	}
+	return Fund(int(math.Max(0, float64(afterValue)))), nil
 }
 
 // 1 point equals to 30 sec.
@@ -90,29 +98,40 @@ func (id ItemId) ToString() string {
 type current int
 type Price current
 
-func (p Price) Multiply(num PurchaseNum) Cost {
+func (p Price) CalculateCost(num Count) Cost {
 	return Cost(int(p) * int(num))
 }
 
-type PurchaseNum current
+func (p Price) CalculateProfit(num Count) Profit {
+	return Profit(int(p) * int(num))
+}
+
 type Cost current
+type Profit current
 
 type MaxStock int
 type Count int
 
-func CheckIsStockEnough(stock Stock, num PurchaseNum) bool {
+func CheckIsStockEnough(stock Stock, num Count) bool {
 	return stock >= Stock(num)
 }
 
-func CheckIsStockOver(stock Stock, num PurchaseNum, maxCount MaxStock) bool {
+func CheckIsStockOver(stock Stock, num Count, maxCount MaxStock) bool {
 	return int(stock)+int(num) > int(maxCount)
 }
 
 // item user
 type Stock int
 
-func (s Stock) Apply(count Count, max MaxStock) Stock {
+func (s Stock) AddStock(count Count, max MaxStock) Stock {
 	return Stock(math.Max(0, math.Min(float64(s)+float64(count), float64(max))))
+}
+
+func (s Stock) SubStock(count Count) (Stock, error) {
+	if s < Stock(count) {
+		return Stock(0), fmt.Errorf("stock will be less than 0: (stock: %d, count: %d)", int(s), int(count))
+	}
+	return Stock(math.Max(0, float64(s)-float64(count))), nil
 }
 
 func (s Stock) Multiply(value int) Stock {

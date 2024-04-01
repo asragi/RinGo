@@ -12,14 +12,17 @@ type ValidatePurchaseFunc func(
 	userId core.UserId,
 	targetUserId core.UserId,
 	index Index,
-	num core.PurchaseNum,
+	num core.Count,
 ) (*ValidateResult, error)
 
 type ValidateResult struct {
+	ItemId             core.ItemId
 	UserStock          core.Stock
 	TargetUserStock    core.Stock
-	PurchaseNum        core.PurchaseNum
+	PurchaseCount      core.Count
+	MaxStock           core.MaxStock
 	TotalCost          core.Cost
+	Profit             core.Profit
 	UserFund           core.Fund
 	ReducedStaminaCost core.StaminaCost
 }
@@ -42,7 +45,7 @@ func CreateValidatePurchase(
 		userId core.UserId,
 		targetUserId core.UserId,
 		index Index,
-		num core.PurchaseNum,
+		num core.Count,
 	) (*ValidateResult, error) {
 		handleError := func(err error) (*ValidateResult, error) {
 			return nil, fmt.Errorf("validating purchase: %w", err)
@@ -116,7 +119,7 @@ func CreateValidatePurchase(
 		userResource, err := fetchUserResource(ctx, userId)
 		userFund := userResource.Fund
 		price := itemMaster[0].Price
-		cost := price.Multiply(num)
+		cost := price.CalculateCost(num)
 		isFundEnough := userFund.CheckIsFundEnough(cost)
 		if !isFundEnough {
 			return handleError(
@@ -128,6 +131,7 @@ func CreateValidatePurchase(
 				),
 			)
 		}
+		profit := price.CalculateProfit(num)
 
 		reductionSkillsRes, err := fetchReductionStaminaSkill(ctx, []game.ExploreId{purchaseExploreId})
 		if err != nil {
@@ -149,9 +153,13 @@ func CreateValidatePurchase(
 			return handleError(fmt.Errorf("stamina not enough"))
 		}
 		return &ValidateResult{
+			ItemId:             targetItemId,
 			UserStock:          userStorage.Stock,
 			TargetUserStock:    targetStorage.Stock,
+			PurchaseCount:      num,
+			MaxStock:           targetItemMaxCount,
 			TotalCost:          cost,
+			Profit:             profit,
 			UserFund:           userFund,
 			ReducedStaminaCost: reducedStamina,
 		}, nil

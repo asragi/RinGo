@@ -87,7 +87,7 @@ func CheckIsExplorePossible(
 	}(args.requiredStamina, args.currentStamina, args.execNum)
 
 	isFundEnough := func(required core.Price, actual core.Fund, execNum int) core.IsPossible {
-		return core.IsPossible(actual.CheckIsFundEnough(required.Multiply(execNum)))
+		return core.IsPossible(actual.CheckIsFundEnough(required.CalculateCost(execNum)))
 	}(args.requiredPrice, args.currentFund, args.execNum)
 
 	isSkillEnough := func(required []*RequiredSkill, actual map[core.SkillId]core.SkillLv) core.IsPossible {

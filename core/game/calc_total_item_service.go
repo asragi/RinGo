@@ -84,7 +84,7 @@ func CalcTotalItem(
 			if _, ok := consumedItemMap[id]; ok {
 				diff -= consumedItemMap[id].Count
 			}
-			afterStock := stock.Apply(diff, maxStockMap[id])
+			afterStock := stock.AddStock(diff, maxStockMap[id])
 			result[i] = &totalItem{
 				ItemId: id,
 				Stock:  afterStock,
