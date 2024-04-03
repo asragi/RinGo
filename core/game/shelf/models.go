@@ -14,4 +14,9 @@ type (
 		Stock       core.Stock
 		Price       SetPrice
 	}
+	Shelf struct {
+		UserId core.UserId
+		ItemId core.ItemId
+		Index  Index
+	}
 )

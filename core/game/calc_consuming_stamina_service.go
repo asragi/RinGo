@@ -8,7 +8,7 @@ import (
 
 type ExploreStaminaPair struct {
 	ExploreId      ExploreId
-	ReducedStamina core.Stamina
+	ReducedStamina core.StaminaCost
 }
 
 type CalcConsumingStaminaFunc func(

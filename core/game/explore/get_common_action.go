@@ -11,8 +11,8 @@ type (
 	getCommonActionRes struct {
 		UserId            core.UserId
 		ActionDisplayName core.DisplayName
-		RequiredPayment   core.Price
-		RequiredStamina   core.Stamina
+		RequiredPayment   core.Cost
+		RequiredStamina   core.StaminaCost
 		RequiredItems     []*RequiredItemsRes
 		EarningItems      []*EarningItemRes
 		RequiredSkills    []*RequiredSkillsRes
@@ -90,7 +90,7 @@ func CreateGetCommonActionDetail(
 			}
 			return result
 		}(consumingItems)
-		requiredStamina, err := func(baseStamina core.Stamina) (core.Stamina, error) {
+		requiredStamina, err := func(baseStamina core.StaminaCost) (core.StaminaCost, error) {
 			reducedStamina, err := calcConsumingStamina(ctx, userId, []game.ExploreId{exploreId})
 			if err != nil {
 				return 0, err

@@ -11,8 +11,8 @@ func TestCheckIsExplorePossible(t *testing.T) {
 		requiredSkill   []*RequiredSkill
 		itemStockList   map[core.ItemId]core.Stock
 		skillLvList     map[core.SkillId]core.SkillLv
-		requiredStamina core.Stamina
-		requiredPrice   core.Price
+		requiredStamina core.StaminaCost
+		requiredPrice   core.Cost
 		currentStamina  core.Stamina
 		currentFund     core.Fund
 	}

@@ -213,7 +213,10 @@ func CreatePostAction(
 		)
 		currentFund := validateActionArgs.currentFund
 		requiredCost := validateActionArgs.requiredPrice
-		afterFund := currentFund.ReduceFund(requiredCost)
+		afterFund, err := currentFund.ReduceFund(requiredCost)
+		if err != nil {
+			return handleError(err)
+		}
 		// Tx
 		txFunc := func(ctx context.Context) error {
 			txHandleError := func(err error) error {
