@@ -149,6 +149,14 @@ func (dba *DBAccessor) Exec(
 		da = dba.writer
 	}
 
+	if arg == nil {
+		result, err := da.ExecContext(ctx, query)
+		if err != nil {
+			return nil, fmt.Errorf("failed to run exec: %w", err)
+		}
+		return result, nil
+	}
+
 	// prepare
 	namedQuery, namedArgs, err := da.BindNamed(query, arg)
 	if err != nil {
@@ -188,6 +196,14 @@ func (dba *DBAccessor) Query(
 		da = tx
 	} else {
 		da = dba.reader
+	}
+
+	if arg == nil {
+		rows, err := da.QueryxContext(ctx, query)
+		if err != nil {
+			return nil, fmt.Errorf("failed to run query: %w", err)
+		}
+		return rows, nil
 	}
 
 	// prepare

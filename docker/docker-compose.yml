@@ -6,7 +6,5 @@ services:
     volumes:
       - ./mysql/init:/docker-entrypoint-initdb.d  #初期データをマウントする場所
     image: ringo_mysql_local
-    environment:
-      - MYSQL_ROOT_PASSWORD=ringo
     ports:
       - "13306:3306"

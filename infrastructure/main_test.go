@@ -1,16 +1,16 @@
 package infrastructure
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/asragi/RinGo/database"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	"github.com/ory/dockertest/v3"
 	"log"
 	"testing"
-
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/ory/dockertest/v3"
 )
 
-var db *sql.DB
+var dba *database.DBAccessor
 
 func TestMain(m *testing.M) {
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
@@ -26,11 +26,16 @@ func TestMain(m *testing.M) {
 	}
 
 	// pulls an image, creates a container based on it and runs it
-	resource, err := pool.Run("mysql", "5.7", []string{"MYSQL_ROOT_PASSWORD=secret"})
+	resource, err := pool.BuildAndRun("mysql-test-image", "./db_for_test/Dockerfile", []string{})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
-	err = resource.Expire(60)
+	defer func() {
+		if err := pool.Purge(resource); err != nil {
+			log.Fatalf("Could not purge resource: %s", err)
+		}
+	}()
+	err = resource.Expire(20)
 	if err != nil {
 		log.Fatalf("Could not set expiration time: %s", err)
 	}
@@ -39,10 +44,14 @@ func TestMain(m *testing.M) {
 	if err := pool.Retry(
 		func() error {
 			var err error
-			db, err = sql.Open("mysql", fmt.Sprintf("root:secret@(localhost:%s)/mysql", resource.GetPort("3306/tcp")))
+			db, err := sqlx.Open(
+				"mysql",
+				fmt.Sprintf("root:ringo@(localhost:%s)/mysql?parseTime=true", resource.GetPort("3306/tcp")),
+			)
 			if err != nil {
 				return err
 			}
+			dba = database.NewDBAccessor(db, db)
 			return db.Ping()
 		},
 	); err != nil {
@@ -50,13 +59,8 @@ func TestMain(m *testing.M) {
 	}
 
 	m.Run()
-
-	// You can't defer this because os.Exit doesn't care for defer
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
 }
 
 func TestSomething(t *testing.T) {
-	// db.Query()
+	fmt.Printf("TEST IS HERE!")
 }

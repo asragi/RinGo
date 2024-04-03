@@ -1,6 +1,10 @@
 package auth
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"github.com/asragi/RinGo/core"
+)
 
 type TokenWasExpiredError struct {
 	token *AccessToken
@@ -10,10 +14,8 @@ func (e *TokenWasExpiredError) Error() string {
 	return fmt.Sprintf("token was expired: %s", string(*e.token))
 }
 
-type UserAlreadyExistsError struct {
-	UserId string
-}
+var UserAlreadyExistsError = errors.New("user already exists")
 
-func (e *UserAlreadyExistsError) Error() string {
-	return fmt.Sprintf("user id already exists: %s", e.UserId)
+func CreateUserAlreadyExistsError(id core.UserId) error {
+	return errors.New(fmt.Sprintf("user id already exists: %s", id))
 }

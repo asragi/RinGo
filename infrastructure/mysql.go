@@ -3,7 +3,6 @@ package infrastructure
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
@@ -54,13 +53,13 @@ func CreateCheckUserExistence(queryFunc queryFunc) core.CheckDoesUserExist {
 		handleError := func(err error) error {
 			return fmt.Errorf("check user existence: %w", err)
 		}
-		queryString := fmt.Sprintf(`SELECT user_id from users WHERE user_id = "%s";`, userId)
-		_, err := queryFunc(ctx, queryString, nil)
-		if err == nil {
-			return handleError(&auth.UserAlreadyExistsError{UserId: string(userId)})
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
+		queryString := fmt.Sprintf(`SELECT user_id from ringo.users WHERE user_id = "%s";`, userId)
+		rows, err := queryFunc(ctx, queryString, nil)
+		if err != nil {
 			return handleError(err)
+		}
+		if rows.Next() {
+			return handleError(fmt.Errorf(`user-id "%s" already exists: %w`, userId, auth.UserAlreadyExistsError))
 		}
 		return nil
 	}
@@ -74,12 +73,15 @@ func CreateGetUserPassword(queryFunc queryFunc) auth.FetchHashedPassword {
 		handleError := func(err error) (auth.HashedPassword, error) {
 			return "", fmt.Errorf("get hashed password: %w", err)
 		}
-		queryString := fmt.Sprintf(`SELECT hashed_password FROM users WHERE user_id = "%s";`, id)
+		queryString := fmt.Sprintf(`SELECT hashed_password FROM ringo.users WHERE user_id = "%s";`, id)
 		rows, err := queryFunc(ctx, queryString, nil)
 		if err != nil {
 			return handleError(err)
 		}
 		var result dbResponse
+		if !rows.Next() {
+			return handleError(sql.ErrNoRows)
+		}
 		err = rows.StructScan(&result)
 		if err != nil {
 			return handleError(err)
@@ -141,7 +143,7 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 		rows, err := q(
 			ctx,
 			fmt.Sprintf(
-				`SELECT user_id, max_stamina, stamina_recover_time, fund FROM users WHERE user_id = "%s";`,
+				`SELECT user_id, max_stamina, stamina_recover_time, fund FROM ringo.users WHERE user_id = "%s";`,
 				userId,
 			),
 			nil,
@@ -150,6 +152,9 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 			return handleError(err)
 		}
 		var result responseStruct
+		if !rows.Next() {
+			return nil, sql.ErrNoRows
+		}
 		err = rows.StructScan(&result)
 		if err != nil {
 			return handleError(err)
@@ -165,17 +170,20 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 
 func CreateUpdateStamina(execDb database.DBExecFunc) game.UpdateStaminaFunc {
 	type updateStaminaReq struct {
-		stamina core.StaminaRecoverTime `db:"stamina_recover_time"`
+		StaminaRecoverTime time.Time `db:"stamina_recover_time"`
 	}
 	query := func(userId core.UserId) string {
-		return fmt.Sprintf(`UPDATE users SET stamina_recover_time = ? WHERE user_id = "%s";`, userId)
+		return fmt.Sprintf(
+			`UPDATE ringo.users SET stamina_recover_time = :stamina_recover_time WHERE user_id = "%s";`,
+			userId,
+		)
 	}
 	return func(ctx context.Context, userId core.UserId, recoverTime core.StaminaRecoverTime) error {
 		return CreateExec[updateStaminaReq](
 			execDb,
 			"update stamina: %w",
 			query(userId),
-		)(ctx, []*updateStaminaReq{{stamina: recoverTime}})
+		)(ctx, []*updateStaminaReq{{StaminaRecoverTime: time.Time(recoverTime)}})
 	}
 }
 
@@ -183,7 +191,7 @@ func CreateGetItemMasterMySQL(q queryFunc) game.FetchItemMasterFunc {
 	return CreateGetQueryFromReq[core.ItemId, itemReq, game.GetItemMasterRes](
 		q,
 		"get item master from mysql: %w",
-		"SELECT item_id, price, display_name, description, max_stock from item_masters WHERE item_id IN (:item_id);",
+		"SELECT item_id, price, display_name, description, max_stock from ringo.item_masters WHERE item_id IN (:item_id);",
 	)
 }
 
@@ -191,7 +199,7 @@ func CreateGetStageMaster(q queryFunc) explore.FetchStageMasterFunc {
 	return CreateGetQueryFromReq[explore.StageId, stageReq, explore.StageMaster](
 		q,
 		"get stage master: %w",
-		"SELECT stage_id, display_name, description from stage_masters WHERE stage_id IN (:stage_id);",
+		"SELECT stage_id, display_name, description from ringo.stage_masters WHERE stage_id IN (:stage_id);",
 	)
 }
 
@@ -200,7 +208,7 @@ func CreateGetAllStageMaster(q queryFunc) explore.FetchAllStageFunc {
 		handleError := func(err error) ([]*explore.StageMaster, error) {
 			return nil, fmt.Errorf("get all stage master from mysql: %w", err)
 		}
-		query := "SELECT stage_id, display_name, description from stage_masters;"
+		query := "SELECT stage_id, display_name, description from ringo.stage_masters;"
 		rows, err := q(ctx, query, nil)
 		if err != nil {
 			return handleError(err)
