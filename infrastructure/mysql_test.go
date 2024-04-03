@@ -287,3 +287,147 @@ func TestCreateGetAllStageMaster(t *testing.T) {
 		t.Errorf("got: %d, expect: >0", len(res))
 	}
 }
+
+func TestCreateGetExploreMasterMySQL(t *testing.T) {
+	type testCase struct {
+		exploreIds []game.ExploreId
+	}
+
+	testCases := []testCase{
+		{exploreIds: []game.ExploreId{"1"}},
+		{exploreIds: []game.ExploreId{"1", "2"}},
+	}
+
+	for _, v := range testCases {
+		fetchExploreMaster := CreateGetExploreMasterMySQL(dba.Query)
+		ctx := test.MockCreateContext()
+		res, err := fetchExploreMaster(ctx, v.exploreIds)
+		if err != nil {
+			t.Errorf("failed to fetch explore master: %v", err)
+		}
+		if len(res) != len(v.exploreIds) {
+			t.Errorf("got: %d, expect: %d", len(res), len(v.exploreIds))
+		}
+	}
+}
+
+func TestCreateGetSkillMaster(t *testing.T) {
+	type testCase struct {
+		skillIds []core.SkillId
+	}
+
+	testCases := []testCase{
+		{skillIds: []core.SkillId{"1"}},
+		{skillIds: []core.SkillId{"1", "2"}},
+	}
+
+	for _, v := range testCases {
+		fetchSkillMaster := CreateGetSkillMaster(dba.Query)
+		ctx := test.MockCreateContext()
+		res, err := fetchSkillMaster(ctx, v.skillIds)
+		if err != nil {
+			t.Fatalf("failed to fetch skill master: %v", err)
+		}
+		if len(res) != len(v.skillIds) {
+			t.Errorf("got: %d, expect: %d", len(res), len(v.skillIds))
+		}
+	}
+}
+
+func TestCreateGetEarningItem(t *testing.T) {
+	type testCase struct {
+		exploreId   game.ExploreId
+		expectedRes []*game.EarningItem
+	}
+
+	testCases := []testCase{
+		{
+			exploreId: "1",
+			expectedRes: []*game.EarningItem{
+				{
+					ItemId:      "1",
+					MinCount:    50,
+					MaxCount:    100,
+					Probability: 1,
+				},
+			},
+		},
+	}
+
+	for _, v := range testCases {
+		ctx := test.MockCreateContext()
+		fetchEarningItem := CreateGetEarningItem(dba.Query)
+		res, err := fetchEarningItem(ctx, v.exploreId)
+		if err != nil {
+			t.Fatalf("failed to fetch earning item: %v", err)
+		}
+		if !test.DeepEqual(res, v.expectedRes) {
+			t.Errorf("got: %+v, expect: %+v", res, v.expectedRes)
+			for i := range res {
+				r := res[i]
+				e := v.expectedRes[i]
+				if r.ItemId != e.ItemId {
+					t.Errorf("got: %v, expect: %v", r.ItemId, e.ItemId)
+				}
+				if r.MinCount != e.MinCount {
+					t.Errorf("got: %v, expect: %v", r.MinCount, e.MinCount)
+				}
+				if r.MaxCount != e.MaxCount {
+					t.Errorf("got: %v, expect: %v", r.MaxCount, e.MaxCount)
+				}
+				if r.Probability != e.Probability {
+					t.Errorf("got: %v, expect: %v", r.Probability, e.Probability)
+				}
+			}
+		}
+	}
+}
+
+func TestCreateGetConsumingItem(t *testing.T) {
+	type testCase struct {
+		exploreIds  []game.ExploreId
+		expectedRes []*game.ConsumingItem
+	}
+
+	testCases := []testCase{
+		{
+			exploreIds: []game.ExploreId{"2"},
+			expectedRes: []*game.ConsumingItem{
+				{
+					ExploreId:       "2",
+					ItemId:          "1",
+					MaxCount:        1,
+					ConsumptionProb: 1,
+				},
+			},
+		},
+	}
+
+	for _, v := range testCases {
+		ctx := test.MockCreateContext()
+		fetchConsumingItem := CreateGetConsumingItem(dba.Query)
+		res, err := fetchConsumingItem(ctx, v.exploreIds)
+		if err != nil {
+			t.Fatalf("failed to fetch consuming item: %v", err)
+		}
+		if !test.DeepEqual(res, v.expectedRes) {
+			t.Errorf("got: %+v, expect: %+v", res, v.expectedRes)
+			for i := range res {
+				r := res[i]
+				e := v.expectedRes[i]
+				if r.ExploreId != e.ExploreId {
+					t.Errorf("got: %v, expect: %v", r.ExploreId, e.ExploreId)
+				}
+				if r.ItemId != e.ItemId {
+					t.Errorf("got: %v, expect: %v", r.ItemId, e.ItemId)
+				}
+				if r.MaxCount != e.MaxCount {
+					t.Errorf("got: %v, expect: %v", r.MaxCount, e.MaxCount)
+				}
+				if r.ConsumptionProb != e.ConsumptionProb {
+					t.Errorf("got: %v, expect: %v", r.ConsumptionProb, e.ConsumptionProb)
+				}
+			}
+		}
+	}
+}

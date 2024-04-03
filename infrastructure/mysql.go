@@ -251,7 +251,7 @@ func CreateGetExploreMasterMySQL(q queryFunc) game.FetchExploreMasterFunc {
 	f := CreateGetQuery[exploreReq, game.GetExploreMasterRes](
 		q,
 		"get explore master from mysql: %w",
-		"SELECT explore_id, display_name, description, consuming_stamina, required_payment, stamina_reducible_rate from explore_masters WHERE explore_id IN (:explore_id);",
+		"SELECT explore_id, display_name, description, consuming_stamina, required_payment, stamina_reducible_rate from ringo.explore_masters WHERE explore_id IN (:explore_id);",
 	)
 
 	return func(ctx context.Context, ids []game.ExploreId) ([]*game.GetExploreMasterRes, error) {
@@ -270,7 +270,7 @@ func CreateGetSkillMaster(q queryFunc) game.FetchSkillMasterFunc {
 	f := CreateGetQuery[skillReq, game.SkillMaster](
 		q,
 		"get skill master from mysql: %w",
-		"SELECT skill_id, display_name from skill_masters WHERE skill_id IN (:skill_id);",
+		"SELECT skill_id, display_name from ringo.skill_masters WHERE skill_id IN (:skill_id);",
 	)
 	return func(ctx context.Context, ids []core.SkillId) ([]*game.SkillMaster, error) {
 		req := func(ids []core.SkillId) []*skillReq {
@@ -289,7 +289,7 @@ func CreateGetEarningItem(q queryFunc) game.FetchEarningItemFunc {
 	f := CreateGetQuery[exploreReq, game.EarningItem](
 		q,
 		"get earning item data from mysql: %w",
-		"SELECT item_id, min_count, max_count, probability from earning_items WHERE explore_id IN (:explore_id);",
+		"SELECT item_id, min_count, max_count, probability from ringo.earning_items WHERE explore_id IN (:explore_id);",
 	)
 
 	return func(ctx context.Context, id game.ExploreId) ([]*game.EarningItem, error) {
@@ -302,7 +302,7 @@ func CreateGetConsumingItem(q queryFunc) game.FetchConsumingItemFunc {
 	f := CreateGetQuery[exploreReq, game.ConsumingItem](
 		q,
 		"get consuming item data from mysql: %w",
-		"SELECT explore_id, item_id, max_count, consumption_prob from consuming_items",
+		"SELECT explore_id, item_id, max_count, consumption_prob from ringo.consuming_items WHERE explore_id IN (:explore_id)",
 	)
 
 	return func(ctx context.Context, ids []game.ExploreId) ([]*game.ConsumingItem, error) {
