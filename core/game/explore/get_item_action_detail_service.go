@@ -16,8 +16,8 @@ type GetItemActionDetailResponse struct {
 	ItemId            core.ItemId
 	DisplayName       core.DisplayName
 	ActionDisplayName core.DisplayName
-	RequiredPayment   core.Price
-	RequiredStamina   core.Stamina
+	RequiredPayment   core.Cost
+	RequiredStamina   core.StaminaCost
 	RequiredItems     []*RequiredItemsRes
 	EarningItems      []*EarningItemRes
 	RequiredSkills    []*RequiredSkillsRes

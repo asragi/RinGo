@@ -54,7 +54,7 @@ func CreateGetShelfFunc(
 						ItemId:      row.ItemId,
 						DisplayName: itemMaster.DisplayName,
 						Index:       row.Index,
-						Price:       row.Price,
+						Price:       row.SetPrice,
 						Stock:       storage.Stock,
 					},
 				)

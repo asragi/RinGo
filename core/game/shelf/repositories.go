@@ -10,10 +10,10 @@ type (
 	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ExploreId, error)
 	FetchShelfSizeRepoFunc    func(context.Context, core.UserId) (Size, error)
 	ShelfRepoRow              struct {
-		UserId core.UserId
-		ItemId core.ItemId
-		Index  Index
-		Price  SetPrice
+		UserId   core.UserId
+		ItemId   core.ItemId
+		Index    Index
+		SetPrice SetPrice
 	}
 	FetchShelf              func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
 	UpdateShelfSizeRepoFunc func(
@@ -29,6 +29,15 @@ type (
 		Index,
 	) error
 )
+
+func checkContainItem(shelves []*ShelfRepoRow, itemId core.ItemId) bool {
+	for _, shelf := range shelves {
+		if shelf.ItemId == itemId {
+			return true
+		}
+	}
+	return false
+}
 
 func shelvesToItemIds(shelves []*ShelfRepoRow) []core.ItemId {
 	checked := map[core.ItemId]struct{}{}

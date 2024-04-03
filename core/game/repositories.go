@@ -210,8 +210,8 @@ type GetExploreMasterRes struct {
 	ExploreId            ExploreId            `db:"explore_id"`
 	DisplayName          core.DisplayName     `db:"display_name"`
 	Description          core.Description     `db:"description"`
-	ConsumingStamina     core.Stamina         `db:"consuming_stamina"`
-	RequiredPayment      core.Price           `db:"required_payment"`
+	ConsumingStamina     core.StaminaCost     `db:"consuming_stamina"`
+	RequiredPayment      core.Cost            `db:"required_payment"`
 	StaminaReducibleRate StaminaReducibleRate `db:"stamina_reducible_rate"`
 }
 

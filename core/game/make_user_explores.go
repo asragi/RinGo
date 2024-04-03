@@ -96,8 +96,8 @@ func CreateGenerateMakeUserExploreArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		staminaMap := func(pair []*ExploreStaminaPair) map[ExploreId]core.Stamina {
-			result := map[ExploreId]core.Stamina{}
+		staminaMap := func(pair []*ExploreStaminaPair) map[ExploreId]core.StaminaCost {
+			result := map[ExploreId]core.StaminaCost{}
 			for _, v := range pair {
 				result[v.ExploreId] = v.ReducedStamina
 			}
@@ -138,7 +138,7 @@ type makeUserExploreArgs struct {
 	itemData          []*StorageData
 	batchGetSkillRes  BatchGetUserSkillRes
 	exploreIds        []ExploreId
-	calculatedStamina map[ExploreId]core.Stamina
+	calculatedStamina map[ExploreId]core.StaminaCost
 	exploreMasterMap  map[ExploreId]*GetExploreMasterRes
 }
 

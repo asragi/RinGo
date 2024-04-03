@@ -45,8 +45,8 @@ const StaminaSec = 30.0
 
 type Stamina int
 
-func (s Stamina) Multiply(value int) Stamina {
-	return Stamina(int(s) * value)
+func (s StaminaCost) Multiply(value int) StaminaCost {
+	return StaminaCost(int(s) * value)
 }
 
 type StaminaCost int
@@ -71,7 +71,7 @@ func (recoverTime StaminaRecoverTime) CalcStamina(currentTime time.Time, maxStam
 
 func CalcAfterStamina(
 	beforeStaminaTime StaminaRecoverTime,
-	reducedStaminaValue Stamina,
+	reducedStaminaValue StaminaCost,
 ) StaminaRecoverTime {
 	return CalcStaminaRecoverTimeOnReduce(
 		beforeStaminaTime,
@@ -79,7 +79,7 @@ func CalcAfterStamina(
 	)
 }
 
-func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceStamina Stamina) StaminaRecoverTime {
+func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceStamina StaminaCost) StaminaRecoverTime {
 	extendTime := int64(float64(reduceStamina) * StaminaSec)
 	return StaminaRecoverTime(time.Unix(time.Time(currentStamina).Unix()+extendTime, 0))
 }
@@ -107,6 +107,11 @@ func (p Price) CalculateProfit(num Count) Profit {
 }
 
 type Cost current
+
+func (c Cost) Multiply(value int) Cost {
+	return Cost(int(c) * value)
+}
+
 type Profit current
 
 type MaxStock int
@@ -184,15 +189,3 @@ const (
 	PossibleTypeStamina IsPossibleType = "Stamina"
 	PossibleTypeFund    IsPossibleType = "Func"
 )
-
-type Stringer interface {
-	ToString() string
-}
-
-type ProvideId[S any] interface {
-	GetId() S
-}
-
-type MultiResponseReceiver[S any, T any, U any] interface {
-	CreateSelf(S, []T) U
-}

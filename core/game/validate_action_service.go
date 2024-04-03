@@ -8,8 +8,8 @@ import (
 )
 
 type CheckIsPossibleArgs struct {
-	requiredStamina core.Stamina
-	requiredPrice   core.Price
+	requiredStamina core.StaminaCost
+	requiredPrice   core.Cost
 	RequiredItems   []*ConsumingItem
 	requiredSkills  []*RequiredSkill
 	currentStamina  core.Stamina
@@ -82,12 +82,12 @@ type CheckActionPossibleFunc func(*CheckIsPossibleArgs) map[core.IsPossibleType]
 func CheckIsExplorePossible(
 	args *CheckIsPossibleArgs,
 ) map[core.IsPossibleType]core.IsPossible {
-	isStaminaEnough := func(required core.Stamina, actual core.Stamina, execNum int) core.IsPossible {
-		return required.Multiply(execNum) <= actual
+	isStaminaEnough := func(required core.StaminaCost, actual core.Stamina, execNum int) core.IsPossible {
+		return core.IsPossible(actual.CheckIsStaminaEnough(required.Multiply(execNum)))
 	}(args.requiredStamina, args.currentStamina, args.execNum)
 
-	isFundEnough := func(required core.Price, actual core.Fund, execNum int) core.IsPossible {
-		return core.IsPossible(actual.CheckIsFundEnough(required.CalculateCost(execNum)))
+	isFundEnough := func(required core.Cost, actual core.Fund, execNum int) core.IsPossible {
+		return core.IsPossible(actual.CheckIsFundEnough(required.Multiply(execNum)))
 	}(args.requiredPrice, args.currentFund, args.execNum)
 
 	isSkillEnough := func(required []*RequiredSkill, actual map[core.SkillId]core.SkillLv) core.IsPossible {

@@ -104,7 +104,8 @@ func TestPostAction(t *testing.T) {
 	for _, v := range testCases {
 		expectedAfterFund := func() core.Fund {
 			currentFund := v.mocks.mockArgs.userResources.Fund
-			return currentFund.ReduceFund(v.mocks.mockCheckIsPossibleArgs.requiredPrice)
+			reduced, _ := currentFund.ReduceFund(v.mocks.mockCheckIsPossibleArgs.requiredPrice)
+			return reduced
 		}()
 		expectedAfterStamina := core.CalcAfterStamina(
 			mocks.mockArgs.userResources.StaminaRecoverTime,
