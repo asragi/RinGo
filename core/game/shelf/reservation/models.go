@@ -34,16 +34,17 @@ func calcModifiedPurchaseProbability(
 ) ModifiedPurchaseProbability {
 	const MaxProbability float64 = 0.95
 	const MinProbability float64 = 0
+	maxProbability := math.Min(MaxProbability, float64(baseProbability)*2)
 	priceRatio := float32(setPrice) / float32(price)
 	penaltyPower := calcPricePenalty(price)
 	poweredRatio := math.Pow(float64(priceRatio), float64(penaltyPower))
 	if priceRatio >= 1 {
 		return ModifiedPurchaseProbability(float64(baseProbability) / poweredRatio)
 	}
-	failedProbability := 1 - poweredRatio
+	failedProbability := 1 - float64(baseProbability)
 	modifiedFailedProbability := failedProbability * poweredRatio
 	return ModifiedPurchaseProbability(
-		utils.RClamp(1.0-modifiedFailedProbability, MinProbability, MaxProbability),
+		utils.RClamp(1.0-modifiedFailedProbability, MinProbability, maxProbability),
 	)
 }
 
