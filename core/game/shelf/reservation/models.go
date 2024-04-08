@@ -110,9 +110,9 @@ func calcItemAttraction(
 		math.Min(
 			math.Max(
 				float64(baseAttraction)*math.Pow(float64(1/priceRatio), float64(penaltyPower)),
-				MinAttractionRatio,
+				MinAttractionRatio*float64(baseAttraction),
 			),
-			MaxAttractionRatio,
+			MaxAttractionRatio*float64(baseAttraction),
 		),
 	)
 }
