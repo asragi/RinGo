@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS ringo.item_storages(
     `stock` int(10) NOT NULL,
     `is_known` bool NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`user_id`, `item_id`),
     INDEX `user_id_item_id_index` (`user_id`, `item_id`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
     FOREIGN KEY (`item_id`) REFERENCES `item_masters` (`item_id`)

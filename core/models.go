@@ -179,6 +179,11 @@ func (exp SkillExp) CalcLv() SkillLv {
 
 // explore user
 type IsKnown bool
+
+func ToIsKnown(val int) IsKnown {
+	return val != 0
+}
+
 type IsPossible bool
 type IsPossibleType string
 

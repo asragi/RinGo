@@ -2,7 +2,9 @@ package infrastructure
 
 import (
 	"fmt"
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/test"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
@@ -11,6 +13,7 @@ import (
 )
 
 var dba *database.DBAccessor
+var testUserId = core.UserId("the-one-test-user")
 
 func TestMain(m *testing.M) {
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
@@ -35,7 +38,7 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Could not purge resource: %s", err)
 		}
 	}()
-	err = resource.Expire(20)
+	// err = resource.Expire(20)
 	if err != nil {
 		log.Fatalf("Could not set expiration time: %s", err)
 	}
@@ -58,9 +61,28 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
+	err = addTestUser(func(u *userTest) { u.UserId = testUserId })
+	if err != nil {
+		log.Fatalf("Could not add test user: %s", err)
+	}
+
 	m.Run()
 }
 
 func TestSomething(t *testing.T) {
 	fmt.Printf("TEST IS HERE!")
+}
+
+func addTestUser(options ...ApplyUserTestOption) error {
+	user := createTestUser(options...)
+	ctx := test.MockCreateContext()
+	_, err := dba.Exec(
+		ctx,
+		"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, hashed_password) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :hashed_password)",
+		user,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
 }

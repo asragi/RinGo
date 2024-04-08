@@ -100,7 +100,7 @@ func CreateInsertNewUser(
 		handleError := func(err error) error {
 			return fmt.Errorf("insert new user: %w", err)
 		}
-		queryText := `INSERT INTO users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password);`
+		queryText := `INSERT INTO ringo.users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password);`
 
 		type UserToDB struct {
 			UserId             core.UserId         `db:"user_id"`
@@ -321,7 +321,7 @@ func CreateGetRequiredSkills(q queryFunc) game.FetchRequiredSkillsFunc {
 	f := CreateGetQuery[exploreReq, game.RequiredSkill](
 		q,
 		"get required skill from mysql :%w",
-		"SELECT explore_id, skill_id, skill_lv from required_skills",
+		"SELECT explore_id, skill_id, skill_lv from ringo.required_skills WHERE explore_id IN (:explore_id)",
 	)
 	return func(ctx context.Context, ids []game.ExploreId) ([]*game.RequiredSkill, error) {
 		req := func(ids []game.ExploreId) []*exploreReq {
@@ -339,7 +339,7 @@ func CreateGetSkillGrowth(q queryFunc) game.FetchSkillGrowthData {
 	f := CreateGetQuery[exploreReq, game.SkillGrowthData](
 		q,
 		"get skill growth from mysql: %w",
-		`SELECT explore_id, skill_id, gaining_point FROM skill_growth_data WHERE explore_id IN (:explore_id);`,
+		`SELECT explore_id, skill_id, gaining_point FROM ringo.skill_growth_data WHERE explore_id IN (:explore_id);`,
 	)
 
 	return func(ctx context.Context, id game.ExploreId) ([]*game.SkillGrowthData, error) {
@@ -352,7 +352,7 @@ func CreateGetReductionSkill(q queryFunc) game.FetchReductionStaminaSkillFunc {
 	f := CreateGetQuery[exploreReq, game.StaminaReductionSkillPair](
 		q,
 		"get stamina reduction skill from mysql: %w",
-		`SELECT explore_id, skill_id FROM stamina_reduction_skills WHERE explore_id IN (:explore_id);`,
+		`SELECT explore_id, skill_id FROM ringo.stamina_reduction_skills WHERE explore_id IN (:explore_id) ORDER BY id;`,
 	)
 
 	return func(ctx context.Context, ids []game.ExploreId) ([]*game.StaminaReductionSkillPair, error) {
@@ -371,7 +371,7 @@ func CreateStageExploreRelation(q queryFunc) explore.FetchStageExploreRelation {
 	f := CreateGetQuery[stageReq, explore.StageExploreIdPairRow](
 		q,
 		"get stage explore relation from mysql: %w",
-		"SELECT explore_id, stage_id FROM stage_explore_relations WHERE stage_id IN (:stage_id);",
+		"SELECT explore_id, stage_id FROM ringo.stage_explore_relations WHERE stage_id IN (:stage_id);",
 	)
 
 	return func(ctx context.Context, ids []explore.StageId) ([]*explore.StageExploreIdPairRow, error) {
@@ -393,7 +393,7 @@ func CreateItemExploreRelation(q queryFunc) explore.FetchItemExploreRelationFunc
 	f := CreateGetQuery[itemReq, fetchExploreIdRes](
 		q,
 		"get item explore relation from mysql: %w",
-		"SELECT explore_id FROM item_explore_relations WHERE item_id IN (:item_id);",
+		"SELECT explore_id FROM ringo.item_explore_relations WHERE item_id IN (:item_id);",
 	)
 
 	return func(ctx context.Context, id core.ItemId) ([]game.ExploreId, error) {
@@ -411,10 +411,14 @@ func CreateItemExploreRelation(q queryFunc) explore.FetchItemExploreRelationFunc
 }
 
 func CreateGetUserExplore(q queryFunc) game.GetUserExploreFunc {
-	f := CreateUserQuery[exploreReq, game.ExploreUserData](
+	type exploreRes struct {
+		ExploreId game.ExploreId `db:"explore_id"`
+		IsKnown   int            `db:"is_known"`
+	}
+	f := CreateUserQuery[exploreReq, exploreRes](
 		q,
 		"get user explore data: %w",
-		createQueryFromUserId(`SELECT explore_id, is_known FROM user_explore_data WHERE user_id = "%s" AND explore_id IN (:explore_id);`),
+		createQueryFromUserId(`SELECT explore_id, is_known FROM ringo.user_explore_data WHERE user_id = "%s" AND explore_id IN (:explore_id);`),
 	)
 
 	return func(ctx context.Context, id core.UserId, ids []game.ExploreId) ([]*game.ExploreUserData, error) {
@@ -425,15 +429,32 @@ func CreateGetUserExplore(q queryFunc) game.GetUserExploreFunc {
 			}
 			return result
 		}(ids)
-		return f(ctx, id, req)
+		res, err := f(ctx, id, req)
+		if err != nil {
+			return nil, err
+		}
+		return func() []*game.ExploreUserData {
+			result := make([]*game.ExploreUserData, len(res))
+			for i, v := range res {
+				result[i] = &game.ExploreUserData{
+					ExploreId: v.ExploreId,
+					IsKnown:   core.ToIsKnown(v.IsKnown),
+				}
+			}
+			return result
+		}(), nil
 	}
 }
 
 func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
-	f := CreateUserQuery[stageReq, explore.UserStage](
+	type userStageRes struct {
+		StageId explore.StageId `db:"stage_id"`
+		IsKnown int             `db:"is_known"`
+	}
+	f := CreateUserQuery[stageReq, userStageRes](
 		queryFunc,
 		"get user stage data: %w",
-		createQueryFromUserId(`SELECT stage_id, is_known FROM user_stage_data WHERE user_id = '%s' AND stage_id IN (:stage_id);`),
+		createQueryFromUserId(`SELECT stage_id, is_known FROM ringo.user_stage_data WHERE user_id = '%s' AND stage_id IN (:stage_id);`),
 	)
 
 	return func(ctx context.Context, id core.UserId, ids []explore.StageId) ([]*explore.UserStage, error) {
@@ -444,79 +465,149 @@ func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
 			}
 			return result
 		}(ids)
-		return f(ctx, id, req)
+		res, err := f(ctx, id, req)
+		if err != nil {
+			return nil, err
+		}
+		return func() []*explore.UserStage {
+			result := make([]*explore.UserStage, len(res))
+			for i, v := range res {
+				result[i] = &explore.UserStage{
+					StageId: v.StageId,
+					IsKnown: core.ToIsKnown(v.IsKnown),
+				}
+			}
+			return result
+		}(), nil
 	}
 }
 
 func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
 	query := func(userId core.UserId) string {
-		return fmt.Sprintf(`UPDATE users SET fund = ? WHERE user_id = "%s";`, userId)
+		return fmt.Sprintf(`UPDATE ringo.users SET fund = :fund WHERE user_id = "%s";`, userId)
+	}
+	type fundReq struct {
+		Fund core.Fund `db:"fund"`
 	}
 	return func(ctx context.Context, userId core.UserId, fund core.Fund) error {
-		return CreateExec[core.Fund](
+		return CreateExec[fundReq](
 			dbExec,
 			"insert user fund: %w",
 			query(userId),
-		)(ctx, []*core.Fund{&fund})
+		)(ctx, []*fundReq{{Fund: fund}})
 	}
 }
 
-func CreateGetStorage(queryFunc queryFunc) game.FetchStorageFunc {
+func CreateGetStorage(queryF queryFunc) game.FetchBatchStorageFunc {
 	type ItemDataRes struct {
 		UserId  core.UserId `db:"user_id"`
 		ItemId  core.ItemId `db:"item_id"`
 		Stock   core.Stock  `db:"stock"`
-		IsKnown bool        `db:"is_known"`
+		IsKnown int         `db:"is_known"`
 	}
-	type itemIdReq struct {
-		ItemId core.ItemId `db:"item_id"`
-	}
-	g := CreateUserQuery[itemIdReq, ItemDataRes](
-		queryFunc,
-		"get user storage: %w",
-		createQueryFromUserId(`SELECT user_id, item_id, stock, is_known FROM item_storages WHERE user_id = "%s" AND item_id IN (:item_id);`),
-	)
-	return func(ctx context.Context, userId core.UserId, itemId []core.ItemId) (game.BatchGetStorageRes, error) {
-		if len(itemId) <= 0 {
-			return game.BatchGetStorageRes{}, nil
-		}
-		req := &itemIdReq{ItemId: itemId[0]}
-		res, err := g(ctx, userId, []*itemIdReq{req})
-		result := func() []*game.StorageData {
-			r := make([]*game.StorageData, len(res))
-			for i, v := range res {
-				r[i] = &game.StorageData{
-					UserId:  v.UserId,
-					ItemId:  v.ItemId,
-					Stock:   v.Stock,
-					IsKnown: core.IsKnown(v.IsKnown),
+	g := func(
+		ctx context.Context,
+		userItemPair []*game.UserItemPair,
+	) ([]*ItemDataRes, error) {
+		toInKeywords := func(userItemPair []*game.UserItemPair) string {
+			result := "("
+			for i, v := range userItemPair {
+				result += fmt.Sprintf(`("%s", "%s")`, v.UserId, v.ItemId)
+				if i != len(userItemPair)-1 {
+					result += ", "
 				}
 			}
-			return r
-		}()
-		return game.BatchGetStorageRes{
-			UserId:   userId,
-			ItemData: result,
-		}, err
+			result += ")"
+			return result
+		}(userItemPair)
+		query := fmt.Sprintf(
+			`SELECT user_id, item_id, stock, is_known FROM ringo.item_storages WHERE (user_id, item_id) IN %s;`,
+			toInKeywords,
+		)
+		rows, err := queryF(ctx, query, nil)
+		if err != nil {
+			return nil, err
+		}
+		var result []*ItemDataRes
+		for rows.Next() {
+			var row ItemDataRes
+			err = rows.StructScan(&row)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, &row)
+		}
+		return result, nil
+	}
+	return func(ctx context.Context, userItemPair []*game.UserItemPair) ([]*game.BatchGetStorageRes, error) {
+		if len(userItemPair) <= 0 {
+			return nil, nil
+		}
+		res, err := g(ctx, userItemPair)
+		if err != nil {
+			return nil, err
+		}
+		return func() []*game.BatchGetStorageRes {
+			mapping := map[core.UserId][]*game.StorageData{}
+			for _, v := range res {
+				if _, ok := mapping[v.UserId]; !ok {
+					mapping[v.UserId] = []*game.StorageData{}
+				}
+				mapping[v.UserId] = append(
+					mapping[v.UserId], &game.StorageData{
+						UserId:  v.UserId,
+						ItemId:  v.ItemId,
+						Stock:   v.Stock,
+						IsKnown: core.ToIsKnown(v.IsKnown),
+					},
+				)
+			}
+			allUserIds := func() []core.UserId {
+				check := map[core.UserId]struct{}{}
+				var result []core.UserId
+				for _, v := range res {
+					if _, ok := check[v.UserId]; ok {
+						continue
+					}
+					check[v.UserId] = struct{}{}
+					result = append(result, v.UserId)
+				}
+				return result
+			}()
+			result := make([]*game.BatchGetStorageRes, len(allUserIds))
+			for i, v := range allUserIds {
+				result[i] = &game.BatchGetStorageRes{
+					UserId:   v,
+					ItemData: mapping[v],
+				}
+			}
+			return result
+		}(), nil
 	}
 }
 
 func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
+	type resStruct struct {
+		UserId  core.UserId `db:"user_id"`
+		ItemId  core.ItemId `db:"item_id"`
+		Stock   core.Stock  `db:"stock"`
+		IsKnown int         `db:"is_known"`
+	}
 	return func(ctx context.Context, userId core.UserId) ([]*game.StorageData, error) {
 		handleError := func(err error) ([]*game.StorageData, error) {
 			return nil, fmt.Errorf("get all storage from mysql: %w", err)
 		}
 		query := fmt.Sprintf(
-			`SELECT user_id, item_id, stock, is_known from item_storages WHERE user_id = "%s";`,
+			`SELECT user_id, item_id, stock, is_known from ringo.item_storages WHERE user_id = "%s";`,
 			userId,
 		)
 		rows, err := queryFunc(ctx, query, nil)
 		if err != nil {
 			return handleError(err)
 		}
-		var result []*game.StorageData
+		var result []*resStruct
 		for rows.Next() {
-			var res game.StorageData
+			var res resStruct
 			err = rows.Scan(&res.UserId, &res.ItemId, &res.Stock, &res.IsKnown)
 			if err != nil {
 				return handleError(err)
@@ -526,7 +617,18 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 		if result == nil || len(result) == 0 {
 			return []*game.StorageData{}, sql.ErrNoRows
 		}
-		return result, nil
+		return func() []*game.StorageData {
+			tmp := make([]*game.StorageData, len(result))
+			for i, v := range result {
+				tmp[i] = &game.StorageData{
+					UserId:  v.UserId,
+					ItemId:  v.ItemId,
+					Stock:   v.Stock,
+					IsKnown: core.ToIsKnown(v.IsKnown),
+				}
+			}
+			return tmp
+		}(), nil
 	}
 }
 
@@ -552,9 +654,7 @@ func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageF
 			return result
 		}(stocks)
 
-		query := createQueryFromUserId(
-			`INSERT INTO item_storages (user_id, item_id, stock, is_known) VALUES (:user_id, :item_id, :stock, :is_known) ON DUPLICATE KEY UPDATE stock =VALUES(stock);`,
-		)(userId)
+		query := `INSERT INTO ringo.item_storages (user_id, item_id, stock, is_known) VALUES (:user_id, :item_id, :stock, :is_known) ON DUPLICATE KEY UPDATE stock =VALUES(stock), is_known=VALUES(is_known);`
 
 		return CreateExec[userItemStock](
 			dbExec,
@@ -566,10 +666,10 @@ func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageF
 
 func CreateGetUserSkill(dbExec queryFunc) game.FetchUserSkillFunc {
 	type skillReq struct {
-		skillId string `db:"skill_id"`
+		SkillId string `db:"skill_id"`
 	}
 	queryFromUserId := createQueryFromUserId(
-		`SELECT user_id, skill_id, skill_exp FROM user_skills WHERE user_id = "%s" AND skill_id IN (:skill_id);`,
+		`SELECT user_id, skill_id, skill_exp FROM ringo.user_skills WHERE user_id = "%s" AND skill_id IN (:skill_id);`,
 	)
 	g := CreateUserQuery[skillReq, game.UserSkillRes](
 		dbExec,
@@ -580,7 +680,7 @@ func CreateGetUserSkill(dbExec queryFunc) game.FetchUserSkillFunc {
 		skillReqStructs := func(ids []core.SkillId) []*skillReq {
 			result := make([]*skillReq, len(ids))
 			for i, v := range ids {
-				result[i] = &skillReq{skillId: v.ToString()}
+				result[i] = &skillReq{SkillId: v.ToString()}
 			}
 			return result
 		}(skillIds)
@@ -599,7 +699,7 @@ func CreateGetUserSkill(dbExec queryFunc) game.FetchUserSkillFunc {
 func CreateUpdateUserSkill(dbExec database.DBExecFunc) game.UpdateUserSkillExpFunc {
 	g := CreateExec[game.SkillGrowthPostRow]
 	f := func(ctx context.Context, growthData game.SkillGrowthPost) error {
-		query := `INSERT INTO user_skills (user_id, skill_id, skill_exp) VALUES (:user_id, :skill_id, :skill_exp) ON DUPLICATE KEY UPDATE skill_exp =VALUES(skill_exp);`
+		query := `INSERT INTO ringo.user_skills (user_id, skill_id, skill_exp) VALUES (:user_id, :skill_id, :skill_exp) ON DUPLICATE KEY UPDATE skill_exp =VALUES(skill_exp);`
 
 		return g(
 			dbExec,
