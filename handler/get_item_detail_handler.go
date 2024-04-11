@@ -13,7 +13,7 @@ import (
 
 func CreateGetItemDetailHandler(
 	fetchItem game.FetchItemMasterFunc,
-	fetchStorage game.FetchStorageFunc,
+	fetchStorage game.FetchStorageFuncDeprecated,
 	fetchExploreMaster game.FetchExploreMasterFunc,
 	fetchItemRelation explore.FetchItemExploreRelationFunc,
 	calcConsumingStamina game.CalcConsumingStaminaFunc,

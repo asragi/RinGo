@@ -33,7 +33,7 @@ type SubscriberUpdateShelfFunc func(context.Context, *UpdateShelfContentInformat
 type SubscribeUpdateShelfFunc func(utils.ListenerType, SubscriberUpdateShelfFunc)
 
 func CreateUpdateShelfContent(
-	fetchStorage game.FetchBatchStorageFunc,
+	fetchStorage game.FetchStorageFunc,
 	fetchItemMaster game.FetchItemMasterFunc,
 	fetchShelf FetchShelf,
 	updateShelfContent UpdateShelfContentRepoFunc,

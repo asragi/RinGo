@@ -20,15 +20,15 @@ type updateOnApplyTradeArgs struct {
 }
 
 func CreateUpdateOnApplyTrade(
-	updateFund game.UpdateFundFunc,
-	updateStorage game.UpdateItemStorageFunc,
+	updateFund game.UpdateFundFuncDeprecated,
+	updateStorage game.UpdateItemStorageFuncDeprecated,
 ) updateOnApplyTradeFunc {
 	return func(ctx context.Context, args *updateOnApplyTradeArgs) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("updating on apply trade: %w", err)
 		}
-		toItemData := func(itemId core.ItemId, stock core.Stock) []*game.ItemStock {
-			return []*game.ItemStock{
+		toItemData := func(itemId core.ItemId, stock core.Stock) []*game.TotalItemStock {
+			return []*game.TotalItemStock{
 				{
 					ItemId:     itemId,
 					AfterStock: stock,

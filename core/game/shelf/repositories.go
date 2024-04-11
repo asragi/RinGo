@@ -10,16 +10,26 @@ type (
 	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ExploreId, error)
 	FetchShelfSizeRepoFunc    func(context.Context, core.UserId) (Size, error)
 	ShelfRepoRow              struct {
-		UserId   core.UserId
-		ItemId   core.ItemId
-		Index    Index
-		SetPrice SetPrice
+		UserId     core.UserId
+		ItemId     core.ItemId
+		Index      Index
+		SetPrice   SetPrice
+		TotalSales core.SalesFigures
 	}
 	FetchShelf              func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
 	UpdateShelfSizeRepoFunc func(
 		context.Context,
 		core.UserId,
 		Size,
+	) error
+	TotalSalesReq struct {
+		UserId     core.UserId
+		Index      Index
+		TotalSales core.SalesFigures
+	}
+	UpdateShelfTotalSalesFunc func(
+		context.Context,
+		[]*TotalSalesReq,
 	) error
 	UpdateShelfContentRepoFunc func(
 		context.Context,

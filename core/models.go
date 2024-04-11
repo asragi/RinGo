@@ -114,18 +114,31 @@ func (c Cost) Multiply(value int) Cost {
 
 type Profit current
 
+func (p Profit) Multiply(value int) Profit {
+	return Profit(int(p) * value)
+}
+
 type MaxStock int
 type Count int
 
-func CheckIsStockEnough(stock Stock, num Count) bool {
-	return stock >= Stock(num)
+func (s Stock) CheckIsStockEnough(num Count) bool {
+	return s >= Stock(num)
 }
 
 func CheckIsStockOver(stock Stock, num Count, maxCount MaxStock) bool {
 	return int(stock)+int(num) > int(maxCount)
 }
 
-// item user
+type SalesFigures int
+
+func (s SalesFigures) AddSalesFigures(num Count) SalesFigures {
+	return SalesFigures(int(s) + int(num))
+}
+
+func (s SalesFigures) TotalingSales(other SalesFigures) SalesFigures {
+	return SalesFigures(int(s) + int(other))
+}
+
 type Stock int
 
 func (s Stock) AddStock(count Count, max MaxStock) Stock {

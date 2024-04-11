@@ -7,27 +7,66 @@ import (
 	"time"
 )
 
+type Id string
 type ReservationRow struct {
+	Id            Id          `db:"reservation_id"`
 	UserId        core.UserId `db:"user_id"`
 	Index         shelf.Index `db:"index"`
 	ScheduledTime time.Time   `db:"scheduled_time"` // sql.db doesn't support type alias for time.Time
+	PurchaseNum   core.Count  `db:"purchase_num"`
+}
+
+func ReservationRowsToUserIdArray(rows []*ReservationRow) []core.UserId {
+	userIdArray := make([]core.UserId, len(rows))
+	for i, r := range rows {
+		userIdArray[i] = r.UserId
+	}
+	return userIdArray
+}
+
+func ReservationRowsToIdArray(rows []*ReservationRow) []Id {
+	idArray := make([]Id, len(rows))
+	for i, r := range rows {
+		idArray[i] = r.Id
+	}
+	return idArray
 }
 
 func ToReservationRow(row []*Reservation) []*ReservationRow {
 	reservationRows := make([]*ReservationRow, len(row))
 	for i, r := range row {
 		reservationRows[i] = &ReservationRow{
+			Id:            r.Id,
 			UserId:        r.TargetUser,
 			Index:         r.Index,
 			ScheduledTime: r.ScheduledTime,
+			PurchaseNum:   r.PurchaseNum,
+		}
+	}
+	return reservationRows
+}
+
+func ToReservationModel(reservations []*ReservationRow) []*Reservation {
+	reservationRows := make([]*Reservation, len(reservations))
+	for i, r := range reservations {
+		reservationRows[i] = &Reservation{
+			Id:            r.Id,
+			TargetUser:    r.UserId,
+			Index:         r.Index,
+			ScheduledTime: r.ScheduledTime,
+			PurchaseNum:   r.PurchaseNum,
 		}
 	}
 	return reservationRows
 }
 
 type InsertReservationRepoFunc func(context.Context, []*ReservationRow) error
-type DeleteReservationRepoFunc func(context.Context, core.UserId, shelf.Index) error
-type FetchReservationRepoFunc func(context.Context, core.UserId) ([]*ReservationRow, error)
+type DeleteReservationToShelfRepoFunc func(context.Context, core.UserId, shelf.Index) error
+type DeleteReservationRepoFunc func(context.Context, []Id) error
+type FetchReservationRepoFunc func(ctx context.Context, users []core.UserId, from time.Time, to time.Time) (
+	[]*ReservationRow,
+	error,
+)
 
 type ItemAttractionRes struct {
 	ItemId              core.ItemId         `db:"item_id"`

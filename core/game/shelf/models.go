@@ -20,3 +20,7 @@ type (
 		Index  Index
 	}
 )
+
+func (p SetPrice) CalculateProfit(purchaseNum core.Count) core.Profit {
+	return core.Profit(int(p) * int(purchaseNum))
+}

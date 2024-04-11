@@ -15,7 +15,7 @@ type GetPostActionRepositories struct {
 	FetchEarningItem     FetchEarningItemFunc
 	FetchConsumingItem   FetchConsumingItemFunc
 	FetchRequiredSkill   FetchRequiredSkillsFunc
-	FetchStorage         FetchStorageFunc
+	FetchStorage         FetchStorageFuncDeprecated
 	FetchItemMaster      FetchItemMasterFunc
 }
 
@@ -162,10 +162,10 @@ func CreatePostAction(
 	calcEarnedItem CalcEarnedItemFunc,
 	calcConsumedItem CalcConsumedItemFunc,
 	calcTotalItem CalcTotalItemFunc,
-	updateItemStorage UpdateItemStorageFunc,
+	updateItemStorage UpdateItemStorageFuncDeprecated,
 	updateSkill UpdateUserSkillExpFunc,
 	updateStamina UpdateStaminaFunc,
-	updateFund UpdateFundFunc,
+	updateFund UpdateFundFuncDeprecated,
 	random core.EmitRandomFunc,
 	transaction core.TransactionFunc,
 ) PostActionFunc {

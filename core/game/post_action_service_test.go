@@ -147,8 +147,8 @@ func TestPostAction(t *testing.T) {
 			return mocks.mockTotal
 		}
 
-		var updatedItemStock []*ItemStock
-		mockItemUpdate := func(_ context.Context, _ core.UserId, stocks []*ItemStock) error {
+		var updatedItemStock []*TotalItemStock
+		mockItemUpdate := func(_ context.Context, _ core.UserId, stocks []*TotalItemStock) error {
 			updatedItemStock = stocks
 			return nil
 		}

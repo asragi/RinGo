@@ -1149,7 +1149,7 @@ func TestCreateUpdateItemStorage(t *testing.T) {
 		err = updateStorage(
 			ctx,
 			v.userId,
-			[]*game.ItemStock{{ItemId: v.itemId, AfterStock: v.stockAfter, IsKnown: true}},
+			[]*game.TotalItemStock{{ItemId: v.itemId, AfterStock: v.stockAfter, IsKnown: true}},
 		)
 		if err != nil {
 			t.Fatalf("failed to update storage: %v", err)

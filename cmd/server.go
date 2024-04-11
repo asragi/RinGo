@@ -26,7 +26,7 @@ type infrastructuresStruct struct {
 	fetchPassword             auth.FetchHashedPassword
 	getResource               game.GetResourceFunc
 	fetchItemMaster           game.FetchItemMasterFunc
-	fetchStorage              game.FetchStorageFunc
+	fetchStorage              game.FetchStorageFuncDeprecated
 	getAllStorage             game.FetchAllStorageFunc
 	userSkill                 game.FetchUserSkillFunc
 	stageMaster               explore.FetchStageMasterFunc
@@ -37,7 +37,7 @@ type infrastructuresStruct struct {
 	consumingItem             game.FetchConsumingItemFunc
 	fetchRequiredSkill        game.FetchRequiredSkillsFunc
 	skillGrowth               game.FetchSkillGrowthData
-	updateStorage             game.UpdateItemStorageFunc
+	updateStorage             game.UpdateItemStorageFuncDeprecated
 	updateSkill               game.UpdateUserSkillExpFunc
 	getUserExplore            game.GetUserExploreFunc
 	fetchStageExploreRelation explore.FetchStageExploreRelation
@@ -45,7 +45,7 @@ type infrastructuresStruct struct {
 	fetchUserStage            explore.FetchUserStageFunc
 	fetchReductionSkill       game.FetchReductionStaminaSkillFunc
 	updateStamina             game.UpdateStaminaFunc
-	updateFund                game.UpdateFundFunc
+	updateFund                game.UpdateFundFuncDeprecated
 	getTime                   core.GetCurrentTimeFunc
 }
 

@@ -8,7 +8,8 @@ import (
 	"github.com/asragi/RinGo/utils"
 )
 
-type AddInsertReservationResult struct{}
+type InsertReservationResult struct{}
+type InsertReservationFunc func() (InsertReservationResult, error)
 
 func AddInsertReservationListener(
 	subscribe shelf.SubscribeUpdateShelfFunc,
@@ -16,7 +17,7 @@ func AddInsertReservationListener(
 	fetchUserPopularity FetchUserPopularityFunc,
 	createReservation createReservationFunc,
 	insertReservation InsertReservationRepoFunc,
-	deleteReservation DeleteReservationRepoFunc,
+	deleteReservation DeleteReservationToShelfRepoFunc,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
 ) {

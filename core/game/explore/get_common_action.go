@@ -23,7 +23,7 @@ type (
 		game.ExploreId,
 	) (getCommonActionRes, error)
 	CreateGetCommonActionRepositories struct {
-		FetchItemStorage        game.FetchStorageFunc
+		FetchItemStorage        game.FetchStorageFuncDeprecated
 		FetchExploreMaster      game.FetchExploreMasterFunc
 		FetchEarningItem        game.FetchEarningItemFunc
 		FetchConsumingItem      game.FetchConsumingItemFunc

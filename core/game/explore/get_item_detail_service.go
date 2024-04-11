@@ -70,7 +70,7 @@ func CreateGetItemDetailService(
 
 type CreateGetItemDetailArgsFunc func(
 	game.FetchItemMasterFunc,
-	game.FetchStorageFunc,
+	game.FetchStorageFuncDeprecated,
 	game.FetchExploreMasterFunc,
 	FetchItemExploreRelationFunc,
 	game.CalcConsumingStaminaFunc,
@@ -85,7 +85,7 @@ type GenerateItemDetailArgsFunc func(
 
 func CreateGenerateGetItemDetailArgs(
 	getItemMaster game.FetchItemMasterFunc,
-	getItemStorage game.FetchStorageFunc,
+	getItemStorage game.FetchStorageFuncDeprecated,
 	getExploreMaster game.FetchExploreMasterFunc,
 	getItemExploreRelation FetchItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc game.CalcConsumingStaminaFunc,

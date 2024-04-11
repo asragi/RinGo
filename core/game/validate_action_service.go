@@ -133,7 +133,7 @@ func CreateShortValidateActionArgs(
 	fetchConsumingItem FetchConsumingItemFunc,
 	fetchRequiredSkill FetchRequiredSkillsFunc,
 	fetchUserSkill FetchUserSkillFunc,
-	fetchStorage FetchStorageFunc,
+	fetchStorage FetchStorageFuncDeprecated,
 	staminaReductionFunc CalcStaminaReductionFunc,
 	getTime core.GetCurrentTimeFunc,
 	generateArgs GenerateIsExplorePossibleArgsFunc,

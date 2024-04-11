@@ -5,18 +5,35 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-type GetResourceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
-
-type GetResourceRes struct {
-	UserId             core.UserId             `db:"user_id"`
-	MaxStamina         core.MaxStamina         `db:"max_stamina"`
-	StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
-	Fund               core.Fund               `db:"fund"`
-}
-
-type UpdateFundFunc func(context.Context, core.UserId, core.Fund) error
-
-type UpdateStaminaFunc func(context.Context, core.UserId, core.StaminaRecoverTime) error
+type (
+	// Deprecated: use GetFundFunc, or GetStaminaFunc
+	GetResourceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
+	StaminaRes      struct {
+		UserId             core.UserId             `db:"user_id"`
+		MaxStamina         core.MaxStamina         `db:"max_stamina"`
+		StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
+	}
+	GetStaminaFunc func(context.Context, []core.UserId) ([]*StaminaRes, error)
+	FundRes        struct {
+		UserId core.UserId `db:"user_id"`
+		Fund   core.Fund   `db:"fund"`
+	}
+	GetFundFunc    func(context.Context, []core.UserId) ([]*FundRes, error)
+	GetResourceRes struct {
+		UserId             core.UserId             `db:"user_id"`
+		MaxStamina         core.MaxStamina         `db:"max_stamina"`
+		StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
+		Fund               core.Fund               `db:"fund"`
+	}
+	// Deprecated: use UpdateFundFunc
+	UpdateFundFuncDeprecated func(context.Context, core.UserId, core.Fund) error
+	UserFundPair             struct {
+		UserId core.UserId `db:"user_id"`
+		Fund   core.Fund   `db:"fund"`
+	}
+	UpdateFundFunc    func(context.Context, []*UserFundPair) error
+	UpdateStaminaFunc func(context.Context, core.UserId, core.StaminaRecoverTime) error
+)
 
 type GetItemMasterRes struct {
 	ItemId      core.ItemId      `db:"item_id" json:"item_id"`
@@ -46,6 +63,14 @@ type StorageData struct {
 type BatchGetStorageRes struct {
 	UserId   core.UserId
 	ItemData []*StorageData
+}
+
+func SpreadGetStorageRes(res []*BatchGetStorageRes) []*StorageData {
+	result := make([]*StorageData, 0)
+	for _, v := range res {
+		result = append(result, v.ItemData...)
+	}
+	return result
 }
 
 func FindItemStorageData(data []*StorageData, itemId core.ItemId) *StorageData {
@@ -82,23 +107,23 @@ type UserItemPair struct {
 	ItemId core.ItemId `db:"item_id"`
 }
 
-type FetchBatchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
+type FetchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
 
-// Deprecated: use FetchBatchStorageFunc
-type FetchStorageFunc func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
+// Deprecated: use FetchStorageFunc
+type FetchStorageFuncDeprecated func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
 
 type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)
 
-type ItemStock struct {
+type TotalItemStock struct {
 	ItemId     core.ItemId
 	AfterStock core.Stock
 	IsKnown    core.IsKnown
 }
 
-func totalItemToItemStock(totalItems []*totalItem) []*ItemStock {
-	result := make([]*ItemStock, len(totalItems))
+func totalItemToItemStock(totalItems []*totalItem) []*TotalItemStock {
+	result := make([]*TotalItemStock, len(totalItems))
 	for i, v := range totalItems {
-		result[i] = &ItemStock{
+		result[i] = &TotalItemStock{
 			ItemId:     v.ItemId,
 			AfterStock: v.Stock,
 			IsKnown:    true,
@@ -107,7 +132,9 @@ func totalItemToItemStock(totalItems []*totalItem) []*ItemStock {
 	return result
 }
 
-type UpdateItemStorageFunc func(context.Context, core.UserId, []*ItemStock) error
+// Deprecated: use UpdateItemStorageFunc
+type UpdateItemStorageFuncDeprecated func(context.Context, core.UserId, []*TotalItemStock) error
+type UpdateItemStorageFunc func(context.Context, []*StorageData) error
 
 type SkillMaster struct {
 	SkillId     core.SkillId     `db:"skill_id"`

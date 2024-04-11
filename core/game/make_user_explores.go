@@ -11,7 +11,7 @@ type CreateMakeUserExploreRepositories struct {
 	GetAction            GetUserExploreFunc
 	GetRequiredSkills    FetchRequiredSkillsFunc
 	GetConsumingItems    FetchConsumingItemFunc
-	GetStorage           FetchStorageFunc
+	GetStorage           FetchStorageFuncDeprecated
 	GetUserSkill         FetchUserSkillFunc
 	CalcConsumingStamina CalcConsumingStaminaFunc
 	GetExploreMaster     FetchExploreMasterFunc

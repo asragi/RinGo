@@ -482,7 +482,7 @@ func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
 	}
 }
 
-func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
+func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFuncDeprecated {
 	query := func(userId core.UserId) string {
 		return fmt.Sprintf(`UPDATE ringo.users SET fund = :fund WHERE user_id = "%s";`, userId)
 	}
@@ -498,7 +498,7 @@ func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
 	}
 }
 
-func CreateGetStorage(queryF queryFunc) game.FetchBatchStorageFunc {
+func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 	type ItemDataRes struct {
 		UserId  core.UserId `db:"user_id"`
 		ItemId  core.ItemId `db:"item_id"`
@@ -632,8 +632,8 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 	}
 }
 
-func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageFunc {
-	return func(ctx context.Context, userId core.UserId, stocks []*game.ItemStock) error {
+func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageFuncDeprecated {
+	return func(ctx context.Context, userId core.UserId, stocks []*game.TotalItemStock) error {
 		type userItemStock struct {
 			UserId  core.UserId  `db:"user_id"`
 			ItemId  core.ItemId  `db:"item_id"`
@@ -641,7 +641,7 @@ func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageF
 			IsKnown core.IsKnown `db:"is_known"`
 		}
 
-		stockData := func(stocks []*game.ItemStock) []*userItemStock {
+		stockData := func(stocks []*game.TotalItemStock) []*userItemStock {
 			result := make([]*userItemStock, len(stocks))
 			for i, v := range stocks {
 				result[i] = &userItemStock{

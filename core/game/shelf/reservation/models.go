@@ -9,9 +9,11 @@ import (
 )
 
 type Reservation struct {
+	Id            Id
 	TargetUser    core.UserId
 	Index         shelf.Index
 	ScheduledTime time.Time
+	PurchaseNum   core.Count
 }
 
 type ShopPopularity float64

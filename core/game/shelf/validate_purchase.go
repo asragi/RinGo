@@ -34,7 +34,7 @@ func CreateValidatePurchase(
 	fetchShelf FetchShelf,
 	fetchUserResource game.GetResourceFunc,
 	fetchItemMaster game.FetchItemMasterFunc,
-	fetchStorage game.FetchBatchStorageFunc,
+	fetchStorage game.FetchStorageFunc,
 	fetchUserSkills game.FetchUserSkillFunc,
 	fetchReductionStaminaSkill game.FetchReductionStaminaSkillFunc,
 	calcStaminaReduction game.CalcStaminaReductionFunc,
@@ -77,7 +77,8 @@ func CreateValidatePurchase(
 		if targetStorage == nil {
 			return handleError(fmt.Errorf("storage not found: %s, item: %s", targetUserId, targetItemId))
 		}
-		isStockEnough := core.CheckIsStockEnough(targetStorage.Stock, num)
+		stock := targetStorage.Stock
+		isStockEnough := stock.CheckIsStockEnough(num)
 		if !isStockEnough {
 			return handleError(fmt.Errorf("stock is not enough: %d, (requested: %d)", targetStorage.Stock, num))
 		}

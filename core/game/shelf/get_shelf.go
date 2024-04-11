@@ -15,7 +15,7 @@ type GetShelfFunc func(
 func CreateGetShelfFunc(
 	fetchShelf FetchShelf,
 	fetchItemMaster game.FetchItemMasterFunc,
-	fetchStorage game.FetchBatchStorageFunc,
+	fetchStorage game.FetchStorageFunc,
 ) GetShelfFunc {
 	return func(
 		ctx context.Context,
