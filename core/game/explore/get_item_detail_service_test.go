@@ -165,14 +165,13 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		}
 
 		var passedStorageArg core.ItemId
-		mockGetItemStorage := func(_ context.Context, userId core.UserId, itemId []core.ItemId) (
-			game.BatchGetStorageRes,
-			error,
-		) {
-			passedStorageArg = itemId[0]
-			return game.BatchGetStorageRes{
-				UserId:   userId,
-				ItemData: []*game.StorageData{v.mockGetItemStorageRes},
+		mockGetItemStorage := func(_ context.Context, pairs []*game.UserItemPair) ([]*game.BatchGetStorageRes, error) {
+			passedStorageArg = pairs[0].ItemId
+			return []*game.BatchGetStorageRes{
+				{
+					UserId:   userId,
+					ItemData: []*game.StorageData{v.mockGetItemStorageRes},
+				},
 			}, nil
 		}
 		var passedExploreArgs []game.ExploreId

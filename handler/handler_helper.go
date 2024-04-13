@@ -12,7 +12,7 @@ import (
 )
 
 type Handler func(http.ResponseWriter, *http.Request)
-type writeLogger func(int, error)
+type WriteLogger func(int, error)
 
 func setHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -69,7 +69,7 @@ func createHandlerWithParameter[T any, S any](
 	endpointFunc func(context.Context, *T) (*S, error),
 	createContext utils.CreateContextFunc,
 	selectParam selectParam[T],
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		passedUrl := r.URL
@@ -100,7 +100,7 @@ func createHandlerWithParameter[T any, S any](
 // Deprecated: use createHandlerWithParameter
 func createHandler[T any, S any](
 	endpointFunc func(*T) (S, error),
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		var req T

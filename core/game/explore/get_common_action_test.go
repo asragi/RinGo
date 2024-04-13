@@ -175,10 +175,9 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 
 		mockItemStorage := func(
 			ctx context.Context,
-			userId core.UserId,
-			itemId []core.ItemId,
-		) (game.BatchGetStorageRes, error) {
-			return v.mockStorage, nil
+			userItemPairs []*game.UserItemPair,
+		) ([]*game.BatchGetStorageRes, error) {
+			return []*game.BatchGetStorageRes{&v.mockStorage}, nil
 		}
 		mockExploreMaster := func(ctx context.Context, exploreId []game.ExploreId) (
 			[]*game.GetExploreMasterRes,

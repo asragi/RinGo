@@ -6,25 +6,24 @@ import (
 )
 
 type (
-	// Deprecated: use GetFundFunc, or GetStaminaFunc
-	GetResourceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
-	StaminaRes      struct {
-		UserId             core.UserId             `db:"user_id"`
-		MaxStamina         core.MaxStamina         `db:"max_stamina"`
-		StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
-	}
-	GetStaminaFunc func(context.Context, []core.UserId) ([]*StaminaRes, error)
-	FundRes        struct {
-		UserId core.UserId `db:"user_id"`
-		Fund   core.Fund   `db:"fund"`
-	}
-	GetFundFunc    func(context.Context, []core.UserId) ([]*FundRes, error)
 	GetResourceRes struct {
 		UserId             core.UserId             `db:"user_id"`
 		MaxStamina         core.MaxStamina         `db:"max_stamina"`
 		StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
 		Fund               core.Fund               `db:"fund"`
 	}
+	GetResourceFunc func(context.Context, core.UserId) (*GetResourceRes, error)
+	StaminaRes      struct {
+		UserId             core.UserId             `db:"user_id"`
+		MaxStamina         core.MaxStamina         `db:"max_stamina"`
+		StaminaRecoverTime core.StaminaRecoverTime `db:"stamina_recover_time"`
+	}
+	FetchStaminaFunc func(context.Context, []core.UserId) ([]*StaminaRes, error)
+	FundRes          struct {
+		UserId core.UserId `db:"user_id"`
+		Fund   core.Fund   `db:"fund"`
+	}
+	FetchFundFunc func(context.Context, []core.UserId) ([]*FundRes, error)
 	// Deprecated: use UpdateFundFunc
 	UpdateFundFuncDeprecated func(context.Context, core.UserId, core.Fund) error
 	UserFundPair             struct {
@@ -34,6 +33,16 @@ type (
 	UpdateFundFunc    func(context.Context, []*UserFundPair) error
 	UpdateStaminaFunc func(context.Context, core.UserId, core.StaminaRecoverTime) error
 )
+
+func FundPairToUserId(pairs []*UserFundPair) ([]core.UserId, []core.Fund) {
+	userId := make([]core.UserId, len(pairs))
+	fund := make([]core.Fund, len(pairs))
+	for i, v := range pairs {
+		userId[i] = v.UserId
+		fund[i] = v.Fund
+	}
+	return userId, fund
+}
 
 type GetItemMasterRes struct {
 	ItemId      core.ItemId      `db:"item_id" json:"item_id"`
@@ -58,6 +67,19 @@ type StorageData struct {
 	ItemId  core.ItemId  `db:"item_id"`
 	Stock   core.Stock   `db:"stock"`
 	IsKnown core.IsKnown `db:"is_known"`
+}
+
+func totalItemStockToStorageData(userId core.UserId, totalItems []*totalItem) []*StorageData {
+	result := make([]*StorageData, len(totalItems))
+	for i, v := range totalItems {
+		result[i] = &StorageData{
+			UserId:  userId,
+			ItemId:  v.ItemId,
+			Stock:   v.Stock,
+			IsKnown: true,
+		}
+	}
+	return result
 }
 
 type BatchGetStorageRes struct {
@@ -107,6 +129,17 @@ type UserItemPair struct {
 	ItemId core.ItemId `db:"item_id"`
 }
 
+func ToUserItemPair(userId core.UserId, itemIds []core.ItemId) []*UserItemPair {
+	result := make([]*UserItemPair, len(itemIds))
+	for i, v := range itemIds {
+		result[i] = &UserItemPair{
+			UserId: userId,
+			ItemId: v,
+		}
+	}
+	return result
+}
+
 type FetchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
 
 // Deprecated: use FetchStorageFunc
@@ -114,22 +147,12 @@ type FetchStorageFuncDeprecated func(context.Context, core.UserId, []core.ItemId
 
 type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)
 
+// Deprecated: use StorageData
 type TotalItemStock struct {
+	UserId     core.UserId
 	ItemId     core.ItemId
 	AfterStock core.Stock
 	IsKnown    core.IsKnown
-}
-
-func totalItemToItemStock(totalItems []*totalItem) []*TotalItemStock {
-	result := make([]*TotalItemStock, len(totalItems))
-	for i, v := range totalItems {
-		result[i] = &TotalItemStock{
-			ItemId:     v.ItemId,
-			AfterStock: v.Stock,
-			IsKnown:    true,
-		}
-	}
-	return result
 }
 
 // Deprecated: use UpdateItemStorageFunc

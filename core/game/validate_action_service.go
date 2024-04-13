@@ -133,7 +133,7 @@ func CreateShortValidateActionArgs(
 	fetchConsumingItem FetchConsumingItemFunc,
 	fetchRequiredSkill FetchRequiredSkillsFunc,
 	fetchUserSkill FetchUserSkillFunc,
-	fetchStorage FetchStorageFuncDeprecated,
+	fetchStorage FetchStorageFunc,
 	staminaReductionFunc CalcStaminaReductionFunc,
 	getTime core.GetCurrentTimeFunc,
 	generateArgs GenerateIsExplorePossibleArgsFunc,
@@ -174,9 +174,13 @@ func CreateShortValidateActionArgs(
 			return handleError(err)
 		}
 		itemIds := ConsumingItemsToIdArray(consumingItems)
-		storage, err := fetchStorage(ctx, userId, itemIds)
+		storage, err := fetchStorage(ctx, ToUserItemPair(userId, itemIds))
 		if err != nil {
 			return handleError(err)
+		}
+		userStorage := FindStorageData(storage, userId)
+		if userStorage == nil {
+			return handleError(&InvalidResponseFromInfrastructureError{Message: "no rows returned from fetchStorage"})
 		}
 		currentTime := getTime()
 		args := generateArgs(
@@ -185,11 +189,51 @@ func CreateShortValidateActionArgs(
 			consumingItems,
 			requiredSkills,
 			userSkills.Skills,
-			storage.ItemData,
+			userStorage.ItemData,
 			execNum,
 			staminaReductionFunc,
 			currentTime,
 		)
 		return &args, nil
+	}
+}
+
+type ValidateActionFunc func(
+	context.Context,
+	core.UserId,
+	ExploreId,
+	int,
+) (map[core.IsPossibleType]core.IsPossible, error)
+
+func CreateValidateAction(
+	fetchUserResource GetResourceFunc,
+	fetchActionMaster FetchExploreMasterFunc,
+	fetchConsumingItem FetchConsumingItemFunc,
+	fetchRequiredSkill FetchRequiredSkillsFunc,
+	fetchUserSkill FetchUserSkillFunc,
+	fetchStorage FetchStorageFunc,
+	getTime core.GetCurrentTimeFunc,
+) ValidateActionFunc {
+	return func(
+		ctx context.Context,
+		userId core.UserId,
+		exploreId ExploreId,
+		execNum int,
+	) (map[core.IsPossibleType]core.IsPossible, error) {
+		args, err := CreateShortValidateActionArgs(
+			fetchUserResource,
+			fetchActionMaster,
+			fetchConsumingItem,
+			fetchRequiredSkill,
+			fetchUserSkill,
+			fetchStorage,
+			CalcStaminaReduction,
+			getTime,
+			GenerateIsExplorePossibleArgs,
+		)(ctx, userId, exploreId, execNum)
+		if err != nil {
+			return nil, err
+		}
+		return CheckIsExplorePossible(args), nil
 	}
 }

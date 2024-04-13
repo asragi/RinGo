@@ -13,7 +13,7 @@ type shelfArg struct {
 
 func informationToShelfArg(
 	indices []shelf.Index,
-	information map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
+	information map[shelf.Index]*shelf.Shelf,
 	itemAttractionMap map[core.ItemId]*ItemAttractionRes,
 ) []*shelfArg {
 	shelves := make([]*shelfArg, len(information))
@@ -40,7 +40,7 @@ type createReservationFunc func(
 	getCurrentTime core.GetCurrentTimeFunc,
 ) []*Reservation
 
-func createReservationService(
+func createReservation(
 	updatedIndex shelf.Index,
 	updatedItemPrice core.Price,
 	updatedItemSetPrice shelf.SetPrice,

@@ -19,7 +19,7 @@ func CreateGetStageListHandler(
 	getStageList explore.CreateGetStageListFunc,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		_ RequestBody,

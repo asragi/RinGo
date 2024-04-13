@@ -15,7 +15,7 @@ func CreateGetResourceHandler(
 	validateToken auth.ValidateTokenFunc,
 	getUserResourceFunc explore.CreateGetUserResourceServiceFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		_ RequestBody,

@@ -7,11 +7,11 @@ import (
 )
 
 type CreateMakeUserExploreRepositories struct {
-	GetResource          GetResourceFunc
+	FetchResource        GetResourceFunc
 	GetAction            GetUserExploreFunc
 	GetRequiredSkills    FetchRequiredSkillsFunc
 	GetConsumingItems    FetchConsumingItemFunc
-	GetStorage           FetchStorageFuncDeprecated
+	GetStorage           FetchStorageFunc
 	GetUserSkill         FetchUserSkillFunc
 	CalcConsumingStamina CalcConsumingStaminaFunc
 	GetExploreMaster     FetchExploreMasterFunc
@@ -39,10 +39,13 @@ func CreateGenerateMakeUserExploreArgs(
 		handleError := func(err error) (*makeUserExploreArgs, error) {
 			return nil, fmt.Errorf("error on create make user explore args: %w", err)
 		}
-		resourceRes, err := repositories.GetResource(ctx, userId)
+		resource, err := repositories.FetchResource(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}
+		fund := resource.Fund
+		staminaRecoverTime := resource.StaminaRecoverTime
+		maxStamina := resource.MaxStamina
 		actionRes, err := repositories.GetAction(ctx, userId, exploreIds)
 		if err != nil {
 			return handleError(err)
@@ -71,9 +74,13 @@ func CreateGenerateMakeUserExploreArgs(
 			}
 			return result
 		}(consumingItemRes)
-		storage, err := repositories.GetStorage(ctx, userId, itemIds)
+		storage, err := repositories.GetStorage(ctx, ToUserItemPair(userId, itemIds))
 		if err != nil {
 			return handleError(err)
+		}
+		userStorage := FindStorageData(storage, userId)
+		if userStorage == nil {
+			return handleError(fmt.Errorf("user storage not found"))
 		}
 		skillIds := func(requiredSkills []*RequiredSkill) []core.SkillId {
 			checkedItems := make(map[core.SkillId]bool)
@@ -92,7 +99,7 @@ func CreateGenerateMakeUserExploreArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		staminaRes, err := repositories.CalcConsumingStamina(ctx, userId, exploreIds)
+		consumingStaminaRes, err := repositories.CalcConsumingStamina(ctx, userId, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -102,7 +109,7 @@ func CreateGenerateMakeUserExploreArgs(
 				result[v.ExploreId] = v.ReducedStamina
 			}
 			return result
-		}(staminaRes)
+		}(consumingStaminaRes)
 		explores, err := repositories.GetExploreMaster(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
@@ -115,31 +122,35 @@ func CreateGenerateMakeUserExploreArgs(
 			return result
 		}(explores)
 		return &makeUserExploreArgs{
-			resourceRes:       resourceRes,
-			currentTimer:      repositories.GetCurrentTime,
-			actionsRes:        getActionsRes,
-			requiredSkillRes:  requiredSkillsResponse,
-			consumingItemRes:  consumingItemRes,
-			itemData:          storage.ItemData,
-			batchGetSkillRes:  skills,
-			exploreIds:        exploreIds,
-			calculatedStamina: staminaMap,
-			exploreMasterMap:  exploreMap,
+			fundRes:            fund,
+			staminaRecoverTime: staminaRecoverTime,
+			maxStamina:         maxStamina,
+			currentTimer:       repositories.GetCurrentTime,
+			actionsRes:         getActionsRes,
+			requiredSkillRes:   requiredSkillsResponse,
+			consumingItemRes:   consumingItemRes,
+			itemData:           userStorage.ItemData,
+			batchGetSkillRes:   skills,
+			exploreIds:         exploreIds,
+			calculatedStamina:  staminaMap,
+			exploreMasterMap:   exploreMap,
 		}, nil
 	}
 }
 
 type makeUserExploreArgs struct {
-	resourceRes       *GetResourceRes
-	currentTimer      core.GetCurrentTimeFunc
-	actionsRes        GetActionsRes
-	requiredSkillRes  []*RequiredSkill
-	consumingItemRes  []*ConsumingItem
-	itemData          []*StorageData
-	batchGetSkillRes  BatchGetUserSkillRes
-	exploreIds        []ExploreId
-	calculatedStamina map[ExploreId]core.StaminaCost
-	exploreMasterMap  map[ExploreId]*GetExploreMasterRes
+	fundRes            core.Fund
+	staminaRecoverTime core.StaminaRecoverTime
+	maxStamina         core.MaxStamina
+	currentTimer       core.GetCurrentTimeFunc
+	actionsRes         GetActionsRes
+	requiredSkillRes   []*RequiredSkill
+	consumingItemRes   []*ConsumingItem
+	itemData           []*StorageData
+	batchGetSkillRes   BatchGetUserSkillRes
+	exploreIds         []ExploreId
+	calculatedStamina  map[ExploreId]core.StaminaCost
+	exploreMasterMap   map[ExploreId]*GetExploreMasterRes
 }
 
 type MakeUserExploreFunc func(context.Context, core.UserId, []ExploreId, int) ([]*UserExplore, error)
@@ -153,11 +164,8 @@ func CreateMakeUserExplore(generateArgs GenerateMakeUserExploreArgs) MakeUserExp
 		if err != nil {
 			return handleError(err)
 		}
-		currentStamina := func(resource *GetResourceRes, currentTime core.GetCurrentTimeFunc) core.Stamina {
-			recoverTime := resource.StaminaRecoverTime
-			return recoverTime.CalcStamina(currentTime(), resource.MaxStamina)
-		}(args.resourceRes, args.currentTimer)
-		currentFund := args.resourceRes.Fund
+		currentStamina := args.staminaRecoverTime.CalcStamina(args.currentTimer(), args.maxStamina)
+		currentFund := args.fundRes
 		exploreMap := func(explores []*ExploreUserData) map[ExploreId]*ExploreUserData {
 			result := make(map[ExploreId]*ExploreUserData)
 			for _, v := range explores {

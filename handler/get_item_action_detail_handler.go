@@ -20,7 +20,7 @@ func CreateGetItemActionDetailHandler(
 	service explore.CreateGetItemActionDetailFunc,
 	createEndpoint endpoint.CreateGetItemActionDetailEndpointFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		_ RequestBody,

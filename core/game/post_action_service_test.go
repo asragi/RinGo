@@ -11,13 +11,14 @@ import (
 func TestPostAction(t *testing.T) {
 	type testMocks struct {
 		mockCheckIsPossibleArgs *CheckIsPossibleArgs
-		mockArgs                *PostActionArgs
+		mockArgs                *postActionArgs
 		mockValidateAction      map[core.IsPossibleType]core.IsPossible
 		mockSkillGrowth         []*skillGrowthResult
 		mockApplyGrowth         []*growthApplyResult
 		mockEarned              []*EarnedItem
 		mockConsumed            []*ConsumedItem
 		mockTotal               []*totalItem
+		mockStamina             core.StaminaCost
 	}
 
 	type testCase struct {
@@ -45,22 +46,18 @@ func TestPostAction(t *testing.T) {
 
 	mocks := testMocks{
 		mockCheckIsPossibleArgs: mockCheckIsPossibleArgs,
-		mockArgs: &PostActionArgs{
-			userId:    userId,
-			exploreId: exploreId,
-			execCount: 2,
-			userResources: &GetResourceRes{
-				UserId:             userId,
-				MaxStamina:         3000,
-				StaminaRecoverTime: core.StaminaRecoverTime(test.MockTime()),
-				Fund:               currentFund,
-			},
+		mockArgs: &postActionArgs{
+			userId:      userId,
+			exploreId:   exploreId,
+			execCount:   2,
+			userFund:    currentFund,
+			userStamina: core.StaminaRecoverTime(test.MockTime()),
 			exploreMaster: &GetExploreMasterRes{
 				ExploreId:            exploreId,
 				DisplayName:          "explore_display",
 				Description:          "explore_desc",
 				ConsumingStamina:     111,
-				RequiredPayment:      222,
+				RequiredPayment:      343,
 				StaminaReducibleRate: 0.4,
 			},
 			skillGrowthList: []*SkillGrowthData{
@@ -74,12 +71,13 @@ func TestPostAction(t *testing.T) {
 				UserId: "",
 				Skills: nil,
 			},
-			skillMaster:       nil,
-			earningItemData:   nil,
-			consumingItemData: nil,
-			requiredSkills:    nil,
-			allStorageItems:   nil,
-			allItemMasterRes:  nil,
+			skillMaster:            nil,
+			earningItemData:        nil,
+			consumingItemData:      nil,
+			requiredSkills:         nil,
+			allStorageItems:        nil,
+			allItemMasterRes:       nil,
+			staminaReductionSkills: nil,
 		},
 		mockValidateAction: map[core.IsPossibleType]core.IsPossible{
 			core.PossibleTypeAll: core.IsPossible(true),
@@ -89,6 +87,7 @@ func TestPostAction(t *testing.T) {
 		mockEarned:      nil,
 		mockConsumed:    nil,
 		mockTotal:       nil,
+		mockStamina:     core.StaminaCost(30),
 	}
 
 	testCases := []testCase{
@@ -103,13 +102,13 @@ func TestPostAction(t *testing.T) {
 
 	for _, v := range testCases {
 		expectedAfterFund := func() core.Fund {
-			currentFund := v.mocks.mockArgs.userResources.Fund
+			currentFund := v.mocks.mockArgs.userFund
 			reduced, _ := currentFund.ReduceFund(v.mocks.mockCheckIsPossibleArgs.requiredPrice)
 			return reduced
 		}()
 		expectedAfterStamina := core.CalcAfterStamina(
-			mocks.mockArgs.userResources.StaminaRecoverTime,
-			mocks.mockCheckIsPossibleArgs.requiredStamina,
+			mocks.mockArgs.userStamina,
+			mocks.mockStamina,
 		)
 		expectedSkillInfo := convertToGrowthInfo(v.mocks.mockArgs.skillMaster, v.mocks.mockApplyGrowth)
 		expectedResult := &PostActionResult{
@@ -120,12 +119,6 @@ func TestPostAction(t *testing.T) {
 			AfterStamina:           expectedAfterStamina,
 		}
 		mocks := v.mocks
-		mockGenerateValidateArgs := func(context.Context, core.UserId, ExploreId, int) (*CheckIsPossibleArgs, error) {
-			return mocks.mockCheckIsPossibleArgs, nil
-		}
-		mockValidateAction := func(*CheckIsPossibleArgs) map[core.IsPossibleType]core.IsPossible {
-			return mocks.mockValidateAction
-		}
 		mockSkillGrowth := func(int, []*SkillGrowthData) []*skillGrowthResult {
 			return mocks.mockSkillGrowth
 		}
@@ -147,8 +140,8 @@ func TestPostAction(t *testing.T) {
 			return mocks.mockTotal
 		}
 
-		var updatedItemStock []*TotalItemStock
-		mockItemUpdate := func(_ context.Context, _ core.UserId, stocks []*TotalItemStock) error {
+		var updatedItemStock []*StorageData
+		mockItemUpdate := func(_ context.Context, stocks []*StorageData) error {
 			updatedItemStock = stocks
 			return nil
 		}
@@ -162,9 +155,9 @@ func TestPostAction(t *testing.T) {
 			updatedStaminaRecoverTime = recoverTime
 			return nil
 		}
-		var updatedFund core.Fund
-		mockUpdateFund := func(ctx context.Context, id core.UserId, afterFund core.Fund) error {
-			updatedFund = afterFund
+		var updatedFund []*UserFundPair
+		mockUpdateFund := func(ctx context.Context, fund []*UserFundPair) error {
+			updatedFund = fund
 			return nil
 		}
 
@@ -173,25 +166,27 @@ func TestPostAction(t *testing.T) {
 			userId core.UserId,
 			execNum int,
 			exploreId ExploreId,
-		) (*PostActionArgs, error) {
+		) (*postActionArgs, error) {
 			return mocks.mockArgs, nil
 		}
 
-		postAction := CreatePostAction(
+		mockCalcStaminaReduction := func(core.StaminaCost, StaminaReducibleRate, []*UserSkillRes) core.StaminaCost {
+			return v.mocks.mockStamina
+		}
+
+		postAction := createPostAction(
 			createArgs,
-			mockGenerateValidateArgs,
-			mockValidateAction,
 			mockSkillGrowth,
 			mockGrowthApply,
 			mockEarned,
 			mockConsumed,
 			mockTotal,
+			mockCalcStaminaReduction,
 			mockItemUpdate,
 			mockSkillUpdate,
 			mockUpdateStamina,
 			mockUpdateFund,
 			test.MockEmitRandom,
-			test.MockTransaction,
 		)
 		ctx := test.MockCreateContext()
 		res, err := postAction(ctx, v.requestUserId, v.requestExecCount, v.requestExploreId)
@@ -209,10 +204,13 @@ func TestPostAction(t *testing.T) {
 		if expectedAfterStamina != updatedStaminaRecoverTime {
 			t.Errorf("updatedStaminaRecoverTime expect: %v, got: %v", expectedAfterStamina, updatedStaminaRecoverTime)
 		}
-		if expectedAfterFund != updatedFund {
-			t.Errorf("updatedFund expect: %d, got: %d", expectedAfterFund, updatedFund)
+		if len(updatedFund) != 1 {
+			t.Fatalf("updatedFund length expect: 1, got: %d", len(updatedFund))
 		}
-		expectedItemStock := totalItemToItemStock(mocks.mockTotal)
+		if expectedAfterFund != updatedFund[0].Fund {
+			t.Errorf("updatedFund expect: %d, got: %d", expectedAfterFund, updatedFund[0].Fund)
+		}
+		expectedItemStock := totalItemStockToStorageData(userId, mocks.mockTotal)
 		if !test.DeepEqual(expectedItemStock, updatedItemStock) {
 			t.Errorf("updatedItemStock expect: %+v, got: %+v", expectedItemStock, updatedItemStock)
 		}

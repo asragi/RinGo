@@ -41,7 +41,7 @@ func CreatePostActionHandler(
 	createEndpoint endpoint.CreatePostActionEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	postEndpoint := createEndpoint(postAction, validateToken)
 	return createHandlerWithParameter(postEndpoint, createContext, GetPostActionParams, logger)

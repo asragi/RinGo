@@ -6,18 +6,14 @@ type (
 	Size     int
 	Index    int
 	SetPrice core.Price
-	ShelfRow struct {
+	Shelf    struct {
 		ItemId      core.ItemId
 		UserId      core.UserId
 		Index       Index
 		DisplayName core.DisplayName
 		Stock       core.Stock
-		Price       SetPrice
-	}
-	Shelf struct {
-		UserId core.UserId
-		ItemId core.ItemId
-		Index  Index
+		SetPrice    SetPrice
+		Price       core.Price
 	}
 )
 

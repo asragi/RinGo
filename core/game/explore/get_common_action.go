@@ -23,7 +23,7 @@ type (
 		game.ExploreId,
 	) (getCommonActionRes, error)
 	CreateGetCommonActionRepositories struct {
-		FetchItemStorage        game.FetchStorageFuncDeprecated
+		FetchItemStorage        game.FetchStorageFunc
 		FetchExploreMaster      game.FetchExploreMasterFunc
 		FetchEarningItem        game.FetchEarningItemFunc
 		FetchConsumingItem      game.FetchConsumingItemFunc
@@ -66,9 +66,13 @@ func CreateGetCommonActionDetail(
 			}
 			return result
 		}(consumingItems)
-		consumingItemStorage, err := args.FetchItemStorage(ctx, userId, consumingItemIds)
+		consumingItemStorage, err := args.FetchItemStorage(ctx, game.ToUserItemPair(userId, consumingItemIds))
 		if err != nil {
 			return handleError(err)
+		}
+		storage := game.FindStorageData(consumingItemStorage, userId)
+		if storage == nil {
+			return handleError(fmt.Errorf("no rows returned from fetchStorage"))
 		}
 		consumingItemMap := func(itemStorage []*game.StorageData) map[core.ItemId]*game.StorageData {
 			result := make(map[core.ItemId]*game.StorageData)
@@ -76,7 +80,7 @@ func CreateGetCommonActionDetail(
 				result[v.ItemId] = v
 			}
 			return result
-		}(consumingItemStorage.ItemData)
+		}(storage.ItemData)
 		requiredItems := func(consuming []*game.ConsumingItem) []*RequiredItemsRes {
 			result := make([]*RequiredItemsRes, len(consuming))
 			for i, v := range consuming {

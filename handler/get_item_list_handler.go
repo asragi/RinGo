@@ -17,7 +17,7 @@ func CreateGetItemListHandler(
 	createEndpoint endpoint.CreateGetItemListEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getItemListSelectParams := func(
 		_ RequestBody,

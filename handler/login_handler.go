@@ -24,7 +24,7 @@ func CreateLoginHandler(
 	loginFunc auth.LoginFunc,
 	createLoginEndpoint endpoint.CreateLoginEndpointFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	loginEndpoint := createLoginEndpoint(loginFunc)
 	return createHandlerWithParameter(loginEndpoint, createContext, GetLoginParams, logger)

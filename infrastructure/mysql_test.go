@@ -927,55 +927,73 @@ func TestCreateGetUserStageData(t *testing.T) {
 
 func TestCreateUpdateFund(t *testing.T) {
 	type testCase struct {
-		userId core.UserId
-		amount core.Fund
+		req []*game.UserFundPair
 	}
 
 	testCases := []testCase{
 		{
-			userId: "test-fund-user",
-			amount: 123,
+			req: []*game.UserFundPair{
+				{
+					UserId: "test_fund_user",
+					Fund:   10001,
+				},
+				{
+					UserId: "test_fund_user2",
+					Fund:   10002,
+				},
+				{
+					UserId: "test_fund_user3",
+					Fund:   10003,
+				},
+			},
 		},
 	}
 
 	for _, v := range testCases {
-		user := createTestUser(func(u *userTest) { u.UserId = v.userId })
 		ctx := test.MockCreateContext()
-		_, err := dba.Exec(
-			ctx,
-			"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
-			user,
-		)
-		if err != nil {
-			t.Fatalf("failed to insert user: %v", err)
+		testUsers := make([]*userTest, len(v.req))
+		for i, w := range v.req {
+			user := createTestUser(func(u *userTest) { u.UserId = w.UserId })
+			testUsers[i] = user
+			_, err := dba.Exec(
+				ctx,
+				"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
+				user,
+			)
+			if err != nil {
+				t.Fatalf("failed to insert user: %v", err)
+			}
 		}
 		updateFund := CreateUpdateFund(dba.Exec)
-		err = updateFund(ctx, v.userId, v.amount)
+		err := updateFund(ctx, v.req)
 		if err != nil {
 			t.Fatalf("failed to update fund: %v", err)
 		}
-		rows, err := dba.Query(
-			ctx,
-			"SELECT fund FROM ringo.users WHERE user_id = :user_id",
-			user,
-		)
-		if err != nil {
-			t.Fatalf("failed to fetch user: %v", err)
-		}
-		if !rows.Next() {
-			t.Fatalf("failed to fetch user: %v", err)
-		}
-		var res core.Fund
-		err = rows.Scan(&res)
-		if err != nil {
-			t.Fatalf("failed to fetch user: %v", err)
-		}
-		if res != v.amount {
-			t.Errorf("got: %v, expect: %v", res, v.amount)
-		}
-		_, err = dba.Exec(ctx, "DELETE FROM ringo.users WHERE user_id = :user_id", user)
-		if err != nil {
-			t.Fatalf("failed to delete user: %v", err)
+		for j, user := range testUsers {
+			rows, err := dba.Query(
+				ctx,
+				"SELECT fund FROM ringo.users WHERE user_id = :user_id",
+				user,
+			)
+			if err != nil {
+				t.Fatalf("failed to fetch user: %v", err)
+			}
+			if !rows.Next() {
+				t.Fatalf("failed to fetch user: %v", err)
+			}
+			var res core.Fund
+			err = rows.Scan(&res)
+			if err != nil {
+				t.Fatalf("failed to fetch user: %v", err)
+			}
+			expect := v.req[j].Fund
+			if res != expect {
+				t.Errorf("got: %v, expect: %v", res, expect)
+			}
+			_, err = dba.Exec(ctx, "DELETE FROM ringo.users WHERE user_id = :user_id", user)
+			if err != nil {
+				t.Fatalf("failed to delete user: %v", err)
+			}
 		}
 	}
 }
@@ -1110,81 +1128,90 @@ func TestCreateGetAllStorage(t *testing.T) {
 
 func TestCreateUpdateItemStorage(t *testing.T) {
 	type testCase struct {
-		userId     core.UserId
-		itemId     core.ItemId
-		stock      core.Stock
-		stockAfter core.Stock
+		dataBefore []*game.StorageData
+		data       []*game.StorageData
 	}
 
 	testCases := []testCase{
 		{
-			userId:     testUserId,
-			itemId:     "5",
-			stock:      100,
-			stockAfter: 200,
+			data: []*game.StorageData{
+				{
+					UserId:  testUserId,
+					ItemId:  "1",
+					Stock:   100,
+					IsKnown: true,
+				},
+				{
+					UserId:  testUserId,
+					ItemId:  "2",
+					Stock:   200,
+					IsKnown: true,
+				},
+			},
+			dataBefore: []*game.StorageData{
+				{
+					UserId:  testUserId,
+					ItemId:  "1",
+					Stock:   50,
+					IsKnown: true,
+				},
+				{
+					UserId:  testUserId,
+					ItemId:  "2",
+					Stock:   500,
+					IsKnown: true,
+				},
+			},
 		},
 	}
 
 	for _, v := range testCases {
 		ctx := test.MockCreateContext()
-		data := func() []*game.StorageData {
-			return []*game.StorageData{
-				{
-					UserId:  v.userId,
-					ItemId:  v.itemId,
-					Stock:   v.stock,
-					IsKnown: true,
-				},
-			}
-		}()
 		_, err := dba.Exec(
 			ctx,
 			`INSERT INTO ringo.item_storages (user_id, item_id, stock, is_known) VALUES (:user_id, :item_id, :stock, :is_known)`,
-			data,
+			v.dataBefore,
 		)
 		if err != nil {
 			t.Fatalf("failed to insert storage: %v", err)
 		}
-		updateStorage := CreateUpdateItemStorage(dba.Exec)
-		err = updateStorage(
-			ctx,
-			v.userId,
-			[]*game.TotalItemStock{{ItemId: v.itemId, AfterStock: v.stockAfter, IsKnown: true}},
-		)
-		if err != nil {
-			t.Fatalf("failed to update storage: %v", err)
-		}
-		rows, err := dba.Query(
-			ctx,
-			fmt.Sprintf(
-				`SELECT stock FROM ringo.item_storages WHERE user_id = "%s" AND item_id = "%s"`,
-				v.userId,
-				v.itemId,
-			),
-			nil,
-		)
-		if err != nil {
-			t.Fatalf("failed to fetch storage: %v", err)
-		}
-		if !rows.Next() {
-			t.Fatalf("failed to fetch storage: %v", err)
-		}
-		var res core.Stock
-		err = rows.Scan(&res)
-		if err != nil {
-			t.Fatalf("failed to fetch storage: %v", err)
-		}
-		if res != v.stockAfter {
-			t.Errorf("got: %v, expect: %v", res, v.stockAfter)
-		}
-		_, err = dba.Exec(
-			ctx, `DELETE FROM ringo.item_storages WHERE user_id = :user_id AND item_id = :item_id`, &game.StorageData{
-				UserId: v.userId,
-				ItemId: v.itemId,
+		err = dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				updateStorage := CreateUpdateItemStorage(dba.Exec)
+				err = updateStorage(ctx, v.data)
+				if err != nil {
+					t.Fatalf("failed to update storage: %v", err)
+				}
+				for _, w := range v.data {
+					rows, err := dba.Query(
+						ctx,
+						fmt.Sprintf(
+							`SELECT stock FROM ringo.item_storages WHERE user_id = "%s" AND item_id = "%s"`,
+							w.UserId,
+							w.ItemId,
+						),
+						nil,
+					)
+					if err != nil {
+						t.Fatalf("failed to fetch storage: %v", err)
+					}
+					if !rows.Next() {
+						t.Fatalf("failed to fetch storage: %v", err)
+					}
+					var res core.Stock
+					err = rows.Scan(&res)
+					if err != nil {
+						t.Fatalf("failed to fetch storage: %v", err)
+					}
+					if res != w.Stock {
+						t.Errorf("got: %v, expect: %v", res, w.Stock)
+					}
+				}
+				return TestCompleted
 			},
 		)
-		if err != nil {
-			t.Fatalf("failed to delete storage: %v", err)
+		if !errors.Is(err, TestCompleted) {
+			t.Fatalf("failed: %v", err)
 		}
 	}
 }

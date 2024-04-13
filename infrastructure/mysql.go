@@ -10,6 +10,7 @@ import (
 	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/database"
 	_ "github.com/go-sql-driver/mysql"
+	"strconv"
 	"time"
 )
 
@@ -482,19 +483,34 @@ func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
 	}
 }
 
-func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFuncDeprecated {
-	query := func(userId core.UserId) string {
-		return fmt.Sprintf(`UPDATE ringo.users SET fund = :fund WHERE user_id = "%s";`, userId)
-	}
-	type fundReq struct {
-		Fund core.Fund `db:"fund"`
-	}
-	return func(ctx context.Context, userId core.UserId, fund core.Fund) error {
-		return CreateExec[fundReq](
-			dbExec,
-			"insert user fund: %w",
-			query(userId),
-		)(ctx, []*fundReq{{Fund: fund}})
+func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
+	return func(ctx context.Context, userFundPair []*game.UserFundPair) error {
+		userIds, fundIds := game.FundPairToUserId(userFundPair)
+		userIdsToString := func(userIds []core.UserId) []string {
+			result := make([]string, len(userIds))
+			for i, v := range userIds {
+				result[i] = fmt.Sprintf(`"%s"`, v)
+			}
+			return result
+		}(userIds)
+		spreadUserId := spreadString(userIdsToString)
+		fundIdsToString := func(fundIds []core.Fund) []string {
+			result := make([]string, len(fundIds))
+			for i, v := range fundIds {
+				result[i] = strconv.Itoa(int(v))
+			}
+			return result
+		}(fundIds)
+		spreadFund := spreadString(fundIdsToString)
+		query := fmt.Sprintf(
+			`UPDATE ringo.users SET fund = ELT(FIELD(user_id,%s),%s)	WHERE user_id IN (%s)`,
+			spreadUserId, spreadFund, spreadUserId,
+		)
+		_, err := dbExec(ctx, query, nil)
+		if err != nil {
+			return fmt.Errorf("update fund: %w", err)
+		}
+		return nil
 	}
 }
 
@@ -632,35 +648,22 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 	}
 }
 
-func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageFuncDeprecated {
-	return func(ctx context.Context, userId core.UserId, stocks []*game.TotalItemStock) error {
-		type userItemStock struct {
-			UserId  core.UserId  `db:"user_id"`
-			ItemId  core.ItemId  `db:"item_id"`
-			Stock   core.Stock   `db:"stock"`
-			IsKnown core.IsKnown `db:"is_known"`
-		}
-
-		stockData := func(stocks []*game.TotalItemStock) []*userItemStock {
-			result := make([]*userItemStock, len(stocks))
-			for i, v := range stocks {
-				result[i] = &userItemStock{
-					UserId:  userId,
-					ItemId:  v.ItemId,
-					Stock:   v.AfterStock,
-					IsKnown: v.IsKnown,
-				}
+func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageFunc {
+	return func(ctx context.Context, data []*game.StorageData) error {
+		baseQuery := `INSERT INTO ringo.item_storages (user_id, item_id, stock, is_known) VALUES %s ON DUPLICATE KEY UPDATE stock = VALUES(stock);`
+		dataString := func(data []*game.StorageData) []string {
+			result := make([]string, len(data))
+			for i, v := range data {
+				result[i] = fmt.Sprintf(`("%s", "%s", %d, %t)`, v.UserId, v.ItemId, v.Stock, v.IsKnown)
 			}
 			return result
-		}(stocks)
-
-		query := `INSERT INTO ringo.item_storages (user_id, item_id, stock, is_known) VALUES (:user_id, :item_id, :stock, :is_known) ON DUPLICATE KEY UPDATE stock =VALUES(stock), is_known=VALUES(is_known);`
-
-		return CreateExec[userItemStock](
-			dbExec,
-			"update item storage: %w",
-			query,
-		)(ctx, stockData)
+		}(data)
+		query := fmt.Sprintf(baseQuery, spreadString(dataString))
+		_, err := dbExec(ctx, query, nil)
+		if err != nil {
+			return fmt.Errorf("update item storage: %w", err)
+		}
+		return nil
 	}
 }
 
@@ -796,4 +799,15 @@ func CreateExec[S any](
 		}
 		return nil
 	}
+}
+
+func spreadString(s []string) string {
+	result := ""
+	for i, v := range s {
+		result += v
+		if i != len(s)-1 {
+			result += ", "
+		}
+	}
+	return result
 }

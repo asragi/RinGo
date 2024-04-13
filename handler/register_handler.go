@@ -10,7 +10,7 @@ func CreateRegisterHandler(
 	register auth.RegisterUserFunc,
 	createEndpoint endpoint.CreateRegisterEndpointFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		body RequestBody,

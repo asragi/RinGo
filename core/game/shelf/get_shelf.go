@@ -10,7 +10,7 @@ import (
 type GetShelfFunc func(
 	context.Context,
 	[]core.UserId,
-) ([]*ShelfRow, error)
+) ([]*Shelf, error)
 
 func CreateGetShelfFunc(
 	fetchShelf FetchShelf,
@@ -20,8 +20,8 @@ func CreateGetShelfFunc(
 	return func(
 		ctx context.Context,
 		userIds []core.UserId,
-	) ([]*ShelfRow, error) {
-		handleError := func(err error) ([]*ShelfRow, error) {
+	) ([]*Shelf, error) {
+		handleError := func(err error) ([]*Shelf, error) {
 			return nil, fmt.Errorf("getting shelf: %w", err)
 		}
 		shelfRepoRows, err := fetchShelf(ctx, userIds)
@@ -42,19 +42,19 @@ func CreateGetShelfFunc(
 		if err != nil {
 			return handleError(err)
 		}
-		var result []*ShelfRow
+		var result []*Shelf
 		for _, userId := range userIds {
 			shelf := shelvesMap[userId]
 			for _, row := range shelf {
 				itemMaster := itemMasterMap[row.ItemId]
 				storage := storageMap[userId][row.ItemId]
 				result = append(
-					result, &ShelfRow{
+					result, &Shelf{
 						UserId:      userId,
 						ItemId:      row.ItemId,
 						DisplayName: itemMaster.DisplayName,
 						Index:       row.Index,
-						Price:       row.SetPrice,
+						SetPrice:    row.SetPrice,
 						Stock:       storage.Stock,
 					},
 				)

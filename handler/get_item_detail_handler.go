@@ -13,7 +13,7 @@ import (
 
 func CreateGetItemDetailHandler(
 	fetchItem game.FetchItemMasterFunc,
-	fetchStorage game.FetchStorageFuncDeprecated,
+	fetchStorage game.FetchStorageFunc,
 	fetchExploreMaster game.FetchExploreMasterFunc,
 	fetchItemRelation explore.FetchItemExploreRelationFunc,
 	calcConsumingStamina game.CalcConsumingStaminaFunc,
@@ -23,7 +23,7 @@ func CreateGetItemDetailHandler(
 	getItemDetailEndpoint endpoint.GetItemDetailEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		_ RequestBody,

@@ -70,7 +70,7 @@ func CreateGetItemDetailService(
 
 type CreateGetItemDetailArgsFunc func(
 	game.FetchItemMasterFunc,
-	game.FetchStorageFuncDeprecated,
+	game.FetchStorageFunc,
 	game.FetchExploreMasterFunc,
 	FetchItemExploreRelationFunc,
 	game.CalcConsumingStaminaFunc,
@@ -85,7 +85,7 @@ type GenerateItemDetailArgsFunc func(
 
 func CreateGenerateGetItemDetailArgs(
 	getItemMaster game.FetchItemMasterFunc,
-	getItemStorage game.FetchStorageFuncDeprecated,
+	getItemStorage game.FetchStorageFunc,
 	getExploreMaster game.FetchExploreMasterFunc,
 	getItemExploreRelation FetchItemExploreRelationFunc,
 	calcBatchConsumingStaminaFunc game.CalcConsumingStaminaFunc,
@@ -116,15 +116,16 @@ func CreateGenerateGetItemDetailArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		storageRes, err := getItemStorage(ctx, userId, itemIdReq)
+		storageRes, err := getItemStorage(ctx, game.ToUserItemPair(userId, itemIdReq))
 		if err != nil {
 			return handleError(err)
 		}
-		itemData := storageRes.ItemData
+		storage := game.FindStorageData(storageRes, userId)
+		itemData := storage.ItemData
 		if len(itemData) <= 0 {
 			return handleError(&game.InvalidResponseFromInfrastructureError{Message: "Item Storage Data"})
 		}
-		storage := itemData[0]
+		targetStorage := itemData[0]
 		userExplores, err := makeUserExplore(ctx, userId, itemExploreIds, 1)
 		if err != nil {
 			return handleError(err)
@@ -134,7 +135,7 @@ func CreateGenerateGetItemDetailArgs(
 			masterRes:          itemMaster,
 			explores:           explores,
 			exploreStaminaPair: staminaRes,
-			storageRes:         storage,
+			storageRes:         targetStorage,
 			userExplore:        userExplores,
 		}, nil
 	}

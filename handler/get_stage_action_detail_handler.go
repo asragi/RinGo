@@ -20,7 +20,7 @@ func CreateGetStageActionDetailHandler(
 	createEndpoint endpoint.CreateGetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
-	logger writeLogger,
+	logger WriteLogger,
 ) Handler {
 	getParams := func(
 		_ RequestBody,

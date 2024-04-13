@@ -16,7 +16,7 @@ func CreateApplyReservation(
 	deleteReservation DeleteReservationRepoFunc,
 	fetchUserStorage game.FetchStorageFunc,
 	fetchShelf shelf.FetchShelf,
-	fetchFund game.GetFundFunc,
+	fetchFund game.FetchFundFunc,
 	updateFund game.UpdateFundFunc,
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
