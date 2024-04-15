@@ -4,41 +4,43 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type UpdateShelfSizeEndpointFunc func(
+type UpdateShelfContentEndpointFunc func(
 	ctx context.Context,
-	req *gateway.UpdateShelfSizeRequest,
-) (*gateway.UpdateShelfSizeResponse, error)
+	req *gateway.UpdateShelfContentRequest,
+) (*gateway.UpdateShelfContentResponse, error)
 
 func CreateUpdateShelfSizeEndpointFunc(
-	updateShelfSize shelf.UpdateShelfSizeFunc,
+	updateShelfContent shelf.UpdateShelfContentFunc,
 	validateToken auth.ValidateTokenFunc,
-) UpdateShelfSizeEndpointFunc {
+) UpdateShelfContentEndpointFunc {
 	return func(
 		ctx context.Context,
-		req *gateway.UpdateShelfSizeRequest,
-	) (*gateway.UpdateShelfSizeResponse, error) {
-		handleError := func(err error) (*gateway.UpdateShelfSizeResponse, error) {
-			return nil, fmt.Errorf("on update shelf size endpoint: %w", err)
+		req *gateway.UpdateShelfContentRequest,
+	) (*gateway.UpdateShelfContentResponse, error) {
+		handleError := func(err error) (*gateway.UpdateShelfContentResponse, error) {
+			return nil, fmt.Errorf("on update shelf content endpoint: %w", err)
 		}
-		sizeInt := req.Size
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		if err != nil {
 			return handleError(err)
 		}
 		userId := tokenInfo.UserId
-		size := shelf.Size(sizeInt)
-		err = updateShelfSize(ctx, userId, size)
+		itemId := core.ItemId(req.ItemId)
+		index := shelf.Index(req.Index)
+		setPrice := shelf.SetPrice(req.SetPrice)
+		err = updateShelfContent(ctx, userId, itemId, setPrice, index)
 		if err != nil {
 			return handleError(err)
 		}
-		return &gateway.UpdateShelfSizeResponse{
+		return &gateway.UpdateShelfContentResponse{
 			Error: nil,
-			Size:  sizeInt,
 		}, nil
+
 	}
 }
