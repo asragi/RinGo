@@ -8,16 +8,19 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type UpdateShelfSizeEndpoint func(
-	context.Context,
-	*gateway.UpdateShelfSizeRequest,
+type UpdateShelfSizeEndpointFunc func(
+	ctx context.Context,
+	req *gateway.UpdateShelfSizeRequest,
 ) (*gateway.UpdateShelfSizeResponse, error)
 
-func CreateUpdateShelfSizeEndpoint(
+func CreateUpdateShelfSizeEndpointFunc(
 	updateShelfSize shelf.UpdateShelfSizeFunc,
 	validateToken auth.ValidateTokenFunc,
-) UpdateShelfSizeEndpoint {
-	return func(ctx context.Context, req *gateway.UpdateShelfSizeRequest) (*gateway.UpdateShelfSizeResponse, error) {
+) UpdateShelfSizeEndpointFunc {
+	return func(
+		ctx context.Context,
+		req *gateway.UpdateShelfSizeRequest,
+	) (*gateway.UpdateShelfSizeResponse, error) {
 		handleError := func(err error) (*gateway.UpdateShelfSizeResponse, error) {
 			return nil, fmt.Errorf("on update shelf size endpoint: %w", err)
 		}
