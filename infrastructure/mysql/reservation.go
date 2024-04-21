@@ -100,7 +100,7 @@ func CreateFetchItemAttraction(queryFunc queryFunc) reservation.FetchItemAttract
 	f := CreateGetQuery[itemReq, reservation.ItemAttractionRes](
 		queryFunc,
 		"fetch item attraction: %w",
-		`SELECT item_id, attraction, purchase_probability FROM ringo.item_attractions WHERE item_id IN (":item_id")`,
+		`SELECT item_id, attraction, purchase_probability FROM ringo.item_masters WHERE item_id IN (":item_id")`,
 	)
 	return func(ctx context.Context, itemIds []core.ItemId) ([]*reservation.ItemAttractionRes, error) {
 		reqs := make([]*itemReq, len(itemIds))

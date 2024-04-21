@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS ringo.item_masters(
     `description` varchar(40) NOT NULL,
     `price` int(20) NOT NULL,
     `max_stock` mediumint(8) NOT NULL,
-    `sale_freq` float(8,4) NOT NULL,
+    `attraction` mediumint(8) NOT NULL,
+    `purchase_probability` float(8,4) NOT NULL,
     PRIMARY KEY (`id`),
     INDEX `item_id_index` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
