@@ -283,6 +283,7 @@ func TestCreateFetchItemAttraction(t *testing.T) {
 func TestCreateFetchReservation(t *testing.T) {
 	type testCase struct {
 		users              []core.UserId
+		doNotFetchedUser   []core.UserId
 		targetReservations []*reservation.ReservationRow
 		exceptReservations []*reservation.ReservationRow
 		fromTime           time.Time
@@ -290,27 +291,28 @@ func TestCreateFetchReservation(t *testing.T) {
 	}
 	tests := []testCase{
 		{
-			users: []core.UserId{"fetch1", "fetch2"},
+			users:            []core.UserId{"fetch1", "fetch2"},
+			doNotFetchedUser: []core.UserId{"do-not-fetched"},
 			targetReservations: []*reservation.ReservationRow{
 				{
 					Id:            reservation.Id("target_id"),
 					UserId:        "fetch1",
 					Index:         1,
-					ScheduledTime: test.MockTime().Add(50),
+					ScheduledTime: test.MockTime().Add(time.Minute * 5),
 					PurchaseNum:   1,
 				},
 				{
 					Id:            reservation.Id("target_id2"),
 					UserId:        "fetch1",
 					Index:         1,
-					ScheduledTime: test.MockTime().Add(100),
+					ScheduledTime: test.MockTime().Add(time.Minute * 10),
 					PurchaseNum:   1,
 				},
 				{
 					Id:            reservation.Id("target_id3"),
 					UserId:        "fetch2",
 					Index:         1,
-					ScheduledTime: test.MockTime().Add(200),
+					ScheduledTime: test.MockTime().Add(time.Minute * 15),
 					PurchaseNum:   1,
 				},
 			},
@@ -322,13 +324,20 @@ func TestCreateFetchReservation(t *testing.T) {
 					ScheduledTime: test.MockTime().Add(time.Hour * 2),
 					PurchaseNum:   1,
 				},
+				{
+					Id:            reservation.Id("target_id2"),
+					UserId:        "do-not-fetched",
+					Index:         1,
+					ScheduledTime: test.MockTime().Add(time.Minute * 10),
+					PurchaseNum:   1,
+				},
 			},
 			fromTime: test.MockTime(),
 			toTime:   test.MockTime().Add(time.Hour * 1),
 		},
 	}
 	for _, tt := range tests {
-		for _, v := range tt.users {
+		for _, v := range append(tt.users, tt.doNotFetchedUser...) {
 			err := addTestUser(func(u *userTest) { u.UserId = v })
 			if err != nil {
 				t.Fatalf("failed to add test user: %v", err)
@@ -337,67 +346,75 @@ func TestCreateFetchReservation(t *testing.T) {
 		fetchReservation := CreateFetchReservation(dba.Query)
 		shelves := shelvesFromReservations(append(tt.targetReservations, tt.exceptReservations...))
 		ctx := test.MockCreateContext()
-		txErr := dba.Transaction(
-			ctx, func(ctx context.Context) error {
-				_, err := dba.Exec(
-					ctx,
-					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id)`,
-					shelves,
-				)
-				if err != nil {
-					return err
-				}
-				_, err = dba.Exec(
-					ctx,
-					"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :shelf_index, :scheduled_time, :purchase_num)",
-					append(tt.targetReservations, tt.exceptReservations...),
-				)
-				if err != nil {
-					return err
-				}
-				result, err := fetchReservation(ctx, tt.users, test.MockTime(), test.MockTime().Add(time.Hour*3))
-				if err != nil {
-					return err
-				}
-				if len(result) != len(tt.targetReservations) {
-					return errors.New("fetch reservation failed")
-				}
-				for j := range result {
-					if result[j].Id != tt.targetReservations[j].Id {
-						return errors.New("fetch reservation failed")
-					}
-					if result[j].UserId != tt.targetReservations[j].UserId {
-						return errors.New("fetch reservation failed")
-					}
-				}
-				return TestCompleted
-			},
+		_, err := dba.Exec(
+			ctx,
+			`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id)`,
+			shelves,
 		)
-		if !errors.Is(txErr, TestCompleted) {
-			t.Errorf("FetchReservation() = %v", txErr)
+		if err != nil {
+			t.Fatalf("failed to insert shelves: %v", err)
+		}
+		_, err = dba.Exec(
+			ctx,
+			"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :shelf_index, :scheduled_time, :purchase_num)",
+			append(tt.targetReservations, tt.exceptReservations...),
+		)
+		if err != nil {
+			t.Fatalf("failed to insert reservations: %v", err)
+		}
+		result, err := fetchReservation(ctx, tt.users, tt.fromTime, tt.toTime)
+		if err != nil {
+			t.Fatalf("failed to fetch reservation: %v", err)
+		}
+		if len(result) != len(tt.targetReservations) {
+			t.Fatalf("expect: %+v, got: %+v", result, tt.targetReservations)
+		}
+		for j := range result {
+			if result[j].Id != tt.targetReservations[j].Id {
+				t.Errorf("expected: %s, got: %s", tt.targetReservations[j].Id, result[j].Id)
+			}
+			if result[j].UserId != tt.targetReservations[j].UserId {
+				t.Errorf("expected: %s, got: %s", tt.targetReservations[j].UserId, result[j].UserId)
+			}
 		}
 	}
 }
 
 func TestCreateFetchUserPopularity(t *testing.T) {
-	type args struct {
-		queryFunc queryFunc
+	type testCase struct {
+		userId     core.UserId
+		popularity reservation.ShopPopularity
 	}
-	tests := []struct {
-		name string
-		args args
-		want reservation.FetchUserPopularityFunc
-	}{
-		// TODO: Add test cases.
+
+	tests := []testCase{
+		{
+			userId:     "fetch1",
+			popularity: 1,
+		},
 	}
+
 	for _, tt := range tests {
-		t.Run(
-			tt.name, func(t *testing.T) {
-				if got := CreateFetchUserPopularity(tt.args.queryFunc); !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("CreateFetchUserPopularity() = %v, want %v", got, tt.want)
+		ctx := test.MockCreateContext()
+		fetchUserPopularity := CreateFetchUserPopularity(dba.Query)
+		txErr := dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				err := addTestUser(func(u *userTest) { u.UserId = tt.userId })
+				if err != nil {
+					t.Fatalf("failed to add test user: %v", err)
 				}
+				popularity, err := fetchUserPopularity(ctx, tt.userId)
+				if err != nil {
+					return err
+				}
+				if popularity.Popularity != tt.popularity {
+					return errors.New("fetch user popularity failed")
+				}
+				return TestCompleted
 			},
 		)
+		if !errors.Is(txErr, TestCompleted) {
+			t.Errorf("FetchUserPopularity() = %v", txErr)
+		}
 	}
 }
 

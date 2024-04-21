@@ -8,6 +8,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
+	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/database"
 	_ "github.com/go-sql-driver/mysql"
 	"strconv"
@@ -98,21 +99,23 @@ func CreateInsertNewUser(
 	dbExec database.DBExecFunc,
 	initialFund core.Fund,
 	initialMaxStamina core.MaxStamina,
+	initialPopularity reservation.ShopPopularity,
 	getTime core.GetCurrentTimeFunc,
 ) auth.InsertNewUser {
 	return func(ctx context.Context, id core.UserId, userName core.UserName, password auth.HashedPassword) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("insert new user: %w", err)
 		}
-		queryText := `INSERT INTO ringo.users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password);`
+		queryText := `INSERT INTO ringo.users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password, popularity) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password, :popularity);`
 
 		type UserToDB struct {
-			UserId             core.UserId         `db:"user_id"`
-			Name               core.UserName       `db:"name"`
-			Fund               core.Fund           `db:"fund"`
-			MaxStamina         core.MaxStamina     `db:"max_stamina"`
-			StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
-			HashedPassword     auth.HashedPassword `db:"hashed_password"`
+			UserId             core.UserId                `db:"user_id"`
+			Name               core.UserName              `db:"name"`
+			Fund               core.Fund                  `db:"fund"`
+			MaxStamina         core.MaxStamina            `db:"max_stamina"`
+			StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
+			HashedPassword     auth.HashedPassword        `db:"hashed_password"`
+			Popularity         reservation.ShopPopularity `db:"popularity"`
 		}
 
 		createUserData := UserToDB{

@@ -74,7 +74,7 @@ func TestSomething(t *testing.T) {
 	fmt.Printf("TEST IS HERE!")
 }
 
-var insertTestUserQuery = "INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, popularity) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :popularity)"
+var insertTestUserQuery = "INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, popularity, hashed_password) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :popularity, :hashed_password)"
 
 func addTestUser(options ...ApplyUserTestOption) error {
 	user := createTestUser(options...)

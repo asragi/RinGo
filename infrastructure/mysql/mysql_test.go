@@ -93,8 +93,8 @@ func TestCreateGetUserPassword(t *testing.T) {
 	}
 
 	for _, v := range testCases {
-		user := createTestUser(func(user *userTest) { user.HashedPassword = v.hashedPassword; user.UserId = v.userId })
 		ctx := test.MockCreateContext()
+		user := createTestUser(func(user *userTest) { user.HashedPassword = v.hashedPassword; user.UserId = v.userId })
 		_, err := dba.Exec(
 			ctx,
 			insertTestUserQuery,
@@ -122,12 +122,13 @@ func TestCreateGetUserPassword(t *testing.T) {
 
 func TestCreateInsertNewUser(t *testing.T) {
 	type testCase struct {
-		UserId             core.UserId         `db:"user_id"`
-		Name               core.UserName       `db:"name"`
-		HashedPassword     auth.HashedPassword `db:"hashed_password"`
-		InitialFund        core.Fund           `db:"fund"`
-		InitialStamina     core.MaxStamina     `db:"max_stamina"`
-		StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
+		UserId             core.UserId                `db:"user_id"`
+		Name               core.UserName              `db:"name"`
+		HashedPassword     auth.HashedPassword        `db:"hashed_password"`
+		InitialFund        core.Fund                  `db:"fund"`
+		InitialStamina     core.MaxStamina            `db:"max_stamina"`
+		InitialPopularity  reservation.ShopPopularity `db:"popularity"`
+		StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
 	}
 
 	testCases := []testCase{
@@ -137,13 +138,20 @@ func TestCreateInsertNewUser(t *testing.T) {
 			HashedPassword:     "test-password",
 			InitialFund:        3456,
 			InitialStamina:     5678,
+			InitialPopularity:  50,
 			StaminaRecoverTime: test.MockTime().In(location.UTC()),
 		},
 	}
 
 	for _, v := range testCases {
 		ctx := test.MockCreateContext()
-		insertNewUser := CreateInsertNewUser(dba.Exec, v.InitialFund, v.InitialStamina, test.MockTime)
+		insertNewUser := CreateInsertNewUser(
+			dba.Exec,
+			v.InitialFund,
+			v.InitialStamina,
+			v.InitialPopularity,
+			test.MockTime,
+		)
 		txErr := dba.Transaction(
 			ctx, func(ctx context.Context) error {
 				err := insertNewUser(ctx, v.UserId, v.Name, v.HashedPassword)

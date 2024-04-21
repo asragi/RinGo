@@ -8,6 +8,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
+	"github.com/asragi/RinGo/location"
 	"time"
 )
 
@@ -24,13 +25,22 @@ func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRep
 		[]*reservation.ReservationRow,
 		error,
 	) {
+
+		layout := "2006-01-02 15:04:05"
 		userIdStrings := infrastructure.UserIdsToString(users)
 		spreadUserIdStrings := spreadString(userIdStrings)
+		fromInUTC := from.In(location.UTC())
+		toInUTC := to.In(location.UTC())
+		fromString := fromInUTC.Format(layout)
+		toString := toInUTC.Format(layout)
+
 		rows, err := queryFunc(
 			ctx,
 			fmt.Sprintf(
-				`SELECT reservation_id, user_id, shelf_index, scheduled_time, purchase_num FROM ringo.reservations WHERE user_id IN (%s) AND scheduled_time >= ":from" AND scheduled_time < ":to"`,
+				`SELECT reservation_id, user_id, shelf_index, scheduled_time, purchase_num FROM ringo.reservations WHERE user_id IN (%s) AND scheduled_time BETWEEN "%s" AND "%s"`,
 				spreadUserIdStrings,
+				fromString,
+				toString,
 			),
 			nil,
 		)
