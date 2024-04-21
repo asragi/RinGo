@@ -1218,6 +1218,10 @@ func TestCreateUpdateItemStorage(t *testing.T) {
 					if err != nil {
 						t.Fatalf("failed to fetch storage: %v", err)
 					}
+					err = rows.Close()
+					if err != nil {
+						t.Fatalf("failed to close rows: %v", err)
+					}
 					if res != w.Stock {
 						t.Errorf("got: %v, expect: %v", res, w.Stock)
 					}

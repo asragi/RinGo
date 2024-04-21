@@ -119,7 +119,7 @@ func CreateFetchUserPopularity(queryFunc queryFunc) reservation.FetchUserPopular
 	f := CreateGetQuery[userReq, reservation.ShopPopularityRes](
 		queryFunc,
 		"fetch user popularity: %w",
-		`SELECT user_id, popularity FROM ringo.users WHERE user_id IN (":user_id")`,
+		`SELECT user_id, popularity FROM ringo.users WHERE user_id IN (:user_id)`,
 	)
 	return func(ctx context.Context, userId core.UserId) (*reservation.ShopPopularityRes, error) {
 		req := []*userReq{{UserId: userId}}

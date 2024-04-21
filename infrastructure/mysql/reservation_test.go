@@ -388,8 +388,8 @@ func TestCreateFetchUserPopularity(t *testing.T) {
 
 	tests := []testCase{
 		{
-			userId:     "fetch1",
-			popularity: 1,
+			userId:     "popularity-test-user",
+			popularity: 40,
 		},
 	}
 
@@ -398,7 +398,12 @@ func TestCreateFetchUserPopularity(t *testing.T) {
 		fetchUserPopularity := CreateFetchUserPopularity(dba.Query)
 		txErr := dba.Transaction(
 			ctx, func(ctx context.Context) error {
-				err := addTestUser(func(u *userTest) { u.UserId = tt.userId })
+				err := addTestUser(
+					func(u *userTest) {
+						u.UserId = tt.userId
+						u.Popularity = tt.popularity
+					},
+				)
 				if err != nil {
 					t.Fatalf("failed to add test user: %v", err)
 				}
@@ -407,7 +412,7 @@ func TestCreateFetchUserPopularity(t *testing.T) {
 					return err
 				}
 				if popularity.Popularity != tt.popularity {
-					return errors.New("fetch user popularity failed")
+					t.Errorf("expected: %f, got: %f", tt.popularity, popularity.Popularity)
 				}
 				return TestCompleted
 			},
