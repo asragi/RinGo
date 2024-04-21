@@ -13,7 +13,7 @@ type shelfArg struct {
 
 func informationToShelfArg(
 	indices []shelf.Index,
-	information map[shelf.Index]*shelf.Shelf,
+	information map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
 	itemAttractionMap map[core.ItemId]*ItemAttractionRes,
 ) []*shelfArg {
 	shelves := make([]*shelfArg, len(information))

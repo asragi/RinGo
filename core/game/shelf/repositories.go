@@ -16,12 +16,7 @@ type (
 		SetPrice   SetPrice
 		TotalSales core.SalesFigures
 	}
-	FetchShelf              func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
-	UpdateShelfSizeRepoFunc func(
-		context.Context,
-		core.UserId,
-		Size,
-	) error
+	FetchShelf    func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
 	TotalSalesReq struct {
 		UserId     core.UserId
 		Index      Index
@@ -38,11 +33,26 @@ type (
 		SetPrice,
 		Index,
 	) error
+	// InsertEmptyShelfFunc inserts single or multiple empty shelves
+	// until the total number of shelves reaches the requested size.
+	InsertEmptyShelfFunc func(context.Context, core.UserId, Size) error
+	// DeleteShelfBySizeFunc deletes shelves  until the total number of shelves
+	// reaches the requested size
+	DeleteShelfBySizeFunc func(context.Context, core.UserId, Size) error
 )
 
 func checkContainItem(shelves []*ShelfRepoRow, itemId core.ItemId) bool {
 	for _, shelf := range shelves {
 		if shelf.ItemId == itemId {
+			return true
+		}
+	}
+	return false
+}
+
+func checkContainIndex(shelves []*ShelfRepoRow, index Index) bool {
+	for _, shelf := range shelves {
+		if shelf.Index == index {
 			return true
 		}
 	}

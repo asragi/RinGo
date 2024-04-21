@@ -20,3 +20,13 @@ type (
 func (p SetPrice) CalculateProfit(purchaseNum core.Count) core.Profit {
 	return core.Profit(int(p) * int(purchaseNum))
 }
+
+func (s Size) Equals(other Size) bool {
+	return s == other
+}
+
+func (s Size) ValidSize() bool {
+	const MaxSize Size = 8
+	const MinSize Size = 1
+	return s >= MinSize && s <= MaxSize
+}

@@ -1,4 +1,4 @@
-package infrastructure
+package mysql
 
 import (
 	"fmt"
@@ -38,6 +38,7 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Could not purge resource: %s", err)
 		}
 	}()
+
 	// err = resource.Expire(20)
 	if err != nil {
 		log.Fatalf("Could not set expiration time: %s", err)
@@ -73,12 +74,14 @@ func TestSomething(t *testing.T) {
 	fmt.Printf("TEST IS HERE!")
 }
 
+var insertTestUserQuery = "INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, popularity) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :popularity)"
+
 func addTestUser(options ...ApplyUserTestOption) error {
 	user := createTestUser(options...)
 	ctx := test.MockCreateContext()
 	_, err := dba.Exec(
 		ctx,
-		"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, hashed_password) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :hashed_password)",
+		insertTestUserQuery,
 		user,
 	)
 	if err != nil {

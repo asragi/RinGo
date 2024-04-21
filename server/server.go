@@ -13,7 +13,7 @@ import (
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
-	"github.com/asragi/RinGo/infrastructure"
+	"github.com/asragi/RinGo/infrastructure/mysql"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/jmoiron/sqlx"
@@ -177,38 +177,38 @@ func createInfrastructures(constants *core.Constants, db *database.DBAccessor) (
 		return db.Query(ctx, query, args)
 	}
 
-	checkUserExistence := infrastructure.CreateCheckUserExistence(dbQuery)
-	getUserPassword := infrastructure.CreateGetUserPassword(dbQuery)
-	getResource := infrastructure.CreateGetResourceMySQL(dbQuery)
-	getItemMaster := infrastructure.CreateGetItemMasterMySQL(dbQuery)
-	getStageMaster := infrastructure.CreateGetStageMaster(dbQuery)
-	getAllStage := infrastructure.CreateGetAllStageMaster(dbQuery)
-	getExploreMaster := infrastructure.CreateGetExploreMasterMySQL(dbQuery)
-	getSkillMaster := infrastructure.CreateGetSkillMaster(dbQuery)
-	getEarningItem := infrastructure.CreateGetEarningItem(dbQuery)
-	getConsumingItem := infrastructure.CreateGetConsumingItem(dbQuery)
-	getRequiredSkill := infrastructure.CreateGetRequiredSkills(dbQuery)
-	getSkillGrowth := infrastructure.CreateGetSkillGrowth(dbQuery)
-	getReductionSkill := infrastructure.CreateGetReductionSkill(dbQuery)
-	getStageExploreRelation := infrastructure.CreateStageExploreRelation(dbQuery)
-	getItemExploreRelation := infrastructure.CreateItemExploreRelation(dbQuery)
-	getUserExplore := infrastructure.CreateGetUserExplore(dbQuery)
-	getUserStageData := infrastructure.CreateGetUserStageData(dbQuery)
-	getUserSkillData := infrastructure.CreateGetUserSkill(dbQuery)
-	getStorage := infrastructure.CreateGetStorage(dbQuery)
-	getAllStorage := infrastructure.CreateGetAllStorage(dbQuery)
+	checkUserExistence := mysql.CreateCheckUserExistence(dbQuery)
+	getUserPassword := mysql.CreateGetUserPassword(dbQuery)
+	getResource := mysql.CreateGetResourceMySQL(dbQuery)
+	getItemMaster := mysql.CreateGetItemMasterMySQL(dbQuery)
+	getStageMaster := mysql.CreateGetStageMaster(dbQuery)
+	getAllStage := mysql.CreateGetAllStageMaster(dbQuery)
+	getExploreMaster := mysql.CreateGetExploreMasterMySQL(dbQuery)
+	getSkillMaster := mysql.CreateGetSkillMaster(dbQuery)
+	getEarningItem := mysql.CreateGetEarningItem(dbQuery)
+	getConsumingItem := mysql.CreateGetConsumingItem(dbQuery)
+	getRequiredSkill := mysql.CreateGetRequiredSkills(dbQuery)
+	getSkillGrowth := mysql.CreateGetSkillGrowth(dbQuery)
+	getReductionSkill := mysql.CreateGetReductionSkill(dbQuery)
+	getStageExploreRelation := mysql.CreateStageExploreRelation(dbQuery)
+	getItemExploreRelation := mysql.CreateItemExploreRelation(dbQuery)
+	getUserExplore := mysql.CreateGetUserExplore(dbQuery)
+	getUserStageData := mysql.CreateGetUserStageData(dbQuery)
+	getUserSkillData := mysql.CreateGetUserSkill(dbQuery)
+	getStorage := mysql.CreateGetStorage(dbQuery)
+	getAllStorage := mysql.CreateGetAllStorage(dbQuery)
 
-	insertNewUser := infrastructure.CreateInsertNewUser(
+	insertNewUser := mysql.CreateInsertNewUser(
 		db.Exec,
 		constants.InitialFund,
 		constants.InitialMaxStamina,
 		getTime,
 	)
 
-	updateFund := infrastructure.CreateUpdateFund(db.Exec)
-	updateSkill := infrastructure.CreateUpdateUserSkill(db.Exec)
-	updateStorage := infrastructure.CreateUpdateItemStorage(db.Exec)
-	updateStamina := infrastructure.CreateUpdateStamina(db.Exec)
+	updateFund := mysql.CreateUpdateFund(db.Exec)
+	updateSkill := mysql.CreateUpdateUserSkill(db.Exec)
+	updateStorage := mysql.CreateUpdateItemStorage(db.Exec)
+	updateStamina := mysql.CreateUpdateStamina(db.Exec)
 
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,

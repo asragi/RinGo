@@ -1,4 +1,4 @@
-package infrastructure
+package mysql
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
+	"github.com/asragi/RinGo/core/game/shelf/reservation"
+	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/location"
 	"github.com/asragi/RinGo/test"
 	"testing"
@@ -15,12 +17,13 @@ import (
 )
 
 type userTest struct {
-	UserId             core.UserId         `db:"user_id"`
-	Name               core.UserName       `db:"name"`
-	MaxStamina         core.MaxStamina     `db:"max_stamina"`
-	Fund               core.Fund           `db:"fund"`
-	StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
-	HashedPassword     auth.HashedPassword `db:"hashed_password"`
+	UserId             core.UserId                `db:"user_id"`
+	Name               core.UserName              `db:"name"`
+	MaxStamina         core.MaxStamina            `db:"max_stamina"`
+	Fund               core.Fund                  `db:"fund"`
+	StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
+	HashedPassword     auth.HashedPassword        `db:"hashed_password"`
+	Popularity         reservation.ShopPopularity `db:"popularity"`
 }
 
 var TestCompleted = errors.New("test completed")
@@ -35,20 +38,12 @@ func createTestUser(options ...ApplyUserTestOption) *userTest {
 		Fund:               100000,
 		StaminaRecoverTime: test.MockTime(),
 		HashedPassword:     "test-password",
+		Popularity:         reservation.ShopPopularity(50),
 	}
 	for _, option := range options {
 		option(&user)
 	}
 	return &user
-}
-
-func deleteTestUser(options ...ApplyUserTestOption) error {
-	ctx := test.MockCreateContext()
-	_, err := dba.Exec(ctx, fmt.Sprintf(`DELETE FROM ringo.users WHERE user_id = "%s"`, testUserId), nil)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func TestCreateCheckUserExistence(t *testing.T) {
@@ -62,7 +57,7 @@ func TestCreateCheckUserExistence(t *testing.T) {
 	testUser := createTestUser(func(user *userTest) { user.UserId = errorUserId })
 	_, err := dba.Exec(
 		ctx,
-		"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
+		insertTestUserQuery,
 		testUser,
 	)
 	if err != nil {
@@ -102,7 +97,7 @@ func TestCreateGetUserPassword(t *testing.T) {
 		ctx := test.MockCreateContext()
 		_, err := dba.Exec(
 			ctx,
-			"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund, hashed_password) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund, :hashed_password)",
+			insertTestUserQuery,
 			user,
 		)
 		if err != nil {
@@ -248,7 +243,7 @@ func TestCreateGetResourceMySQL(t *testing.T) {
 		ctx := test.MockCreateContext()
 		_, err := dba.Exec(
 			ctx,
-			"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
+			insertTestUserQuery,
 			user,
 		)
 		if err != nil {
@@ -303,7 +298,7 @@ func TestCreateUpdateStamina(t *testing.T) {
 		ctx := test.MockCreateContext()
 		_, err := dba.Exec(
 			ctx,
-			"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
+			insertTestUserQuery,
 			user,
 		)
 		if err != nil {
@@ -806,7 +801,19 @@ func TestCreateGetUserExplore(t *testing.T) {
 
 	defer func() {
 		ctx := test.MockCreateContext()
-		_, err := dba.Exec(ctx, `DELETE FROM ringo.user_explore_data WHERE user_id IN (:user_id)`, allUserId)
+		userIds := func() []core.UserId {
+			var res []core.UserId
+			for _, w := range allUserId {
+				res = append(res, w.UserId)
+			}
+			return res
+		}()
+		allUserIdString := spreadString(infrastructure.UserIdsToString(userIds))
+		_, err := dba.Exec(
+			ctx,
+			fmt.Sprintf(`DELETE FROM ringo.user_explore_data WHERE user_id IN (%s)`, allUserIdString),
+			nil,
+		)
 		if err != nil {
 			t.Fatalf("failed to delete user explore: %v", err)
 		}
@@ -957,7 +964,7 @@ func TestCreateUpdateFund(t *testing.T) {
 			testUsers[i] = user
 			_, err := dba.Exec(
 				ctx,
-				"INSERT INTO ringo.users (user_id, name, max_stamina, stamina_recover_time, fund) VALUES (:user_id, :name, :max_stamina, :stamina_recover_time, :fund)",
+				insertTestUserQuery,
 				user,
 			)
 			if err != nil {

@@ -1,4 +1,4 @@
-package infrastructure
+package mysql
 
 import (
 	"context"
@@ -17,6 +17,9 @@ import (
 type (
 	reqInterface[S any, T any] interface {
 		Create(S) *T
+	}
+	userReq struct {
+		UserId core.UserId `db:"user_id"`
 	}
 	exploreReq struct {
 		ExploreId game.ExploreId `db:"explore_id"`

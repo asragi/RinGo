@@ -50,6 +50,7 @@ func (s StaminaCost) Multiply(value int) StaminaCost {
 }
 
 type StaminaCost int
+type ReducedStaminaCost int
 
 func (s Stamina) CheckIsStaminaEnough(cost StaminaCost) bool {
 	return int(s) >= int(cost)

@@ -15,10 +15,11 @@ type UpdateShelfSizeFunc func(
 
 func CreateUpdateShelfSize(
 	fetchSizeToAction FetchSizeToActionRepoFunc,
-	updateShelf UpdateShelfSizeRepoFunc,
+	insertEmptyShelf InsertEmptyShelfFunc,
+	deleteShelfBySize DeleteShelfBySizeFunc,
 	postAction game.PostActionFunc,
 	validateUpdateShelfSize ValidateUpdateShelfSizeFunc,
-	transaction core.TransactionFunc,
+	validateAction game.ValidateActionFunc,
 ) UpdateShelfSizeFunc {
 	return func(ctx context.Context, userId core.UserId, targetShelfSize Size) error {
 		handleError := func(err error) error {
@@ -28,26 +29,23 @@ func CreateUpdateShelfSize(
 		if err != nil {
 			return handleError(err)
 		}
-		exploreId, err := fetchSizeToAction(ctx, targetShelfSize)
+		actionId, err := fetchSizeToAction(ctx, targetShelfSize)
 		if err != nil {
 			return handleError(err)
 		}
-		err = transaction(
-			ctx, func(ctx context.Context) error {
-				handleTxError := func(err error) error {
-					return fmt.Errorf("updating shelf size in transaction: %w", err)
-				}
-				txErr := updateShelf(ctx, userId, targetShelfSize)
-				if txErr != nil {
-					return handleTxError(err)
-				}
-				_, txErr = postAction(ctx, userId, 1, exploreId)
-				if txErr != nil {
-					return handleTxError(err)
-				}
-				return nil
-			},
-		)
+		_, err = validateAction(ctx, userId, actionId, 1)
+		if err != nil {
+			return handleError(err)
+		}
+		err = insertEmptyShelf(ctx, userId, targetShelfSize)
+		if err != nil {
+			return handleError(err)
+		}
+		err = deleteShelfBySize(ctx, userId, targetShelfSize)
+		if err != nil {
+			return handleError(err)
+		}
+		_, err = postAction(ctx, userId, 1, actionId)
 		if err != nil {
 			return handleError(err)
 		}

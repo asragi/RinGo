@@ -1,12 +1,11 @@
 package game
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-type InvalidActionError struct{}
-
-func (err InvalidActionError) Error() string {
-	return "invalid action error"
-}
+var InvalidActionError = errors.New("invalid Action")
 
 type InvalidResponseFromInfrastructureError struct {
 	Message string

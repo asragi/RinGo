@@ -11,7 +11,7 @@ type Id string
 type ReservationRow struct {
 	Id            Id          `db:"reservation_id"`
 	UserId        core.UserId `db:"user_id"`
-	Index         shelf.Index `db:"index"`
+	Index         shelf.Index `db:"shelf_index"`
 	ScheduledTime time.Time   `db:"scheduled_time"` // sql.db doesn't support type alias for time.Time
 	PurchaseNum   core.Count  `db:"purchase_num"`
 }
@@ -84,4 +84,8 @@ func itemAttractionResToMap(res []*ItemAttractionRes) map[core.ItemId]*ItemAttra
 
 type FetchItemAttractionFunc func(context.Context, []core.ItemId) ([]*ItemAttractionRes, error)
 
-type FetchUserPopularityFunc func(context.Context, core.UserId) (ShopPopularity, error)
+type ShopPopularityRes struct {
+	UserId     core.UserId    `db:"user_id"`
+	Popularity ShopPopularity `db:"popularity"`
+}
+type FetchUserPopularityFunc func(context.Context, core.UserId) (*ShopPopularityRes, error)

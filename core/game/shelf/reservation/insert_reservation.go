@@ -9,7 +9,6 @@ import (
 )
 
 type InsertedReservation struct {
-	Id            Id
 	UserId        core.UserId
 	Index         shelf.Index
 	ReservationId Id
@@ -21,7 +20,6 @@ func ToInsertedReservation(reservations []*Reservation) []*InsertedReservation {
 	insertedReservations := make([]*InsertedReservation, len(reservations))
 	for i, r := range reservations {
 		insertedReservations[i] = &InsertedReservation{
-			Id:            r.Id,
 			UserId:        r.TargetUser,
 			Index:         r.Index,
 			ReservationId: r.Id,
@@ -41,7 +39,7 @@ type InsertReservationFunc func(
 	core.UserId,
 	shelf.Index,
 	[]shelf.Index,
-	map[shelf.Index]*shelf.Shelf,
+	map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
 ) (*InsertReservationResult, error)
 
 func CreateInsertReservation(
@@ -58,7 +56,7 @@ func CreateInsertReservation(
 		userId core.UserId,
 		index shelf.Index,
 		indices []shelf.Index,
-		shelves map[shelf.Index]*shelf.Shelf,
+		shelves map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
 	) (*InsertReservationResult, error) {
 		handleError := func(err error) (*InsertReservationResult, error) {
 			return nil, fmt.Errorf("inserting reservation: %w", err)
@@ -70,7 +68,7 @@ func CreateInsertReservation(
 		}
 		itemIds := func(
 			indices []shelf.Index,
-			shelvesMap map[shelf.Index]*shelf.Shelf,
+			shelvesMap map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
 		) []core.ItemId {
 			itemIds := make([]core.ItemId, len(indices))
 			for i, mapIndex := range indices {
@@ -96,7 +94,7 @@ func CreateInsertReservation(
 			updatedShelf.SetPrice,
 			updatedItemAttractionData.PurchaseProbability,
 			userId,
-			shopPopularity,
+			shopPopularity.Popularity,
 			shelfArgs,
 			rand,
 			getCurrentTime,
