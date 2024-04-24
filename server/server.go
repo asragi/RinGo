@@ -100,7 +100,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 	compare := auth.CreateCompareToken(&key, sha256Func)
 	getTokenInfo := auth.CreateGetTokenInformation(
 		auth.Base64ToString,
-		utils.JsonToStruct[auth.AccessTokenInformation],
+		utils.JsonToStruct[auth.AccessTokenInformationFromJson],
 	)
 	validateToken := auth.CreateValidateToken(compare, getTokenInfo)
 
@@ -171,7 +171,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 	}
 }
 
-func createInfrastructures(constants *core.Constants, db *database.DBAccessor) (*infrastructuresStruct, error) {
+func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infrastructuresStruct, error) {
 	getTime := func() time.Time { return time.Now() }
 	dbQuery := func(ctx context.Context, query string, args interface{}) (*sqlx.Rows, error) {
 		return db.Query(ctx, query, args)
@@ -202,6 +202,7 @@ func createInfrastructures(constants *core.Constants, db *database.DBAccessor) (
 		db.Exec,
 		constants.InitialFund,
 		constants.InitialMaxStamina,
+		constants.InitialPopularity,
 		getTime,
 	)
 
@@ -253,7 +254,7 @@ func createInfrastructures(constants *core.Constants, db *database.DBAccessor) (
 type CloseDB func() error
 type Serve func() error
 
-func InitializeServer(constants *core.Constants, writeLogger handler.WriteLogger) (error, CloseDB, Serve) {
+func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (error, CloseDB, Serve) {
 	var closeDB CloseDB
 	var serve Serve
 	handleError := func(err error) (error, CloseDB, Serve) {
@@ -362,21 +363,6 @@ func InitializeServer(constants *core.Constants, writeLogger handler.WriteLogger
 		functions.createContext,
 		writeLogger,
 	)
-	itemsRouteHandler := router.CreateItemsRouteHandler(
-		getItemList,
-		getItemDetail,
-		getItemActionDetail,
-		handler.ErrorOnMethodNotAllowed,
-		handler.ErrorOnInternalError,
-		handler.ErrorOnPageNotFound,
-	)
-	stageRouteHandler := router.CreateStageRouteHandler(
-		getStageListHandler,
-		getStageActionDetailHandler,
-		handler.ErrorOnMethodNotAllowed,
-		handler.ErrorOnInternalError,
-		handler.ErrorOnPageNotFound,
-	)
 	register := handler.CreateRegisterHandler(
 		functions.register,
 		endpoint.CreateRegisterEndpoint,
@@ -389,21 +375,75 @@ func InitializeServer(constants *core.Constants, writeLogger handler.WriteLogger
 		functions.createContext,
 		writeLogger,
 	)
-	http.HandleFunc("/register", register)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/action", postActionHandler)
-	// http.HandleFunc("/stages", getStageListHandler)
-	http.HandleFunc("/stages/", stageRouteHandler)
-	http.HandleFunc("/users", getResource)
-	http.HandleFunc("/items/", itemsRouteHandler)
-	http.HandleFunc("/items", getItemList)
-	http.HandleFunc("/", hello)
+
+	handleData := []*router.HandleDataRaw{
+		{
+			SamplePathString: "/health",
+			Method:           router.GET,
+			Handler:          health,
+		},
+		{
+			SamplePathString: "/signup",
+			Method:           router.POST,
+			Handler:          register,
+		},
+		{
+			SamplePathString: "/login",
+			Method:           router.POST,
+			Handler:          login,
+		},
+		{
+			SamplePathString: "/me/resource",
+			Method:           router.GET,
+			Handler:          getResource,
+		},
+		{
+			SamplePathString: "/me/items",
+			Method:           router.GET,
+			Handler:          getItemList,
+		},
+		{
+			SamplePathString: "/me/items/{itemId}",
+			Method:           router.GET,
+			Handler:          getItemDetail,
+		},
+		{
+			SamplePathString: "/me/items/{itemId}/actions/{actionId}",
+			Method:           router.GET,
+			Handler:          getItemActionDetail,
+		},
+		{
+			SamplePathString: "/me/places",
+			Method:           router.GET,
+			Handler:          getStageListHandler,
+		},
+		{
+			SamplePathString: "/me/places/{placeId}/actions/{actionId}",
+			Method:           router.GET,
+			Handler:          getStageActionDetailHandler,
+		},
+		{
+			SamplePathString: "/actions",
+			Method:           router.POST,
+			Handler:          postActionHandler,
+		},
+	}
+	routeData, err := router.CreateHandleData(handleData)
+	if err != nil {
+		return handleError(err)
+	}
+	mainRouter, err := router.CreateRouter(routeData)
+	if err != nil {
+		return handleError(err)
+	}
+
+	http.HandleFunc("/", mainRouter)
 	serve = func() error {
 		return http.ListenAndServe(":4444", nil)
 	}
 	return nil, closeDB, serve
 }
 
-func hello(w http.ResponseWriter, _ *http.Request) {
-	_, _ = fmt.Fprintln(w, "Hello, Kisaragi!")
+func health(w http.ResponseWriter, _ *http.Request) {
+	_, _ = fmt.Fprintln(w, "Hello!")
 }

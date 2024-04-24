@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -25,7 +26,7 @@ func CreateLoginHandler(
 	createLoginEndpoint endpoint.CreateLoginEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	loginEndpoint := createLoginEndpoint(loginFunc)
 	return createHandlerWithParameter(loginEndpoint, createContext, GetLoginParams, logger)
 }

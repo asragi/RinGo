@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 )
 
@@ -11,7 +12,7 @@ func CreateRegisterHandler(
 	createEndpoint endpoint.CreateRegisterEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	getParams := func(
 		body RequestBody,
 		query QueryParameter,

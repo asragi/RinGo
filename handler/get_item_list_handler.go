@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -18,7 +19,7 @@ func CreateGetItemListHandler(
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	getItemListSelectParams := func(
 		_ RequestBody,
 		query QueryParameter,

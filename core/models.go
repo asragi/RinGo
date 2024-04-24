@@ -13,11 +13,17 @@ type UpdatedAt time.Time
 // user
 type UserId string
 
-func (id UserId) IsValid() error {
-	if len(id) <= 0 {
-		return UserIdIsInvalidError{userId: id}
+func CreateUserId(userId string) (UserId, error) {
+	isValid := func(userId string) error {
+		if len(userId) <= 0 {
+			return ThrowInvalidUserIdError(userId)
+		}
+		return nil
 	}
-	return nil
+	if err := isValid(userId); err != nil {
+		return "", err
+	}
+	return UserId(userId), nil
 }
 
 type UserName string

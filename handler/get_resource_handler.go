@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -16,7 +17,7 @@ func CreateGetResourceHandler(
 	getUserResourceFunc explore.CreateGetUserResourceServiceFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	getParams := func(
 		_ RequestBody,
 		query QueryParameter,

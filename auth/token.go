@@ -13,8 +13,24 @@ type sha256Func func(*SecretHashKey, *string) (*string, error)
 type AccessToken string
 type ExpirationTime int
 type AccessTokenInformation struct {
-	UserId         core.UserId    `json:"user_id"`
-	ExpirationTime ExpirationTime `json:"exp"`
+	UserId         core.UserId
+	ExpirationTime ExpirationTime
+}
+
+type AccessTokenInformationFromJson struct {
+	UserId         string `json:"user_id"`
+	ExpirationTime int    `json:"exp"`
+}
+
+func (info *AccessTokenInformationFromJson) ToInformation() (*AccessTokenInformation, error) {
+	userId, err := core.CreateUserId(info.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("decode request: %w", err)
+	}
+	return &AccessTokenInformation{
+		UserId:         userId,
+		ExpirationTime: ExpirationTime(info.ExpirationTime),
+	}, nil
 }
 
 func CreateTokenFuncEmitter(
@@ -53,7 +69,7 @@ type GetTokenInformationFunc func(token *AccessToken) (*AccessTokenInformation, 
 
 func CreateGetTokenInformation(
 	decodeBase64 base64DecodeFunc,
-	unmarshalJson utils.JsonToStructFunc[AccessTokenInformation],
+	unmarshalJson utils.JsonToStructFunc[AccessTokenInformationFromJson],
 ) GetTokenInformationFunc {
 	return func(token *AccessToken) (*AccessTokenInformation, error) {
 		handleError := func(err error) (*AccessTokenInformation, error) {
@@ -74,7 +90,11 @@ func CreateGetTokenInformation(
 		if err != nil {
 			return handleError(err)
 		}
-		return tokenInfo, nil
+		info, err := tokenInfo.ToInformation()
+		if err != nil {
+			return handleError(err)
+		}
+		return info, nil
 	}
 }
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -11,7 +12,7 @@ func CreateUpdateShelfSizeHandler(
 	updateShelfSize endpoint.UpdateShelfSizeEndpoint,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	getParams := func(
 		body RequestBody,
 		query QueryParameter,

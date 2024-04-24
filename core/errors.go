@@ -1,8 +1,15 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 )
+
+var InvalidUserIdError = errors.New("invalid user id")
+
+func ThrowInvalidUserIdError(userId string) error {
+	return fmt.Errorf("user id is invalid: %s: %w", userId, InvalidUserIdError)
+}
 
 type UserIdIsInvalidError struct {
 	userId UserId

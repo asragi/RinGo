@@ -5,6 +5,7 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -42,7 +43,7 @@ func CreatePostActionHandler(
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	postEndpoint := createEndpoint(postAction, validateToken)
 	return createHandlerWithParameter(postEndpoint, createContext, GetPostActionParams, logger)
 }

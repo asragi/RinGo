@@ -8,6 +8,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/test"
+	"github.com/asragi/RinGo/utils"
 	"reflect"
 	"testing"
 	"time"
@@ -259,24 +260,45 @@ func TestCreateDeleteReservationToShelf(t *testing.T) {
 }
 
 func TestCreateFetchItemAttraction(t *testing.T) {
-	type args struct {
-		queryFunc queryFunc
+	type testCase struct {
+		expected []*reservation.ItemAttractionRes
 	}
-	tests := []struct {
-		name string
-		args args
-		want reservation.FetchItemAttractionFunc
-	}{
-		// TODO: Add test cases.
+
+	testCases := []*testCase{
+		{
+			expected: []*reservation.ItemAttractionRes{
+				{
+					ItemId:              "1",
+					Attraction:          100,
+					PurchaseProbability: 0.5,
+				},
+				{
+					ItemId:              "2",
+					Attraction:          100,
+					PurchaseProbability: 0.5,
+				},
+			},
+		},
 	}
-	for _, tt := range tests {
-		t.Run(
-			tt.name, func(t *testing.T) {
-				if got := CreateFetchItemAttraction(tt.args.queryFunc); !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("CreateFetchItemAttraction() = %v, want %v", got, tt.want)
+
+	for _, tt := range testCases {
+		ctx := test.MockCreateContext()
+		fetchItemAttraction := CreateFetchItemAttraction(dba.Query)
+		txErr := dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				result, err := fetchItemAttraction(ctx, []core.ItemId{"1", "2"})
+				if err != nil {
+					return err
 				}
+				if !reflect.DeepEqual(result, tt.expected) {
+					t.Errorf("expected: %+v, got: %+v", utils.ToObjArray(tt.expected), utils.ToObjArray(result))
+				}
+				return TestCompleted
 			},
 		)
+		if !errors.Is(txErr, TestCompleted) {
+			t.Errorf("FetchItemAttraction() = %v", txErr)
+		}
 	}
 }
 

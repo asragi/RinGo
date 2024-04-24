@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"io"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"net/url"
 )
 
-type Handler func(http.ResponseWriter, *http.Request)
 type WriteLogger func(int, error)
 
 func setHeader(w http.ResponseWriter) {
@@ -70,7 +70,7 @@ func createHandlerWithParameter[T any, S any](
 	createContext utils.CreateContextFunc,
 	selectParam selectParam[T],
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		passedUrl := r.URL
 		query := passedUrl.Query()
@@ -101,7 +101,7 @@ func createHandlerWithParameter[T any, S any](
 func createHandler[T any, S any](
 	endpointFunc func(*T) (S, error),
 	logger WriteLogger,
-) Handler {
+) router.Handler {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		var req T
 		decoder := json.NewDecoder(r.Body)
