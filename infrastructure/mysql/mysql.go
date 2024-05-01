@@ -61,10 +61,10 @@ func CreateCheckUserExistence(queryFunc queryFunc) core.CheckDoesUserExist {
 		}
 		queryString := fmt.Sprintf(`SELECT user_id from ringo.users WHERE user_id = "%s";`, userId)
 		rows, err := queryFunc(ctx, queryString, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		if rows.Next() {
 			return handleError(fmt.Errorf(`user-id "%s" already exists: %w`, userId, auth.UserAlreadyExistsError))
 		}
@@ -82,10 +82,10 @@ func CreateGetUserPassword(queryFunc queryFunc) auth.FetchHashedPassword {
 		}
 		queryString := fmt.Sprintf(`SELECT hashed_password FROM ringo.users WHERE user_id = "%s";`, id)
 		rows, err := queryFunc(ctx, queryString, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result dbResponse
 		if !rows.Next() {
 			return handleError(sql.ErrNoRows)
@@ -159,10 +159,10 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 			),
 			nil,
 		)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result responseStruct
 		if !rows.Next() {
 			return nil, sql.ErrNoRows
@@ -191,10 +191,10 @@ func CreateFetchFund(q queryFunc) game.FetchFundFunc {
 			spreadUserId,
 		)
 		rows, err := q(ctx, query, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*game.FundRes
 		for rows.Next() {
 			var res game.FundRes
@@ -219,10 +219,10 @@ func CreateFetchStamina(q queryFunc) game.FetchStaminaFunc {
 			spreadUserId,
 		)
 		rows, err := q(ctx, query, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*game.StaminaRes
 		for rows.Next() {
 			var res game.StaminaRes
@@ -278,10 +278,10 @@ func CreateGetAllStageMaster(q queryFunc) explore.FetchAllStageFunc {
 		}
 		query := "SELECT stage_id, display_name, description from ringo.stage_masters;"
 		rows, err := q(ctx, query, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*explore.StageMaster
 		for rows.Next() {
 			var res explore.StageMaster
@@ -608,10 +608,10 @@ func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 			toInKeywords,
 		)
 		rows, err := queryF(ctx, query, nil)
-		defer rows.Close()
 		if err != nil {
 			return nil, err
 		}
+		defer rows.Close()
 		var result []*ItemDataRes
 		for rows.Next() {
 			var row ItemDataRes
@@ -702,10 +702,10 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 			userId,
 		)
 		rows, err := queryFunc(ctx, query, nil)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*resStruct
 		for rows.Next() {
 			var res resStruct
@@ -815,10 +815,10 @@ func CreateGetQuery[S any, T any](
 			return nil, nil
 		}
 		rows, err := queryFunc(ctx, queryText, ids)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*T
 		for rows.Next() {
 			var row T
@@ -853,10 +853,10 @@ func CreateUserQuery[S any, T any](
 		}
 		queryText := queryTextFromUserId(userId)
 		rows, err := queryFunc(ctx, queryText, ids)
-		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
+		defer rows.Close()
 		var result []*T
 		for rows.Next() {
 			var row T

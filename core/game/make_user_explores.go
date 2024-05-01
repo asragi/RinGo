@@ -62,26 +62,36 @@ func CreateGenerateMakeUserExploreArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		itemIds := func(consuming []*ConsumingItem) []core.ItemId {
-			checkedItems := make(map[core.ItemId]bool)
-			var result []core.ItemId
-			for _, v := range consuming {
-				if _, ok := checkedItems[v.ItemId]; ok {
-					continue
-				}
-				checkedItems[v.ItemId] = true
-				result = append(result, v.ItemId)
+		storageData, err := func(consuming []*ConsumingItem) ([]*StorageData, error) {
+			handleError := func(err error) ([]*StorageData, error) {
+				return nil, fmt.Errorf("error on get storage data: %w", err)
 			}
-			return result
+			if len(consuming) == 0 {
+				return []*StorageData{}, nil
+			}
+			itemIds := func(consuming []*ConsumingItem) []core.ItemId {
+				checkedItems := make(map[core.ItemId]bool)
+				var result []core.ItemId
+				for _, v := range consuming {
+					if _, ok := checkedItems[v.ItemId]; ok {
+						continue
+					}
+					checkedItems[v.ItemId] = true
+					result = append(result, v.ItemId)
+				}
+				return result
+			}(consumingItemRes)
+
+			storage, innerErr := repositories.GetStorage(ctx, ToUserItemPair(userId, itemIds))
+			if innerErr != nil {
+				return handleError(innerErr)
+			}
+			userStorage := FindStorageData(storage, userId)
+			if userStorage == nil {
+				return handleError(fmt.Errorf("user storage not found"))
+			}
+			return userStorage.ItemData, nil
 		}(consumingItemRes)
-		storage, err := repositories.GetStorage(ctx, ToUserItemPair(userId, itemIds))
-		if err != nil {
-			return handleError(err)
-		}
-		userStorage := FindStorageData(storage, userId)
-		if userStorage == nil {
-			return handleError(fmt.Errorf("user storage not found"))
-		}
 		skillIds := func(requiredSkills []*RequiredSkill) []core.SkillId {
 			checkedItems := make(map[core.SkillId]bool)
 			var result []core.SkillId
@@ -129,7 +139,7 @@ func CreateGenerateMakeUserExploreArgs(
 			actionsRes:         getActionsRes,
 			requiredSkillRes:   requiredSkillsResponse,
 			consumingItemRes:   consumingItemRes,
-			itemData:           userStorage.ItemData,
+			itemData:           storageData,
 			batchGetSkillRes:   skills,
 			exploreIds:         exploreIds,
 			calculatedStamina:  staminaMap,

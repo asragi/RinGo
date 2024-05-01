@@ -25,6 +25,7 @@ func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 		if err != nil {
 			return nil, fmt.Errorf("fetch shelf: %w", err)
 		}
+		defer rows.Close()
 		var result []*shelf.ShelfRepoRow
 		for rows.Next() {
 			var row shelf.ShelfRepoRow

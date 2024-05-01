@@ -47,6 +47,7 @@ func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRep
 		if err != nil {
 			return nil, fmt.Errorf("fetch reservation: %w", err)
 		}
+		defer rows.Close()
 		var result []*reservation.ReservationRow
 		for rows.Next() {
 			var row reservation.ReservationRow

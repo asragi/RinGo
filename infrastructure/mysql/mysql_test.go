@@ -12,6 +12,7 @@ import (
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/location"
 	"github.com/asragi/RinGo/test"
+	"github.com/asragi/RinGo/utils"
 	"testing"
 	"time"
 )
@@ -1034,14 +1035,16 @@ func TestCreateGetStorage(t *testing.T) {
 					UserId: testUserId,
 					ItemData: []*game.StorageData{
 						{
-							UserId: testUserId,
-							ItemId: "1",
-							Stock:  100,
+							UserId:  testUserId,
+							ItemId:  "1",
+							Stock:   100,
+							IsKnown: true,
 						},
 						{
-							UserId: testUserId,
-							ItemId: "2",
-							Stock:  200,
+							UserId:  testUserId,
+							ItemId:  "2",
+							Stock:   200,
+							IsKnown: true,
 						},
 					},
 				},
@@ -1076,7 +1079,7 @@ func TestCreateGetStorage(t *testing.T) {
 					t.Fatalf("failed to fetch storage: %v", err)
 				}
 				if !test.DeepEqual(res, v.expectedRes) {
-					t.Errorf("got: %+v, expect: %+v", res, v.expectedRes)
+					t.Errorf("got: %+v, expect: %+v", utils.ToObjArray(res), utils.ToObjArray(v.expectedRes))
 				}
 				return TestCompleted
 			},
