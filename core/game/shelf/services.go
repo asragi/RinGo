@@ -19,6 +19,7 @@ func NewService(
 	fetchSizeToAction FetchSizeToActionRepoFunc,
 	postAction game.PostActionFunc,
 	validateAction game.ValidateActionFunc,
+	generateId func() string,
 ) *Services {
 	updateShelfContentService := CreateUpdateShelfContent(
 		fetchStorage,
@@ -36,6 +37,7 @@ func NewService(
 		postAction,
 		validateUpdateShelfSize,
 		validateAction,
+		generateId,
 	)
 
 	return &Services{

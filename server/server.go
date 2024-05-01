@@ -165,6 +165,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.fetchSizeToAction,
 		gameServices.PostAction,
 		gameServices.ValidateAction,
+		generateUUID,
 	)
 	reservationService := reservation.NewService(
 		infra.fetchReservation,
@@ -202,6 +203,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	checkUserExistence := mysql.CreateCheckUserExistence(dbQuery)
 	getUserPassword := mysql.CreateGetUserPassword(dbQuery)
 	getResource := mysql.CreateGetResourceMySQL(dbQuery)
+	fetchFund := mysql.CreateFetchFund(dbQuery)
+	fetchStamina := mysql.CreateFetchStamina(dbQuery)
 	getItemMaster := mysql.CreateGetItemMasterMySQL(dbQuery)
 	getStageMaster := mysql.CreateGetStageMaster(dbQuery)
 	getAllStage := mysql.CreateGetAllStageMaster(dbQuery)
@@ -251,8 +254,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		insertNewUser:             insertNewUser,
 		fetchPassword:             getUserPassword,
 		getResource:               getResource,
-		fetchFund:                 nil,
-		fetchStamina:              nil,
+		fetchFund:                 fetchFund,
+		fetchStamina:              fetchStamina,
 		fetchItemMaster:           getItemMaster,
 		fetchStorage:              getStorage,
 		getAllStorage:             getAllStorage,

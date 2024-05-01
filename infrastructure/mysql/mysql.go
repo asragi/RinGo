@@ -10,6 +10,7 @@ import (
 	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/infrastructure"
 	_ "github.com/go-sql-driver/mysql"
 	"strconv"
 	"time"
@@ -127,6 +128,7 @@ func CreateInsertNewUser(
 			MaxStamina:         initialMaxStamina,
 			StaminaRecoverTime: getTime(),
 			HashedPassword:     password,
+			Popularity:         initialPopularity,
 		}
 
 		_, err := dbExec(ctx, queryText, []*UserToDB{&createUserData})
@@ -175,6 +177,62 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 			StaminaRecoverTime: core.StaminaRecoverTime(result.StaminaRecoverTime),
 			Fund:               result.Fund,
 		}, err
+	}
+}
+
+func CreateFetchFund(q queryFunc) game.FetchFundFunc {
+	return func(ctx context.Context, userIds []core.UserId) ([]*game.FundRes, error) {
+		handleError := func(err error) ([]*game.FundRes, error) {
+			return nil, fmt.Errorf("fetch fund from mysql: %w", err)
+		}
+		spreadUserId := spreadString(infrastructure.UserIdsToString(userIds))
+		query := fmt.Sprintf(
+			`SELECT user_id, fund FROM ringo.users WHERE user_id IN (%s);`,
+			spreadUserId,
+		)
+		rows, err := q(ctx, query, nil)
+		defer rows.Close()
+		if err != nil {
+			return handleError(err)
+		}
+		var result []*game.FundRes
+		for rows.Next() {
+			var res game.FundRes
+			err = rows.Scan(&res.UserId, &res.Fund)
+			if err != nil {
+				return handleError(err)
+			}
+			result = append(result, &res)
+		}
+		return result, nil
+	}
+}
+
+func CreateFetchStamina(q queryFunc) game.FetchStaminaFunc {
+	return func(ctx context.Context, userIds []core.UserId) ([]*game.StaminaRes, error) {
+		handleError := func(err error) ([]*game.StaminaRes, error) {
+			return nil, fmt.Errorf("fetch stamina from mysql: %w", err)
+		}
+		spreadUserId := spreadString(infrastructure.UserIdsToString(userIds))
+		query := fmt.Sprintf(
+			`SELECT user_id, max_stamina, stamina_recover_time FROM ringo.users WHERE user_id IN (%s);`,
+			spreadUserId,
+		)
+		rows, err := q(ctx, query, nil)
+		defer rows.Close()
+		if err != nil {
+			return handleError(err)
+		}
+		var result []*game.StaminaRes
+		for rows.Next() {
+			var res game.StaminaRes
+			err = rows.Scan(&res.UserId, &res.MaxStamina, &res.StaminaRecoverTime)
+			if err != nil {
+				return handleError(err)
+			}
+			result = append(result, &res)
+		}
+		return result, nil
 	}
 }
 
