@@ -7,8 +7,8 @@ import (
 )
 
 type Service struct {
-	applyReservation  ApplyReservationFunc
-	insertReservation InsertReservationFunc
+	ApplyReservation  ApplyReservationFunc
+	InsertReservation InsertReservationFunc
 }
 
 func NewService(
@@ -49,7 +49,7 @@ func NewService(
 		getTime,
 	)
 	return &Service{
-		applyReservation:  applyReservation,
-		insertReservation: insertReservation,
+		ApplyReservation:  applyReservation,
+		InsertReservation: insertReservation,
 	}
 }

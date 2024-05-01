@@ -24,9 +24,7 @@ type (
 		Fund   core.Fund   `db:"fund"`
 	}
 	FetchFundFunc func(context.Context, []core.UserId) ([]*FundRes, error)
-	// Deprecated: use UpdateFundFunc
-	UpdateFundFuncDeprecated func(context.Context, core.UserId, core.Fund) error
-	UserFundPair             struct {
+	UserFundPair  struct {
 		UserId core.UserId `db:"user_id"`
 		Fund   core.Fund   `db:"fund"`
 	}
@@ -73,10 +71,9 @@ func totalItemStockToStorageData(userId core.UserId, totalItems []*totalItem) []
 	result := make([]*StorageData, len(totalItems))
 	for i, v := range totalItems {
 		result[i] = &StorageData{
-			UserId:  userId,
-			ItemId:  v.ItemId,
-			Stock:   v.Stock,
-			IsKnown: true,
+			UserId: userId,
+			ItemId: v.ItemId,
+			Stock:  v.Stock,
 		}
 	}
 	return result
@@ -142,21 +139,8 @@ func ToUserItemPair(userId core.UserId, itemIds []core.ItemId) []*UserItemPair {
 
 type FetchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
 
-// Deprecated: use FetchStorageFunc
-type FetchStorageFuncDeprecated func(context.Context, core.UserId, []core.ItemId) (BatchGetStorageRes, error)
-
 type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)
 
-// Deprecated: use StorageData
-type TotalItemStock struct {
-	UserId     core.UserId
-	ItemId     core.ItemId
-	AfterStock core.Stock
-	IsKnown    core.IsKnown
-}
-
-// Deprecated: use UpdateItemStorageFunc
-type UpdateItemStorageFuncDeprecated func(context.Context, core.UserId, []*TotalItemStock) error
 type UpdateItemStorageFunc func(context.Context, []*StorageData) error
 
 type SkillMaster struct {
@@ -220,17 +204,7 @@ type ConsumingItem struct {
 	ConsumptionProb ConsumptionProb `db:"consumption_prob"`
 }
 
-type BatchGetConsumingItemRes struct {
-	ExploreId      ExploreId
-	ConsumingItems []ConsumingItem
-}
-
 type FetchConsumingItemFunc func(context.Context, []ExploreId) ([]*ConsumingItem, error)
-
-type BatchGetReductionStaminaSkill struct {
-	ExploreId ExploreId
-	Skills    []StaminaReductionSkillPair
-}
 
 type StaminaReductionSkillPair struct {
 	ExploreId ExploreId    `db:"explore_id"`

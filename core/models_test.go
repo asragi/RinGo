@@ -22,7 +22,7 @@ func TestUserId(t *testing.T) {
 	}
 
 	for _, v := range testCases {
-		err := v.userId.IsValid()
+		_, err := CreateUserId(string(v.userId))
 		if (err == nil) != v.isNil {
 			if err == nil {
 				t.Errorf("expected error is not nil, got: nil")

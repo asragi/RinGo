@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type WriteLogger func(int, error)
@@ -29,22 +30,11 @@ func ErrorOnGenerateResponse(w http.ResponseWriter, err error) {
 	http.Error(w, fmt.Errorf("error on generate response: %w", err).Error(), http.StatusInternalServerError)
 }
 
-func ErrorOnInternalError(w http.ResponseWriter, err error) {
-	http.Error(w, fmt.Errorf("internal server error: %w", err).Error(), http.StatusInternalServerError)
-}
+type requestBody io.ReadCloser
 
-func ErrorOnMethodNotAllowed(w http.ResponseWriter, err error) {
+type queryParameter url.Values
 
-}
-
-func ErrorOnPageNotFound(w http.ResponseWriter, err error) {
-	http.Error(w, fmt.Errorf("not found: %w", err).Error(), http.StatusNotFound)
-}
-
-type RequestBody io.ReadCloser
-type QueryParameter url.Values
-
-func (q *QueryParameter) GetFirstQuery(name string) (string, error) {
+func (q *queryParameter) GetFirstQuery(name string) (string, error) {
 	arr := (*q)[name]
 	if len(arr) <= 0 {
 		return "", NoQueryProvidedError{Message: name}
@@ -52,7 +42,14 @@ func (q *QueryParameter) GetFirstQuery(name string) (string, error) {
 	return arr[0], nil
 }
 
-type PathString string
+type pathString string
+type requestHeader struct {
+	header http.Header
+}
+
+func (h *requestHeader) Get(key string) string {
+	return h.header.Get(key)
+}
 
 func DecodeBody[T any](body io.ReadCloser) (*T, error) {
 	var req T
@@ -63,7 +60,7 @@ func DecodeBody[T any](body io.ReadCloser) (*T, error) {
 	return &req, err
 }
 
-type selectParam[T any] func(RequestBody, QueryParameter, PathString) (*T, error)
+type selectParam[T any] func(requestHeader, requestBody, queryParameter, pathString) (*T, error)
 
 func createHandlerWithParameter[T any, S any](
 	endpointFunc func(context.Context, *T) (*S, error),
@@ -74,7 +71,7 @@ func createHandlerWithParameter[T any, S any](
 	h := func(w http.ResponseWriter, r *http.Request) {
 		passedUrl := r.URL
 		query := passedUrl.Query()
-		req, err := selectParam(r.Body, QueryParameter(query), PathString(passedUrl.Path))
+		req, err := selectParam(requestHeader{r.Header}, r.Body, queryParameter(query), pathString(passedUrl.Path))
 		if err != nil {
 			ErrorOnDecode(w, err)
 			return
@@ -97,58 +94,25 @@ func createHandlerWithParameter[T any, S any](
 	return h
 }
 
-// Deprecated: use createHandlerWithParameter
-func createHandler[T any, S any](
-	endpointFunc func(*T) (S, error),
-	logger WriteLogger,
-) router.Handler {
-	h := func(w http.ResponseWriter, r *http.Request) {
-		var req T
-		decoder := json.NewDecoder(r.Body)
-		decoder.DisallowUnknownFields()
-		err := decoder.Decode(&req)
-		if err != nil {
-			ErrorOnDecode(w, err)
-			return
-		}
-		res, err := endpointFunc(&req)
-		if err != nil {
-			ErrorOnGenerateResponse(w, err)
-			return
-		}
-		resJson, err := json.Marshal(res)
-		if err != nil {
-			ErrorOnGenerateResponse(w, err)
-			return
-		}
-		setHeader(w)
-		logger(w.Write(resJson))
-	}
-
-	return h
-}
-
 func LogHttpWrite(status int, err error) {
 	if err == nil {
+		log.Printf("Write success: %d", status)
 		return
 	}
 	log.Printf("Write failed: %v, status: %d", err, status)
 }
 
-func getTokenParams[T any](createRequest func(token string) *T) selectParam[T] {
-	return func(
-		_ RequestBody,
-		query QueryParameter,
-		_ PathString,
-	) (*T, error) {
-		handleError := func(err error) (*T, error) {
-			return nil, fmt.Errorf("get params: %w", err)
-		}
-		token, err := query.GetFirstQuery("token")
-		if err != nil {
-			return handleError(err)
-		}
-
-		return createRequest(token), nil
+func (h *requestHeader) getTokenFromHeader() (string, error) {
+	tokenHeader := h.Get("Authorization")
+	if tokenHeader == "" {
+		return "", fmt.Errorf("no token provided")
 	}
+	headerData := strings.Split(tokenHeader, " ")
+	if len(headerData) != 2 {
+		return "", fmt.Errorf("invalid token format")
+	}
+	if headerData[0] != "Bearer" {
+		return "", fmt.Errorf("invalid token type")
+	}
+	return headerData[1], nil
 }

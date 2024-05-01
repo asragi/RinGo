@@ -14,9 +14,10 @@ func CreateUpdateShelfSizeHandler(
 	logger WriteLogger,
 ) router.Handler {
 	getParams := func(
-		body RequestBody,
-		query QueryParameter,
-		_ PathString,
+		header requestHeader,
+		body requestBody,
+		_ queryParameter,
+		_ pathString,
 	) (*gateway.UpdateShelfSizeRequest, error) {
 		type updateShelfSizeBody struct {
 			Size int32 `json:"size"`
@@ -28,7 +29,7 @@ func CreateUpdateShelfSizeHandler(
 		if err != nil {
 			return handleError(err)
 		}
-		token, err := query.GetFirstQuery("token")
+		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}

@@ -20,36 +20,42 @@ type updateOnApplyTradeArgs struct {
 }
 
 func CreateUpdateOnApplyTrade(
-	updateFund game.UpdateFundFuncDeprecated,
-	updateStorage game.UpdateItemStorageFuncDeprecated,
+	updateFund game.UpdateFundFunc,
+	updateStorage game.UpdateItemStorageFunc,
 ) updateOnApplyTradeFunc {
 	return func(ctx context.Context, args *updateOnApplyTradeArgs) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("updating on apply trade: %w", err)
 		}
-		toItemData := func(itemId core.ItemId, stock core.Stock) []*game.TotalItemStock {
-			return []*game.TotalItemStock{
-				{
-					ItemId:     itemId,
-					AfterStock: stock,
-					IsKnown:    true,
-				},
-			}
+		updateFundRequest := []*game.UserFundPair{
+			{
+				UserId: args.userId,
+				Fund:   args.userFundAfter,
+			},
+			{
+				UserId: args.targetUserId,
+				Fund:   args.targetFundAfter,
+			},
 		}
-		// TODO: batch update
-		err := updateFund(ctx, args.userId, args.userFundAfter)
+		err := updateFund(ctx, updateFundRequest)
 		if err != nil {
 			return handleError(err)
 		}
-		err = updateFund(ctx, args.targetUserId, args.targetFundAfter)
-		if err != nil {
-			return handleError(err)
+		storageData := []*game.StorageData{
+			{
+				UserId:  args.userId,
+				ItemId:  args.itemId,
+				Stock:   args.userStockAfter,
+				IsKnown: true,
+			},
+			{
+				UserId:  args.targetUserId,
+				ItemId:  args.itemId,
+				Stock:   args.targetStockAfter,
+				IsKnown: true,
+			},
 		}
-		err = updateStorage(ctx, args.userId, toItemData(args.itemId, args.userStockAfter))
-		if err != nil {
-			return handleError(err)
-		}
-		err = updateStorage(ctx, args.targetUserId, toItemData(args.itemId, args.targetStockAfter))
+		err = updateStorage(ctx, storageData)
 		if err != nil {
 			return handleError(err)
 		}

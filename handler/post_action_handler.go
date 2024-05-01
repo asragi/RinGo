@@ -11,9 +11,10 @@ import (
 )
 
 func GetPostActionParams(
-	body RequestBody,
-	query QueryParameter,
-	_ PathString,
+	header requestHeader,
+	body requestBody,
+	_ queryParameter,
+	_ pathString,
 ) (*gateway.PostActionRequest, error) {
 	type postActionBody struct {
 		ExploreId string `json:"explore_id"`
@@ -26,7 +27,7 @@ func GetPostActionParams(
 	if err != nil {
 		return handleError(err)
 	}
-	token, err := query.GetFirstQuery("token")
+	token, err := header.getTokenFromHeader()
 	if err != nil {
 		return handleError(err)
 	}

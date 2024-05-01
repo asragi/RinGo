@@ -119,8 +119,7 @@ func calcReservationApplication(
 			)
 			appliedShelfSales = append(
 				appliedShelfSales, &shelf.TotalSalesReq{
-					UserId:     user,
-					Index:      index,
+					Id:         targetShelf.Id,
 					TotalSales: totalSalesBefore.TotalingSales(totalSalesPerItem),
 				},
 			)

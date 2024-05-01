@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
@@ -13,10 +12,10 @@ import (
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
+	"github.com/asragi/RinGo/infrastructure/in_memory"
 	"github.com/asragi/RinGo/infrastructure/mysql"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"time"
 )
@@ -51,7 +50,11 @@ type infrastructuresStruct struct {
 	updateFund                game.UpdateFundFunc
 
 	fetchShelf            shelf.FetchShelf
+	fetchSizeToAction     shelf.FetchSizeToActionRepoFunc
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc
+	updateShelfContent    shelf.UpdateShelfContentRepoFunc
+	insertEmptyShelf      shelf.InsertEmptyShelfFunc
+	deleteShelfBySize     shelf.DeleteShelfBySizeFunc
 
 	fetchReservation         reservation.FetchReservationRepoFunc
 	deleteReservation        reservation.DeleteReservationRepoFunc
@@ -64,12 +67,14 @@ type infrastructuresStruct struct {
 }
 
 type functionContainer struct {
+	generateUUID        func() string
 	createContext       utils.CreateContextFunc
 	validateToken       auth.ValidateTokenFunc
 	login               auth.LoginFunc
 	register            auth.RegisterUserFunc
 	getTime             core.GetCurrentTimeFunc
 	gameServices        *game.Services
+	shelfServices       *shelf.Services
 	reservationServices *reservation.Service
 }
 
@@ -86,6 +91,10 @@ func createDB() (*database.DBAccessor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connect DB: %w", err)
 	}
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(4 * time.Minute)
 	return database.NewDBAccessor(db, db), nil
 }
 
@@ -114,7 +123,8 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 	login := auth.CreateLoginFunc(infra.fetchPassword, crypto.Compare, createToken)
 	createUserIdFunc := auth.CreateUserId(3, infra.checkUser, utils.GenerateUUID)
 	createHashedPassword := auth.CreateHashedPassword(crypto.Encrypt)
-	generatePassword := func() auth.RowPassword { return auth.RowPassword(utils.GenerateUUID()) }
+	generateUUID := utils.GenerateUUID
+	generatePassword := func() auth.RowPassword { return auth.RowPassword(generateUUID()) }
 	// TODO: initial name must be decided depending on locale
 	initialName := func() core.UserName { return "夢追い人" }
 	register := auth.RegisterUser(
@@ -134,6 +144,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.consumingItem,
 		infra.fetchRequiredSkill,
 		infra.fetchStorage,
+		infra.getAllStorage,
 		infra.fetchItemMaster,
 		infra.fetchReductionSkill,
 		infra.getUserExplore,
@@ -143,6 +154,17 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.updateFund,
 		random.Emit,
 		getTime,
+	)
+	shelfService := shelf.NewService(
+		infra.fetchStorage,
+		infra.fetchItemMaster,
+		infra.fetchShelf,
+		infra.insertEmptyShelf,
+		infra.deleteShelfBySize,
+		infra.updateShelfContent,
+		infra.fetchSizeToAction,
+		gameServices.PostAction,
+		gameServices.ValidateAction,
 	)
 	reservationService := reservation.NewService(
 		infra.fetchReservation,
@@ -161,21 +183,21 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		getTime,
 	)
 	return &functionContainer{
+		generateUUID:        generateUUID,
 		createContext:       utils.CreateContext,
 		validateToken:       validateToken,
 		login:               login,
 		register:            register,
 		getTime:             getTime,
 		gameServices:        gameServices,
+		shelfServices:       shelfService,
 		reservationServices: reservationService,
 	}
 }
 
 func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infrastructuresStruct, error) {
 	getTime := func() time.Time { return time.Now() }
-	dbQuery := func(ctx context.Context, query string, args interface{}) (*sqlx.Rows, error) {
-		return db.Query(ctx, query, args)
-	}
+	dbQuery := db.Query
 
 	checkUserExistence := mysql.CreateCheckUserExistence(dbQuery)
 	getUserPassword := mysql.CreateGetUserPassword(dbQuery)
@@ -211,6 +233,19 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	updateStorage := mysql.CreateUpdateItemStorage(db.Exec)
 	updateStamina := mysql.CreateUpdateStamina(db.Exec)
 
+	fetchUserShelf := mysql.CreateFetchShelfRepo(dbQuery)
+	updateShelfContent := mysql.CreateUpdateShelfContentRepo(db.Exec)
+	updateTotalSales := mysql.CreateUpdateTotalSales(db.Exec)
+	insertEmpty := mysql.CreateInsertEmptyShelf(db.Exec)
+	deleteShelfBySize := mysql.CreateDeleteShelfBySize(db.Exec)
+
+	fetchReservation := mysql.CreateFetchReservation(dbQuery)
+	insertReservation := mysql.CreateInsertReservation(db.Exec)
+	deleteReservation := mysql.CreateDeleteReservation(db.Exec)
+	deleteReservationToShelf := mysql.CreateDeleteReservationToShelf(db.Exec)
+	fetchItemAttraction := mysql.CreateFetchItemAttraction(dbQuery)
+	fetchUserPopularity := mysql.CreateFetchUserPopularity(dbQuery)
+
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
 		insertNewUser:             insertNewUser,
@@ -239,14 +274,18 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		fetchReductionSkill:       getReductionSkill,
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
-		fetchShelf:                nil,
-		updateShelfTotalSales:     nil,
-		fetchReservation:          nil,
-		deleteReservation:         nil,
-		fetchItemAttraction:       nil,
-		fetchUserPopularity:       nil,
-		insertReservationRepo:     nil,
-		deleteReservationToShelf:  nil,
+		fetchShelf:                fetchUserShelf,
+		fetchSizeToAction:         in_memory.FetchSizeToActionRepoInMemory,
+		updateShelfTotalSales:     updateTotalSales,
+		updateShelfContent:        updateShelfContent,
+		insertEmptyShelf:          insertEmpty,
+		deleteShelfBySize:         deleteShelfBySize,
+		fetchReservation:          fetchReservation,
+		deleteReservation:         deleteReservation,
+		fetchItemAttraction:       fetchItemAttraction,
+		fetchUserPopularity:       fetchUserPopularity,
+		insertReservationRepo:     insertReservation,
+		deleteReservationToShelf:  deleteReservationToShelf,
 		getTime:                   getTime,
 	}, nil
 }
@@ -306,7 +345,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			FetchAllStage:             infrastructures.fetchAllStage,
 			FetchUserStageFunc:        infrastructures.fetchUserStage,
 			FetchStageExploreRelation: infrastructures.fetchStageExploreRelation,
-			MakeUserExplore:           nil,
+			MakeUserExplore:           functions.gameServices.MakeUserExplore,
 		},
 		explore.CreateFetchStageData,
 		explore.GetStageList,
@@ -336,9 +375,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 		writeLogger,
 	)
 	getItemList := handler.CreateGetItemListHandler(
-		infrastructures.getAllStorage,
-		infrastructures.fetchItemMaster,
-		explore.CreateGetItemListService,
+		functions.gameServices.GetItemList,
 		endpoint.CreateGetItemService,
 		functions.validateToken,
 		functions.createContext,
@@ -372,6 +409,24 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	login := handler.CreateLoginHandler(
 		functions.login,
 		endpoint.CreateLoginEndpoint,
+		functions.createContext,
+		writeLogger,
+	)
+	updateShelfContent := handler.CreateUpdateShelfContentHandler(
+		endpoint.CreateUpdateShelfContentEndpoint(
+			functions.shelfServices.UpdateShelfContent,
+			functions.reservationServices.InsertReservation,
+			functions.validateToken,
+		),
+		functions.createContext,
+		writeLogger,
+	)
+
+	updateShelfSize := handler.CreateUpdateShelfSizeHandler(
+		endpoint.CreateUpdateShelfSizeEndpoint(
+			functions.shelfServices.UpdateShelfSize,
+			functions.validateToken,
+		),
 		functions.createContext,
 		writeLogger,
 	)
@@ -421,6 +476,16 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			SamplePathString: "/me/places/{placeId}/actions/{actionId}",
 			Method:           router.GET,
 			Handler:          getStageActionDetailHandler,
+		},
+		{
+			SamplePathString: "/me/shelves/{shelfId}",
+			Method:           router.PATCH,
+			Handler:          updateShelfContent,
+		},
+		{
+			SamplePathString: "/me/shelves/size",
+			Method:           router.PUT,
+			Handler:          updateShelfSize,
 		},
 		{
 			SamplePathString: "/actions",

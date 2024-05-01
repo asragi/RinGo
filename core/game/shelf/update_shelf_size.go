@@ -14,6 +14,7 @@ type UpdateShelfSizeFunc func(
 ) error
 
 func CreateUpdateShelfSize(
+	fetchShelf FetchShelf,
 	fetchSizeToAction FetchSizeToActionRepoFunc,
 	insertEmptyShelf InsertEmptyShelfFunc,
 	deleteShelfBySize DeleteShelfBySizeFunc,
@@ -25,7 +26,12 @@ func CreateUpdateShelfSize(
 		handleError := func(err error) error {
 			return fmt.Errorf("updating shelf size: %w", err)
 		}
-		err := validateUpdateShelfSize(ctx, userId, targetShelfSize)
+		shelves, err := fetchShelf(ctx, []core.UserId{userId})
+		if err != nil {
+			return handleError(err)
+		}
+		size := shelfRowToSize(shelves)
+		err = validateUpdateShelfSize(size, targetShelfSize)
 		if err != nil {
 			return handleError(err)
 		}

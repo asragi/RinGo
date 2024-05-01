@@ -11,6 +11,14 @@ type createTokenFunc func(core.UserId) (AccessToken, error)
 type sha256Func func(*SecretHashKey, *string) (*string, error)
 
 type AccessToken string
+
+func NewAccessToken(token string) (AccessToken, error) {
+	if len(token) <= 0 {
+		return "", TokenIsInvalidError{token: AccessToken(token)}
+	}
+	return AccessToken(token), nil
+}
+
 type ExpirationTime int
 type AccessTokenInformation struct {
 	UserId         core.UserId
@@ -18,8 +26,8 @@ type AccessTokenInformation struct {
 }
 
 type AccessTokenInformationFromJson struct {
-	UserId         string `json:"user_id"`
-	ExpirationTime int    `json:"exp"`
+	UserId         string `json:"UserId"`
+	ExpirationTime int    `json:"ExpirationTime"`
 }
 
 func (info *AccessTokenInformationFromJson) ToInformation() (*AccessTokenInformation, error) {

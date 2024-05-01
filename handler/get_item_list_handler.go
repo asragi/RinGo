@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core/game"
-	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
@@ -12,23 +11,22 @@ import (
 )
 
 func CreateGetItemListHandler(
-	getAllStorage game.FetchAllStorageFunc,
-	getItemMaster game.FetchItemMasterFunc,
-	createGetItemList explore.CreateGetItemListFunc,
+	getItemList game.GetItemListFunc,
 	createEndpoint endpoint.CreateGetItemListEndpoint,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
 ) router.Handler {
 	getItemListSelectParams := func(
-		_ RequestBody,
-		query QueryParameter,
-		_ PathString,
+		header requestHeader,
+		_ requestBody,
+		_ queryParameter,
+		_ pathString,
 	) (*gateway.GetItemListRequest, error) {
 		handleError := func(err error) (*gateway.GetItemListRequest, error) {
 			return nil, fmt.Errorf("get query: %w", err)
 		}
-		token, err := query.GetFirstQuery("token")
+		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}
@@ -36,7 +34,6 @@ func CreateGetItemListHandler(
 			Token: token,
 		}, nil
 	}
-	getItemListFunc := createGetItemList(getAllStorage, getItemMaster)
-	endpointFunc := createEndpoint(getItemListFunc, validateToken)
+	endpointFunc := createEndpoint(getItemList, validateToken)
 	return createHandlerWithParameter(endpointFunc, createContext, getItemListSelectParams, logger)
 }

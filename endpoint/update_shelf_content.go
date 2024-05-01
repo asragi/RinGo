@@ -16,7 +16,7 @@ type UpdateShelfContentEndpointFunc func(
 	req *gateway.UpdateShelfContentRequest,
 ) (*gateway.UpdateShelfContentResponse, error)
 
-func CreateUpdateShelfSizeEndpointFunc(
+func CreateUpdateShelfContentEndpoint(
 	updateShelfContent shelf.UpdateShelfContentFunc,
 	insertReservation reservation.InsertReservationFunc,
 	validateToken auth.ValidateTokenFunc,

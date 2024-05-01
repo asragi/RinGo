@@ -98,6 +98,8 @@ type Description string
 // item master
 type ItemId string
 
+var EmptyItemId = ItemId("empty")
+
 func (id ItemId) ToString() string {
 	return string(id)
 }

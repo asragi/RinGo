@@ -14,9 +14,10 @@ func CreateRegisterHandler(
 	logger WriteLogger,
 ) router.Handler {
 	getParams := func(
-		body RequestBody,
-		query QueryParameter,
-		_ PathString,
+		_ requestHeader,
+		_ requestBody,
+		_ queryParameter,
+		_ pathString,
 	) (*endpoint.RegisterRequest, error) {
 		return &endpoint.RegisterRequest{}, nil
 	}

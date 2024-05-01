@@ -1,12 +1,10 @@
-package explore
+package game
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/asragi/RinGo/core/game"
-
 	"github.com/asragi/RinGo/core"
 )
 
@@ -20,11 +18,11 @@ type ItemListRow struct {
 	Price       core.Price
 }
 
-type CreateGetItemListFunc func(game.FetchAllStorageFunc, game.FetchItemMasterFunc) GetItemListFunc
+type CreateGetItemListFunc func(FetchAllStorageFunc, FetchItemMasterFunc) GetItemListFunc
 
 func CreateGetItemListService(
-	getAllStorage game.FetchAllStorageFunc,
-	getItemMaster game.FetchItemMasterFunc,
+	getAllStorage FetchAllStorageFunc,
+	getItemMaster FetchItemMasterFunc,
 ) GetItemListFunc {
 	return func(
 		ctx context.Context,
@@ -40,7 +38,7 @@ func CreateGetItemListService(
 		if err != nil {
 			return handleError(err)
 		}
-		itemIds := func(storages []*game.StorageData) []core.ItemId {
+		itemIds := func(storages []*StorageData) []core.ItemId {
 			result := make([]core.ItemId, len(storages))
 			for i, v := range storages {
 				result[i] = v.ItemId
@@ -51,18 +49,18 @@ func CreateGetItemListService(
 		if err != nil {
 			return handleError(err)
 		}
-		storageMap := func(storages []*game.StorageData) map[core.ItemId]*game.StorageData {
-			result := map[core.ItemId]*game.StorageData{}
+		storageMap := func(storages []*StorageData) map[core.ItemId]*StorageData {
+			result := map[core.ItemId]*StorageData{}
 			for _, v := range storages {
 				result[v.ItemId] = v
 			}
 			return result
 		}(storages)
-		masterMap := game.ItemMasterResToMap(itemMaster)
+		masterMap := ItemMasterResToMap(itemMaster)
 		itemList := func(
 			items []core.ItemId,
-			itemMasterMap map[core.ItemId]*game.GetItemMasterRes,
-			itemStorageMap map[core.ItemId]*game.StorageData,
+			itemMasterMap map[core.ItemId]*GetItemMasterRes,
+			itemStorageMap map[core.ItemId]*StorageData,
 		) []*ItemListRow {
 			result := make([]*ItemListRow, len(items))
 			for i, v := range items {

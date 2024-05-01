@@ -8,8 +8,8 @@ import (
 
 type (
 	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ExploreId, error)
-	FetchShelfSizeRepoFunc    func(context.Context, core.UserId) (Size, error)
 	ShelfRepoRow              struct {
+		Id         Id
 		UserId     core.UserId
 		ItemId     core.ItemId
 		Index      Index
@@ -18,9 +18,8 @@ type (
 	}
 	FetchShelf    func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
 	TotalSalesReq struct {
-		UserId     core.UserId
-		Index      Index
-		TotalSales core.SalesFigures
+		Id         Id                `db:"shelf_id"`
+		TotalSales core.SalesFigures `db:"total_sales"`
 	}
 	UpdateShelfTotalSalesFunc func(
 		context.Context,
@@ -28,14 +27,13 @@ type (
 	) error
 	UpdateShelfContentRepoFunc func(
 		context.Context,
-		core.UserId,
+		Id,
 		core.ItemId,
 		SetPrice,
-		Index,
 	) error
-	// InsertEmptyShelfFunc inserts single or multiple empty shelves
-	// until the total number of shelves reaches the requested size.
-	InsertEmptyShelfFunc func(context.Context, core.UserId, Size) error
+
+	InsertEmptyShelfFunc func(ctx context.Context, userId core.UserId, shelves []*ShelfRepoRow) error
+
 	// DeleteShelfBySizeFunc deletes shelves  until the total number of shelves
 	// reaches the requested size
 	DeleteShelfBySizeFunc func(context.Context, core.UserId, Size) error
@@ -81,6 +79,10 @@ func shelvesToMap(shelves []*ShelfRepoRow) map[core.UserId][]*ShelfRepoRow {
 		shelvesMap[shelf.UserId] = append(shelvesMap[shelf.UserId], shelf)
 	}
 	return shelvesMap
+}
+
+func shelfRowToSize(shelf []*ShelfRepoRow) Size {
+	return Size(len(shelf))
 }
 
 func shelfRowToUserItemPair(shelf []*ShelfRepoRow) []*game.UserItemPair {

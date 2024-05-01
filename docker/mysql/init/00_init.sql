@@ -3,8 +3,9 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(40) NOT NULL,
     `name` varchar(40) NOT NULL,
-    `fund` int(20) NOT NULL,
-    `max_stamina` int(11) NOT NULL,
+    `fund` bigint(20) NOT NULL,
+    `max_stamina` mediumint(6) NOT NULL,
+    `popularity` smallint(4) NOT NULL,
     `stamina_recover_time` DATETIME NOT NULL,
     `hashed_password` varchar(64),
     PRIMARY KEY (`id`),
@@ -17,8 +18,9 @@ CREATE TABLE IF NOT EXISTS ringo.item_masters(
     `display_name` varchar(40) NOT NULL,
     `description` varchar(40) NOT NULL,
     `price` int(20) NOT NULL,
-    `max_stock` int(10) NOT NULL,
-    `sale_freq` float(8,4) NOT NULL,
+    `max_stock` mediumint(8) NOT NULL,
+    `attraction` mediumint(8) NOT NULL,
+    `purchase_probability` float(8,4) NOT NULL,
     PRIMARY KEY (`id`),
     INDEX `item_id_index` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -27,7 +29,7 @@ CREATE TABLE IF NOT EXISTS ringo.item_storages(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(40) NOT NULL,
     `item_id` varchar(40) NOT NULL,
-    `stock` int(10) NOT NULL,
+    `stock` mediumint(8) NOT NULL,
     `is_known` bool NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE (`user_id`, `item_id`),
@@ -174,4 +176,32 @@ CREATE TABLE IF NOT EXISTS ringo.user_stage_data(
     INDEX `user_id_index` (`user_id`),
     FOREIGN KEY (`stage_id`) REFERENCES `stage_masters` (`stage_id`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS ringo.shelves(
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `shelf_id` varchar(40) NOT NULL,
+    `user_id` varchar(40) NOT NULL,
+    `item_id` varchar(40) NOT NULL,
+    `shelf_index` tinyint(4) NOT NULL,
+    `set_price` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `user_shelf_index` (`user_id`, `shelf_index`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+    FOREIGN KEY (`item_id`) REFERENCES `item_masters` (`item_id`),
+    CONSTRAINT user_shelf_pair UNIQUE (`user_id`, `shelf_index`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS ringo.reservations(
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `reservation_id` varchar(40) NOT NULL,
+    `user_id` varchar(40) NOT NULL,
+    `shelf_index` tinyint(4) NOT NULL,
+    `scheduled_time` DATETIME NOT NULL,
+    `purchase_num` mediumint(8) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `user_time_index` (`user_id`, `scheduled_time`),
+    INDEX `reservation_id_index` (`reservation_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+    FOREIGN KEY (`user_id`, `shelf_index`) REFERENCES `shelves` (`user_id`, `shelf_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

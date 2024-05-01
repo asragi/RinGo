@@ -1,17 +1,11 @@
 package shelf
 
 import (
-	"context"
 	"fmt"
-	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 )
 
-type ValidateUpdateShelfSizeFunc func(
-	context.Context,
-	core.UserId,
-	Size,
-) error
+type ValidateUpdateShelfSizeFunc func(targetSize Size, currentSize Size) error
 
 func validateUpdateShelfSize(size Size, currentSize Size) error {
 	if !size.ValidSize() {

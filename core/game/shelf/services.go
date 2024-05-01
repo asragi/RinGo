@@ -18,7 +18,6 @@ func NewService(
 	updateShelfContent UpdateShelfContentRepoFunc,
 	fetchSizeToAction FetchSizeToActionRepoFunc,
 	postAction game.PostActionFunc,
-	validateUpdateShelfSize ValidateUpdateShelfSizeFunc,
 	validateAction game.ValidateActionFunc,
 ) *Services {
 	updateShelfContentService := CreateUpdateShelfContent(
@@ -30,6 +29,7 @@ func NewService(
 	)
 
 	updateShelfSizeService := CreateUpdateShelfSize(
+		fetchShelf,
 		fetchSizeToAction,
 		insertEmptyShelf,
 		deleteShelfBySize,

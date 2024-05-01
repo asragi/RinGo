@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
-	"github.com/asragi/RinGo/core/game/explore"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetItemListEndpoint func(explore.GetItemListFunc, auth.ValidateTokenFunc) GetItemEndpoint
+type CreateGetItemListEndpoint func(game.GetItemListFunc, auth.ValidateTokenFunc) GetItemEndpoint
 
 type GetItemEndpoint func(context.Context, *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
 
 func CreateGetItemService(
-	getItem explore.GetItemListFunc,
+	getItem game.GetItemListFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetItemEndpoint {
 	get := func(ctx context.Context, req *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error) {
@@ -30,7 +30,7 @@ func CreateGetItemService(
 		if err != nil {
 			return &gateway.GetItemListResponse{}, fmt.Errorf("error on get item list endpoint: %w", err)
 		}
-		itemList := func(res []*explore.ItemListRow) []*gateway.GetItemListResponseRow {
+		itemList := func(res []*game.ItemListRow) []*gateway.GetItemListResponseRow {
 			result := make([]*gateway.GetItemListResponseRow, len(res))
 			for i, v := range res {
 				result[i] = &gateway.GetItemListResponseRow{

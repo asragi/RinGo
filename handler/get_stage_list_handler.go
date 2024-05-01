@@ -23,14 +23,15 @@ func CreateGetStageListHandler(
 	logger WriteLogger,
 ) router.Handler {
 	getParams := func(
-		_ RequestBody,
-		query QueryParameter,
-		_ PathString,
+		header requestHeader,
+		_ requestBody,
+		_ queryParameter,
+		_ pathString,
 	) (*gateway.GetStageListRequest, error) {
 		handleError := func(err error) (*gateway.GetStageListRequest, error) {
 			return nil, fmt.Errorf("get params: %w", err)
 		}
-		token, err := query.GetFirstQuery("token")
+		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}

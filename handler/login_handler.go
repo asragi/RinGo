@@ -10,9 +10,10 @@ import (
 )
 
 func GetLoginParams(
-	body RequestBody,
-	_ QueryParameter,
-	_ PathString,
+	_ requestHeader,
+	body requestBody,
+	_ queryParameter,
+	_ pathString,
 ) (*gateway.LoginRequest, error) {
 	req, err := DecodeBody[gateway.LoginRequest](body)
 	if err != nil {

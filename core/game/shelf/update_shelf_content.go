@@ -69,7 +69,8 @@ func CreateUpdateShelfContent(
 			}
 			return result
 		}(shelvesRes)
-		err = updateShelfContent(ctx, userId, itemId, setPrice, index)
+		shelf := findShelfRow(shelvesRes, userId, index)
+		err = updateShelfContent(ctx, shelf.Id, itemId, setPrice)
 		if err != nil {
 			return handleError(err)
 		}

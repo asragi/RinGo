@@ -1,10 +1,9 @@
-package explore
+package game
 
 import (
 	"context"
 	"errors"
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/test"
 	"testing"
 )
@@ -12,16 +11,16 @@ import (
 func TestCreateGetItemListService(t *testing.T) {
 	type testCase struct {
 		request        core.UserId
-		mockStorage    []*game.StorageData
-		mockItemMaster []*game.GetItemMasterRes
+		mockStorage    []*StorageData
+		mockItemMaster []*GetItemMasterRes
 		expectedError  error
 	}
 
 	testCases := []testCase{
 		{
 			request:     "userId",
-			mockStorage: []*game.StorageData{},
-			mockItemMaster: []*game.GetItemMasterRes{
+			mockStorage: []*StorageData{},
+			mockItemMaster: []*GetItemMasterRes{
 				{
 					ItemId:      "A",
 					Price:       100,
@@ -34,7 +33,7 @@ func TestCreateGetItemListService(t *testing.T) {
 		},
 		{
 			request: "userId",
-			mockStorage: []*game.StorageData{
+			mockStorage: []*StorageData{
 				{
 					UserId:  "userId",
 					ItemId:  "A",
@@ -42,7 +41,7 @@ func TestCreateGetItemListService(t *testing.T) {
 					IsKnown: true,
 				},
 			},
-			mockItemMaster: []*game.GetItemMasterRes{
+			mockItemMaster: []*GetItemMasterRes{
 				{
 					ItemId:      "A",
 					Price:       100,
@@ -92,10 +91,10 @@ func TestCreateGetItemListService(t *testing.T) {
 			}
 			return res
 		}()
-		mockGetAllStorage := func(ctx context.Context, id core.UserId) ([]*game.StorageData, error) {
+		mockGetAllStorage := func(ctx context.Context, id core.UserId) ([]*StorageData, error) {
 			return v.mockStorage, nil
 		}
-		mockFetchItemMaster := func(ctx context.Context, ids []core.ItemId) ([]*game.GetItemMasterRes, error) {
+		mockFetchItemMaster := func(ctx context.Context, ids []core.ItemId) ([]*GetItemMasterRes, error) {
 			return v.mockItemMaster, nil
 		}
 		f := CreateGetItemListService(mockGetAllStorage, mockFetchItemMaster)

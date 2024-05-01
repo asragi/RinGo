@@ -60,6 +60,7 @@ func CreateCheckUserExistence(queryFunc queryFunc) core.CheckDoesUserExist {
 		}
 		queryString := fmt.Sprintf(`SELECT user_id from ringo.users WHERE user_id = "%s";`, userId)
 		rows, err := queryFunc(ctx, queryString, nil)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -80,6 +81,7 @@ func CreateGetUserPassword(queryFunc queryFunc) auth.FetchHashedPassword {
 		}
 		queryString := fmt.Sprintf(`SELECT hashed_password FROM ringo.users WHERE user_id = "%s";`, id)
 		rows, err := queryFunc(ctx, queryString, nil)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -155,6 +157,7 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 			),
 			nil,
 		)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -217,6 +220,7 @@ func CreateGetAllStageMaster(q queryFunc) explore.FetchAllStageFunc {
 		}
 		query := "SELECT stage_id, display_name, description from ringo.stage_masters;"
 		rows, err := q(ctx, query, nil)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -522,10 +526,9 @@ func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
 
 func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 	type ItemDataRes struct {
-		UserId  core.UserId `db:"user_id"`
-		ItemId  core.ItemId `db:"item_id"`
-		Stock   core.Stock  `db:"stock"`
-		IsKnown int         `db:"is_known"`
+		UserId core.UserId `db:"user_id"`
+		ItemId core.ItemId `db:"item_id"`
+		Stock  core.Stock  `db:"stock"`
 	}
 	g := func(
 		ctx context.Context,
@@ -543,10 +546,11 @@ func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 			return result
 		}(userItemPair)
 		query := fmt.Sprintf(
-			`SELECT user_id, item_id, stock, is_known FROM ringo.item_storages WHERE (user_id, item_id) IN %s;`,
+			`SELECT user_id, item_id, stock FROM ringo.item_storages WHERE (user_id, item_id) IN %s;`,
 			toInKeywords,
 		)
 		rows, err := queryF(ctx, query, nil)
+		defer rows.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -563,24 +567,40 @@ func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 	}
 	return func(ctx context.Context, userItemPair []*game.UserItemPair) ([]*game.BatchGetStorageRes, error) {
 		if len(userItemPair) <= 0 {
-			return nil, nil
+			return []*game.BatchGetStorageRes{}, nil
 		}
 		res, err := g(ctx, userItemPair)
 		if err != nil {
 			return nil, err
 		}
 		return func() []*game.BatchGetStorageRes {
-			mapping := map[core.UserId][]*game.StorageData{}
-			for _, v := range res {
-				if _, ok := mapping[v.UserId]; !ok {
-					mapping[v.UserId] = []*game.StorageData{}
+			resToMap := func() map[core.UserId][]*game.StorageData {
+				var mapping = map[core.UserId][]*game.StorageData{}
+				for _, v := range res {
+					if _, ok := mapping[v.UserId]; !ok {
+						mapping[v.UserId] = []*game.StorageData{}
+					}
+					mapping[v.UserId] = append(
+						mapping[v.UserId], &game.StorageData{
+							UserId:  v.UserId,
+							ItemId:  v.ItemId,
+							Stock:   v.Stock,
+							IsKnown: true,
+						},
+					)
 				}
-				mapping[v.UserId] = append(
-					mapping[v.UserId], &game.StorageData{
+				return mapping
+			}()
+			for _, v := range userItemPair {
+				if _, ok := resToMap[v.UserId]; ok {
+					continue
+				}
+				resToMap[v.UserId] = append(
+					resToMap[v.UserId], &game.StorageData{
 						UserId:  v.UserId,
 						ItemId:  v.ItemId,
-						Stock:   v.Stock,
-						IsKnown: core.ToIsKnown(v.IsKnown),
+						Stock:   0,
+						IsKnown: false,
 					},
 				)
 			}
@@ -600,7 +620,7 @@ func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 			for i, v := range allUserIds {
 				result[i] = &game.BatchGetStorageRes{
 					UserId:   v,
-					ItemData: mapping[v],
+					ItemData: resToMap[v],
 				}
 			}
 			return result
@@ -624,6 +644,7 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 			userId,
 		)
 		rows, err := queryFunc(ctx, query, nil)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -736,6 +757,7 @@ func CreateGetQuery[S any, T any](
 			return nil, nil
 		}
 		rows, err := queryFunc(ctx, queryText, ids)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}
@@ -773,6 +795,7 @@ func CreateUserQuery[S any, T any](
 		}
 		queryText := queryTextFromUserId(userId)
 		rows, err := queryFunc(ctx, queryText, ids)
+		defer rows.Close()
 		if err != nil {
 			return handleError(err)
 		}

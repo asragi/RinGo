@@ -24,9 +24,10 @@ func CreateGetItemActionDetailHandler(
 	logger WriteLogger,
 ) router.Handler {
 	getParams := func(
-		_ RequestBody,
-		query QueryParameter,
-		path PathString,
+		header requestHeader,
+		_ requestBody,
+		_ queryParameter,
+		path pathString,
 	) (*gateway.GetItemActionDetailRequest, error) {
 		handleError := func(err error) (*gateway.GetItemActionDetailRequest, error) {
 			return nil, fmt.Errorf("get query: %w", err)
@@ -34,7 +35,7 @@ func CreateGetItemActionDetailHandler(
 		pathSplit := strings.Split(string(path), "/")
 		itemId := pathSplit[2]
 		exploreId := pathSplit[4]
-		token, err := query.GetFirstQuery("token")
+		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}

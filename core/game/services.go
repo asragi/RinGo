@@ -7,6 +7,7 @@ type Services struct {
 	PostAction           PostActionFunc
 	MakeUserExplore      MakeUserExploreFunc
 	CalcConsumingStamina CalcConsumingStaminaFunc
+	GetItemList          GetItemListFunc
 }
 
 func createPostActionService(
@@ -107,6 +108,7 @@ func CreateServices(
 	fetchConsumingItem FetchConsumingItemFunc,
 	fetchRequiredSkill FetchRequiredSkillsFunc,
 	fetchStorage FetchStorageFunc,
+	fetchAllStorage FetchAllStorageFunc,
 	fetchItemMaster FetchItemMasterFunc,
 	fetchReductionStamina FetchReductionStaminaSkillFunc,
 	fetchUserExplore GetUserExploreFunc,
@@ -160,10 +162,16 @@ func CreateServices(
 		fetchExploreMaster,
 		getTime,
 	)
+	getItemList := CreateGetItemListService(
+		fetchAllStorage,
+		fetchItemMaster,
+	)
+
 	return &Services{
 		ValidateAction:       validateAction,
 		PostAction:           postAction,
 		MakeUserExplore:      makeUserExplore,
 		CalcConsumingStamina: calcConsumingStamina,
+		GetItemList:          getItemList,
 	}
 }

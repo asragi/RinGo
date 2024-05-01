@@ -14,9 +14,10 @@ func CreateUpdateShelfContentHandler(
 	logger WriteLogger,
 ) router.Handler {
 	getParams := func(
-		body RequestBody,
-		query QueryParameter,
-		_ PathString,
+		header requestHeader,
+		body requestBody,
+		_ queryParameter,
+		_ pathString,
 	) (*gateway.UpdateShelfContentRequest, error) {
 		type updateShelfContentBody struct {
 			Index    int32  `json:"index"`
@@ -30,7 +31,7 @@ func CreateUpdateShelfContentHandler(
 		if err != nil {
 			return handleError(err)
 		}
-		token, err := query.GetFirstQuery("token")
+		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}

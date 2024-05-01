@@ -3,10 +3,12 @@ package shelf
 import "github.com/asragi/RinGo/core"
 
 type (
+	Id       string
 	Size     int
 	Index    int
 	SetPrice core.Price
 	Shelf    struct {
+		Id          Id
 		ItemId      core.ItemId
 		UserId      core.UserId
 		Index       Index
