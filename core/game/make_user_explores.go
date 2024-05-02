@@ -176,13 +176,22 @@ func CreateMakeUserExplore(generateArgs GenerateMakeUserExploreArgs) MakeUserExp
 		}
 		currentStamina := args.staminaRecoverTime.CalcStamina(args.currentTimer(), args.maxStamina)
 		currentFund := args.fundRes
-		exploreMap := func(explores []*ExploreUserData) map[ExploreId]*ExploreUserData {
+		exploreMap := func(explores []*ExploreUserData, exploreIds []ExploreId) map[ExploreId]*ExploreUserData {
 			result := make(map[ExploreId]*ExploreUserData)
 			for _, v := range explores {
 				result[v.ExploreId] = v
 			}
+			for _, v := range exploreIds {
+				if _, ok := result[v]; ok {
+					continue
+				}
+				result[v] = &ExploreUserData{
+					ExploreId: v,
+					IsKnown:   false,
+				}
+			}
 			return result
-		}(args.actionsRes.Explores)
+		}(args.actionsRes.Explores, exploreIds)
 
 		skillDataToLvMap := func(arr []*UserSkillRes) map[core.SkillId]core.SkillLv {
 			result := make(map[core.SkillId]core.SkillLv)
