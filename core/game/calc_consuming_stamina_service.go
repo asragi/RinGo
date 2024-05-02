@@ -71,13 +71,26 @@ func CreateCalcConsumingStaminaService(
 			return handleError(err)
 		}
 
-		allSkillsMap := func(skills []*UserSkillRes) map[core.SkillId]*UserSkillRes {
+		allSkillsMap := func(
+			userId core.UserId,
+			skills []*UserSkillRes,
+			skillId []core.SkillId,
+		) map[core.SkillId]*UserSkillRes {
 			result := map[core.SkillId]*UserSkillRes{}
 			for _, v := range skills {
 				result[v.SkillId] = v
 			}
+			for _, v := range skillId {
+				if _, ok := result[v]; !ok {
+					result[v] = &UserSkillRes{
+						UserId:   userId,
+						SkillId:  v,
+						SkillExp: 0,
+					}
+				}
+			}
 			return result
-		}(allSkills.Skills)
+		}(userId, allSkills.Skills, allRequiredSkill)
 
 		reductionSkillResMap := func(
 			allSkillsMap map[core.SkillId]*UserSkillRes,

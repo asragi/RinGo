@@ -83,6 +83,31 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 				},
 			},
 		},
+		{
+			request:           exploreIds,
+			mockUserSkillRes:  []*UserSkillRes{},
+			mockExploreMaster: master,
+			mockReductionSkill: []*StaminaReductionSkillPair{
+				{
+					ExploreId: exploreIds[2],
+					SkillId:   skillIds[2],
+				},
+			},
+			expect: []*ExploreStaminaPair{
+				{
+					ExploreId:      exploreIds[0],
+					ReducedStamina: 100,
+				},
+				{
+					ExploreId:      exploreIds[1],
+					ReducedStamina: 100,
+				},
+				{
+					ExploreId:      exploreIds[2],
+					ReducedStamina: 100,
+				},
+			},
+		},
 	}
 
 	for i, v := range testCases {
