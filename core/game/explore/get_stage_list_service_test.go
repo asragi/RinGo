@@ -169,6 +169,29 @@ func TestGetAllStage(t *testing.T) {
 				},
 			},
 		},
+		{
+			request: request{
+				stageIds:           stageIds,
+				stageMaster:        stageMasters,
+				userStageData:      []*UserStage{},
+				stageExplores:      stageExplores,
+				exploreStaminaPair: exploreStaminaPair,
+				explores:           exploreMasters,
+				mockUserExplore:    mockUserExplore,
+			},
+			expect: []StageInformation{
+				{
+					StageId:      stageIds[0],
+					IsKnown:      true,
+					UserExplores: mockUserExplore,
+				},
+				{
+					StageId:      stageIds[1],
+					IsKnown:      false,
+					UserExplores: []*game.UserExplore{},
+				},
+			},
+		},
 	}
 
 	for i, v := range testCases {

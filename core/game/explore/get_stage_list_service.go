@@ -135,13 +135,21 @@ func getAllStage(
 	stages := stageMaster
 	userExplore := args.userExplore
 
-	userStageMap := func(userStages []*UserStage) map[StageId]*UserStage {
+	userStageMap := func(userStages []*UserStage, stageIds []StageId) map[StageId]*UserStage {
 		result := make(map[StageId]*UserStage)
 		for _, v := range userStages {
 			result[v.StageId] = v
 		}
+		for _, v := range stageIds {
+			if _, ok := result[v]; !ok {
+				result[v] = &UserStage{
+					StageId: v,
+					IsKnown: false,
+				}
+			}
+		}
 		return result
-	}(userStageData)
+	}(userStageData, stageIds)
 
 	allActions := func(
 		stageIds []StageId,
