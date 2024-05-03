@@ -405,7 +405,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	)
 	register := handler.CreateRegisterHandler(
 		functions.register,
-		functions.shelfServices.UpdateShelfSize,
+		functions.shelfServices.InitializeShelf,
 		endpoint.CreateRegisterEndpoint,
 		functions.createContext,
 		writeLogger,

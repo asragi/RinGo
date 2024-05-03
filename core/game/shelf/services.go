@@ -7,6 +7,7 @@ import (
 type Services struct {
 	UpdateShelfContent UpdateShelfContentFunc
 	UpdateShelfSize    UpdateShelfSizeFunc
+	InitializeShelf    InitializeShelfFunc
 }
 
 func NewService(
@@ -40,8 +41,11 @@ func NewService(
 		generateId,
 	)
 
+	initializeShelf := CreateInitializeShelf(insertEmptyShelf, generateId)
+
 	return &Services{
 		UpdateShelfContent: updateShelfContentService,
 		UpdateShelfSize:    updateShelfSizeService,
+		InitializeShelf:    initializeShelf,
 	}
 }

@@ -10,7 +10,7 @@ import (
 
 func CreateRegisterHandler(
 	register auth.RegisterUserFunc,
-	updateShelf shelf.UpdateShelfSizeFunc,
+	initializeShelf shelf.InitializeShelfFunc,
 	createEndpoint endpoint.CreateRegisterEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
@@ -23,6 +23,6 @@ func CreateRegisterHandler(
 	) (*endpoint.RegisterRequest, error) {
 		return &endpoint.RegisterRequest{}, nil
 	}
-	endpointFunc := createEndpoint(register, updateShelf)
+	endpointFunc := createEndpoint(register, initializeShelf)
 	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

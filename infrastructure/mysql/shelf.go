@@ -2,12 +2,51 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
 )
+
+type nullableShelfRow struct {
+	Id         shelf.Id          `db:"shelf_id"`
+	UserId     core.UserId       `db:"user_id"`
+	ItemId     sql.NullString    `db:"item_id"`
+	Index      shelf.Index       `db:"shelf_index"`
+	SetPrice   shelf.SetPrice    `db:"set_price"`
+	TotalSales core.SalesFigures `db:"total_sales"`
+}
+
+func (r *nullableShelfRow) toShelfRow() *shelf.ShelfRepoRow {
+	itemId := func() core.ItemId {
+		if !r.ItemId.Valid {
+			return core.EmptyItemId
+		}
+		return core.ItemId(r.ItemId.String)
+	}()
+
+	return &shelf.ShelfRepoRow{
+		Id:         r.Id,
+		UserId:     r.UserId,
+		ItemId:     itemId,
+		Index:      r.Index,
+		SetPrice:   r.SetPrice,
+		TotalSales: r.TotalSales,
+	}
+}
+
+func toNullableShelfRow(shelfRow *shelf.ShelfRepoRow) *nullableShelfRow {
+	return &nullableShelfRow{
+		Id:         shelfRow.Id,
+		UserId:     shelfRow.UserId,
+		ItemId:     sql.NullString{String: string(shelfRow.ItemId), Valid: shelfRow.ItemId != core.EmptyItemId},
+		Index:      shelfRow.Index,
+		SetPrice:   shelfRow.SetPrice,
+		TotalSales: shelfRow.TotalSales,
+	}
+}
 
 func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 	return func(ctx context.Context, userIds []core.UserId) ([]*shelf.ShelfRepoRow, error) {
@@ -26,14 +65,21 @@ func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 			return nil, fmt.Errorf("fetch shelf: %w", err)
 		}
 		defer rows.Close()
-		var result []*shelf.ShelfRepoRow
+		var response []*nullableShelfRow
 		for rows.Next() {
-			var row shelf.ShelfRepoRow
+			var row nullableShelfRow
 			if err := rows.StructScan(&row); err != nil {
 				return nil, fmt.Errorf("fetch shelf: %w", err)
 			}
-			result = append(result, &row)
+			response = append(response, &row)
 		}
+		result := func() []*shelf.ShelfRepoRow {
+			var result []*shelf.ShelfRepoRow
+			for _, row := range response {
+				result = append(result, row.toShelfRow())
+			}
+			return result
+		}()
 		return result, nil
 	}
 }
@@ -45,7 +91,7 @@ func createUpdateShelf(dbExec database.DBExecFunc) func(
 	shelf.SetPrice,
 	core.SalesFigures,
 ) error {
-	f := CreateExec[shelf.ShelfRepoRow](
+	f := CreateExec[nullableShelfRow](
 		dbExec,
 		"update shelf content: %w",
 		"UPDATE ringo.shelves set set_price = :set_price, total_sales = :total_sales, item_id = :item_id WHERE shelf_id = :shelf_id",
@@ -57,15 +103,16 @@ func createUpdateShelf(dbExec database.DBExecFunc) func(
 		setPrice shelf.SetPrice,
 		totalSales core.SalesFigures,
 	) error {
-		return f(
-			ctx, []*shelf.ShelfRepoRow{
-				{
-					Id:         shelfId,
-					ItemId:     itemId,
-					SetPrice:   setPrice,
-					TotalSales: 0,
-				},
+		shelfRow := toNullableShelfRow(
+			&shelf.ShelfRepoRow{
+				Id:         shelfId,
+				ItemId:     itemId,
+				SetPrice:   setPrice,
+				TotalSales: totalSales,
 			},
+		)
+		return f(
+			ctx, []*nullableShelfRow{shelfRow},
 		)
 	}
 }
@@ -97,10 +144,17 @@ func CreateUpdateShelfContentRepo(dbExec database.DBExecFunc) shelf.UpdateShelfC
 
 func CreateInsertEmptyShelf(dbExec database.DBExecFunc) shelf.InsertEmptyShelfFunc {
 	return func(ctx context.Context, userId core.UserId, shelves []*shelf.ShelfRepoRow) error {
+		shelvesReq := func() []*nullableShelfRow {
+			var result []*nullableShelfRow
+			for _, s := range shelves {
+				result = append(result, toNullableShelfRow(s))
+			}
+			return result
+		}()
 		_, err := dbExec(
 			ctx,
 			"INSERT INTO ringo.shelves (shelf_id, user_id, item_id, set_price, total_sales, shelf_index) VALUES (:shelf_id, :user_id, :item_id, :set_price, :total_sales, :shelf_index)",
-			shelves,
+			shelvesReq,
 		)
 		if err != nil {
 			return fmt.Errorf("insert empty shelf: %w", err)

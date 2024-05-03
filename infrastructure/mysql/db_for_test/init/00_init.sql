@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS ringo.shelves(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `shelf_id` varchar(40) NOT NULL,
     `user_id` varchar(40) NOT NULL,
-    `item_id` varchar(40) NOT NULL,
+    `item_id` varchar(40),
     `shelf_index` tinyint(4) NOT NULL,
     `set_price` int(11) NOT NULL,
     `total_sales` int(11) NOT NULL,

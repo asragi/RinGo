@@ -29,6 +29,6 @@ func (s Size) Equals(other Size) bool {
 
 func (s Size) ValidSize() bool {
 	const MaxSize Size = 8
-	const MinSize Size = 1
+	const MinSize Size = 0
 	return s >= MinSize && s <= MaxSize
 }
