@@ -9,12 +9,12 @@ import (
 type (
 	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ExploreId, error)
 	ShelfRepoRow              struct {
-		Id         Id
-		UserId     core.UserId
-		ItemId     core.ItemId
-		Index      Index
-		SetPrice   SetPrice
-		TotalSales core.SalesFigures
+		Id         Id                `db:"shelf_id"`
+		UserId     core.UserId       `db:"user_id"`
+		ItemId     core.ItemId       `db:"item_id"`
+		Index      Index             `db:"shelf_index"`
+		SetPrice   SetPrice          `db:"set_price"`
+		TotalSales core.SalesFigures `db:"total_sales"`
 	}
 	FetchShelf    func(context.Context, []core.UserId) ([]*ShelfRepoRow, error)
 	TotalSalesReq struct {

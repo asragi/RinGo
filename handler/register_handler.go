@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/asragi/RinGo/auth"
+	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
@@ -9,6 +10,7 @@ import (
 
 func CreateRegisterHandler(
 	register auth.RegisterUserFunc,
+	updateShelf shelf.UpdateShelfSizeFunc,
 	createEndpoint endpoint.CreateRegisterEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
@@ -21,6 +23,6 @@ func CreateRegisterHandler(
 	) (*endpoint.RegisterRequest, error) {
 		return &endpoint.RegisterRequest{}, nil
 	}
-	endpointFunc := createEndpoint(register)
+	endpointFunc := createEndpoint(register, updateShelf)
 	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
 }

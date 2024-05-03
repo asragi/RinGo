@@ -185,6 +185,7 @@ CREATE TABLE IF NOT EXISTS ringo.shelves(
     `item_id` varchar(40) NOT NULL,
     `shelf_index` tinyint(4) NOT NULL,
     `set_price` int(11) NOT NULL,
+    `total_sales` int(11) NOT NULL,
     PRIMARY KEY (`id`),
     INDEX `user_shelf_index` (`user_id`, `shelf_index`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),

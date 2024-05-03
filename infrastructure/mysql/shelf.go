@@ -17,7 +17,7 @@ func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 		rows, err := query(
 			ctx,
 			fmt.Sprintf(
-				`SELECT user_id, item_id, shelf_index, set_price, total_sales FROM ringo.shelves WHERE user_id IN (%s)`,
+				`SELECT shelf_id, user_id, item_id, shelf_index, set_price, total_sales FROM ringo.shelves WHERE user_id IN (%s)`,
 				spreadUserIdStrings,
 			),
 			nil,
