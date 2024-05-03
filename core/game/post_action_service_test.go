@@ -227,3 +227,111 @@ func TestPostAction(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateGeneratePostActionArgs(t *testing.T) {
+	type testCase struct {
+		mockResource       *GetResourceRes
+		mockExploreMaster  []*GetExploreMasterRes
+		mockSkillMaster    []*SkillMaster
+		mockSkillGrowth    []*SkillGrowthData
+		mockUserSkill      BatchGetUserSkillRes
+		mockEarned         []*EarningItem
+		mockConsumed       []*ConsumingItem
+		mockRequiredSkill  []*RequiredSkill
+		mockAllStorage     []*StorageData
+		mockStorage        []*BatchGetStorageRes
+		mockAllItemMaster  []*GetItemMasterRes
+		mockReductionSkill []*StaminaReductionSkillPair
+	}
+
+	testCases := []testCase{
+		{
+			mockResource: &GetResourceRes{
+				UserId:             "user_id",
+				MaxStamina:         3000,
+				StaminaRecoverTime: core.StaminaRecoverTime(test.MockTime()),
+				Fund:               0,
+			},
+			mockExploreMaster: []*GetExploreMasterRes{
+				{
+					ExploreId:            "explore",
+					DisplayName:          "explore_display",
+					Description:          "desc",
+					ConsumingStamina:     100,
+					RequiredPayment:      200,
+					StaminaReducibleRate: 0.5,
+				},
+			},
+			mockSkillMaster:    []*SkillMaster{},
+			mockSkillGrowth:    []*SkillGrowthData{},
+			mockUserSkill:      BatchGetUserSkillRes{},
+			mockEarned:         []*EarningItem{},
+			mockConsumed:       []*ConsumingItem{},
+			mockRequiredSkill:  []*RequiredSkill{},
+			mockAllStorage:     []*StorageData{},
+			mockStorage:        []*BatchGetStorageRes{},
+			mockAllItemMaster:  []*GetItemMasterRes{},
+			mockReductionSkill: []*StaminaReductionSkillPair{},
+		},
+	}
+
+	for _, v := range testCases {
+		userId := v.mockResource.UserId
+		exploreId := v.mockExploreMaster[0].ExploreId
+		mockResource := func(context.Context, core.UserId) (*GetResourceRes, error) {
+			return v.mockResource, nil
+		}
+		mockExploreMaster := func(context.Context, []ExploreId) ([]*GetExploreMasterRes, error) {
+			return v.mockExploreMaster, nil
+		}
+		mockSkillMaster := func(context.Context, []core.SkillId) ([]*SkillMaster, error) {
+			return v.mockSkillMaster, nil
+		}
+		mockSkillGrowth := func(context.Context, ExploreId) ([]*SkillGrowthData, error) {
+			return v.mockSkillGrowth, nil
+		}
+		mockUserSkill := func(context.Context, core.UserId, []core.SkillId) (BatchGetUserSkillRes, error) {
+			return v.mockUserSkill, nil
+		}
+		mockEarned := func(context.Context, ExploreId) ([]*EarningItem, error) {
+			return v.mockEarned, nil
+		}
+		mockConsumed := func(context.Context, []ExploreId) ([]*ConsumingItem, error) {
+			return v.mockConsumed, nil
+		}
+		mockRequiredSkill := func(context.Context, []ExploreId) ([]*RequiredSkill, error) {
+			return v.mockRequiredSkill, nil
+		}
+		mockStorage := func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error) {
+			return v.mockStorage, nil
+		}
+		mockAllItemMaster := func(context.Context, []core.ItemId) ([]*GetItemMasterRes, error) {
+			return v.mockAllItemMaster, nil
+		}
+		mockReductionSkill := func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error) {
+			return v.mockReductionSkill, nil
+		}
+
+		createArgs := createGeneratePostActionArgs(
+			&getPostActionRepositories{
+				FetchResource:              mockResource,
+				FetchExploreMaster:         mockExploreMaster,
+				FetchSkillMaster:           mockSkillMaster,
+				FetchSkillGrowthData:       mockSkillGrowth,
+				FetchUserSkill:             mockUserSkill,
+				FetchEarningItem:           mockEarned,
+				FetchConsumingItem:         mockConsumed,
+				FetchRequiredSkill:         mockRequiredSkill,
+				FetchStorage:               mockStorage,
+				FetchItemMaster:            mockAllItemMaster,
+				FetchStaminaReductionSkill: mockReductionSkill,
+			},
+		)
+
+		ctx := test.MockCreateContext()
+		_, err := createArgs(ctx, userId, 1, exploreId)
+		if err != nil {
+			t.Fatalf("err: %v", err)
+		}
+	}
+}

@@ -139,6 +139,63 @@ func ToUserItemPair(userId core.UserId, itemIds []core.ItemId) []*UserItemPair {
 
 type FetchStorageFunc func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error)
 
+func FillStorageData(res []*BatchGetStorageRes, userIdPair []*UserItemPair) []*BatchGetStorageRes {
+	userIds := func() []core.UserId {
+		check := make(map[core.UserId]bool)
+		var result []core.UserId
+		for _, v := range userIdPair {
+			if _, ok := check[v.UserId]; ok {
+				continue
+			}
+			check[v.UserId] = true
+			result = append(result, v.UserId)
+		}
+		return result
+	}()
+	result := make([]*BatchGetStorageRes, len(userIds))
+	for i, userId := range userIds {
+		itemIds := func() []core.ItemId {
+			check := make(map[core.ItemId]bool)
+			var result []core.ItemId
+			for _, v := range userIdPair {
+				if v.UserId != userId {
+					continue
+				}
+				if _, ok := check[v.ItemId]; ok {
+					continue
+				}
+				check[v.ItemId] = true
+				result = append(result, v.ItemId)
+			}
+			return result
+		}()
+		storageData := make([]*StorageData, len(itemIds))
+		for j, itemId := range itemIds {
+			storage := FindStorageData(res, userId)
+			if storage == nil {
+				storage = &BatchGetStorageRes{
+					UserId:   userId,
+					ItemData: make([]*StorageData, 0),
+				}
+			}
+			storageData[j] = FindItemStorageData(storage.ItemData, itemId)
+			if storageData[j] == nil {
+				storageData[j] = &StorageData{
+					UserId:  userId,
+					ItemId:  itemId,
+					Stock:   0,
+					IsKnown: false,
+				}
+			}
+		}
+		result[i] = &BatchGetStorageRes{
+			UserId:   userId,
+			ItemData: storageData,
+		}
+	}
+	return result
+}
+
 type FetchAllStorageFunc func(context.Context, core.UserId) ([]*StorageData, error)
 
 type UpdateItemStorageFunc func(context.Context, []*StorageData) error

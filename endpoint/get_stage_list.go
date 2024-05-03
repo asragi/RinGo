@@ -36,6 +36,9 @@ func CreateGetStageList(
 		}
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
+		if err != nil {
+			return handleError(err)
+		}
 		userId := tokenInfo.UserId
 		res, err := getStageList(ctx, userId, timer)
 		if err != nil {

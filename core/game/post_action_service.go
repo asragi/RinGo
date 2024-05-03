@@ -90,10 +90,14 @@ func createGeneratePostActionArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		storage := FindStorageData(storageRes, userId)
-		if storage == nil {
-			return handleError(fmt.Errorf("user storage not found"))
-		}
+		storageData := FillStorageData(storageRes, ToUserItemPair(userId, itemIds))
+		userStorage := FindStorageData(storageData, userId)
+		itemStorage := func() []*StorageData {
+			if userStorage == nil {
+				return []*StorageData{}
+			}
+			return userStorage.ItemData
+		}()
 
 		itemMaster, err := repo.FetchItemMaster(ctx, itemIds)
 		if err != nil {
@@ -139,7 +143,7 @@ func createGeneratePostActionArgs(
 			earningItemData:        earningItemData,
 			consumingItemData:      consumingItem,
 			requiredSkills:         requiredSkills,
-			allStorageItems:        storage.ItemData,
+			allStorageItems:        itemStorage,
 			allItemMasterRes:       itemMaster,
 			staminaReductionSkills: reductionUserSkills.Skills,
 		}, nil
