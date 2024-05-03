@@ -20,6 +20,14 @@ func (g GainingPoint) ApplyTo(exp core.SkillExp) core.SkillExp {
 
 type ExploreId string
 
+func CreateActionId(id string) (ExploreId, error) {
+	return ExploreId(id), nil
+}
+
+func (id ExploreId) String() string {
+	return string(id)
+}
+
 type StaminaReducibleRate float64
 
 func ApplyReduction(s core.StaminaCost, reductionRate float64, reducibleRate StaminaReducibleRate) core.StaminaCost {

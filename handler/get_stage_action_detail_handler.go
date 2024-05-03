@@ -9,7 +9,6 @@ import (
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
-	"strings"
 )
 
 func CreateGetStageActionDetailHandler(
@@ -36,16 +35,31 @@ func CreateGetStageActionDetailHandler(
 		if err != nil {
 			return handleError(err)
 		}
-		splitPath := strings.Split(string(path), "/")
-		if len(splitPath) != 5 {
-			return nil, PageNotFoundError{Message: fmt.Sprintf("path is invalid: %s", string(path))}
+		pathData, err := router.NewPathData(string(path))
+		if err != nil {
+			return handleError(err)
 		}
-		stageId := splitPath[2]
-		exploreId := splitPath[4]
+		samplePath, err := router.NewSamplePath(
+			fmt.Sprintf(
+				"/me/places/%s/actions/%s",
+				router.PlaceSymbol,
+				router.ActionSymbol,
+			),
+		)
+		actionParam := router.CreateUseActionIdParam(samplePath)
+		placeParam := router.CreateUsePlaceIdParam(samplePath)
+		actionId, err := actionParam(pathData)
+		if err != nil {
+			return handleError(err)
+		}
+		placeId, err := placeParam(pathData)
+		if err != nil {
+			return handleError(err)
+		}
 		return &gateway.GetStageActionDetailRequest{
-			StageId:   stageId,
+			StageId:   placeId.String(),
 			Token:     token,
-			ExploreId: exploreId,
+			ExploreId: actionId.String(),
 		}, nil
 	}
 	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)

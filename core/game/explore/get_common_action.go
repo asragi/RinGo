@@ -66,14 +66,22 @@ func CreateGetCommonActionDetail(
 			}
 			return result
 		}(consumingItems)
-		consumingItemStorage, err := args.FetchItemStorage(ctx, game.ToUserItemPair(userId, consumingItemIds))
+		userItemPair := game.ToUserItemPair(userId, consumingItemIds)
+		consumingItemStorage, err := args.FetchItemStorage(ctx, userItemPair)
 		if err != nil {
 			return handleError(err)
 		}
-		storage := game.FindStorageData(consumingItemStorage, userId)
-		if storage == nil {
-			return handleError(fmt.Errorf("no rows returned from fetchStorage"))
-		}
+		filledStorageData := game.FillStorageData(consumingItemStorage, userItemPair)
+		storage := func() *game.BatchGetStorageRes {
+			userStorage := game.FindStorageData(filledStorageData, userId)
+			if userStorage == nil {
+				return &game.BatchGetStorageRes{
+					UserId:   userId,
+					ItemData: []*game.StorageData{},
+				}
+			}
+			return userStorage
+		}()
 		consumingItemMap := func(itemStorage []*game.StorageData) map[core.ItemId]*game.StorageData {
 			result := make(map[core.ItemId]*game.StorageData)
 			for _, v := range itemStorage {

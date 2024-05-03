@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/explore"
 	"net/http"
 )
 
@@ -19,6 +21,22 @@ func CreateUseUserIdParam(samplePath SamplePath) UseParam[core.UserId] {
 	return func(path *Path) (core.UserId, error) {
 		targetParam := paramExpression("{userId}")
 		return createUsePathParam[core.UserId](core.CreateUserId, targetParam)(samplePath, path)
+	}
+}
+
+var ActionSymbol = paramExpression("{actionId}")
+
+func CreateUseActionIdParam(samplePath SamplePath) UseParam[game.ExploreId] {
+	return func(path *Path) (game.ExploreId, error) {
+		return createUsePathParam[game.ExploreId](game.CreateActionId, ActionSymbol)(samplePath, path)
+	}
+}
+
+var PlaceSymbol = paramExpression("{placeId}")
+
+func CreateUsePlaceIdParam(samplePath SamplePath) UseParam[explore.StageId] {
+	return func(path *Path) (explore.StageId, error) {
+		return createUsePathParam[explore.StageId](explore.CreateStageId, PlaceSymbol)(samplePath, path)
 	}
 }
 
