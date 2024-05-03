@@ -49,6 +49,7 @@ func CreateGetCommonActionDetail(
 		handleError := func(err error) (getCommonActionRes, error) {
 			return getCommonActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
 		}
+		fmt.Printf("userId: %v, exploreId: %v\n", userId, exploreId)
 		exploreMasterRes, err := args.FetchExploreMaster(ctx, []game.ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)

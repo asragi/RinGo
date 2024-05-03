@@ -9,7 +9,6 @@ import (
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
-	"strings"
 )
 
 func CreateGetItemActionDetailHandler(
@@ -32,16 +31,34 @@ func CreateGetItemActionDetailHandler(
 		handleError := func(err error) (*gateway.GetItemActionDetailRequest, error) {
 			return nil, fmt.Errorf("get query: %w", err)
 		}
-		pathSplit := strings.Split(string(path), "/")
-		itemId := pathSplit[2]
-		exploreId := pathSplit[4]
+		samplePath, err := router.NewSamplePath(
+			fmt.Sprintf(
+				"/me/items/%s/actions/%s",
+				router.ItemSymbol,
+				router.ActionSymbol,
+			),
+		)
+		pathData, err := router.NewPathData(string(path))
+		if err != nil {
+			return handleError(err)
+		}
+		useItemPath := router.CreateUseItemIdParam(samplePath)
+		itemId, err := useItemPath(pathData)
+		if err != nil {
+			return handleError(err)
+		}
+		useActionPath := router.CreateUseActionIdParam(samplePath)
+		exploreId, err := useActionPath(pathData)
+		if err != nil {
+			return handleError(err)
+		}
 		token, err := header.getTokenFromHeader()
 		if err != nil {
 			return handleError(err)
 		}
 		return &gateway.GetItemActionDetailRequest{
-			ItemId:      itemId,
-			ExploreId:   exploreId,
+			ItemId:      itemId.String(),
+			ExploreId:   exploreId.String(),
 			AccessToken: token,
 		}, nil
 	}
