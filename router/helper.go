@@ -17,10 +17,14 @@ type pathChecker struct {
 
 type UseParam[T any] func(*Path) (T, error)
 
-func CreateUseUserIdParam(samplePath SamplePath) UseParam[core.UserId] {
-	return func(path *Path) (core.UserId, error) {
-		targetParam := paramExpression("{userId}")
-		return createUsePathParam[core.UserId](core.CreateUserId, targetParam)(samplePath, path)
+var ItemSymbol = paramExpression("{itemId}")
+
+func CreateUseItemIdParam(samplePath SamplePath) UseParam[core.ItemId] {
+	return func(path *Path) (core.ItemId, error) {
+		createItemId := func(s string) (core.ItemId, error) {
+			return core.ItemId(s), nil
+		}
+		return createUsePathParam[core.ItemId](createItemId, ItemSymbol)(samplePath, path)
 	}
 }
 

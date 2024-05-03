@@ -9,7 +9,6 @@ import (
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
-	"strings"
 )
 
 func CreateGetItemDetailHandler(
@@ -39,14 +38,18 @@ func CreateGetItemDetailHandler(
 		if err != nil {
 			return handleError(err)
 		}
-		splitPath := strings.Split(string(path), "/")
-		if len(splitPath) != 3 {
-			return nil, PageNotFoundError{Message: fmt.Sprintf("path is invalid: %s", string(path))}
+		useItemPath := router.CreateUseItemIdParam(router.SamplePath("/me/items/" + router.ItemSymbol))
+		pathData, err := router.NewPathData(string(path))
+		if err != nil {
+			return handleError(err)
 		}
-		itemId := splitPath[2]
+		itemId, err := useItemPath(pathData)
+		if err != nil {
+			return handleError(err)
+		}
 		return &gateway.GetItemDetailRequest{
 			Token:  token,
-			ItemId: itemId,
+			ItemId: itemId.String(),
 		}, nil
 	}
 	createArgsFunc := createGetItemDetailArgs(

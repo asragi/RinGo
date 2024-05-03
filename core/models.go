@@ -100,7 +100,7 @@ type ItemId string
 
 var EmptyItemId = ItemId("empty")
 
-func (id ItemId) ToString() string {
+func (id ItemId) String() string {
 	return string(id)
 }
 

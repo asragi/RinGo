@@ -30,8 +30,8 @@ func TestCreateApplyReservation(t *testing.T) {
 				{UserId: "2", Index: 1, ScheduledTime: test.MockTime(), PurchaseNum: 4},
 			},
 			mockShelves: []*shelf.ShelfRepoRow{
-				{UserId: "1", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
-				{UserId: "2", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
+				{Id: "s1", UserId: "1", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
+				{Id: "s2", UserId: "2", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
 			},
 			mockStorage: []*game.BatchGetStorageRes{
 				{
@@ -60,8 +60,8 @@ func TestCreateApplyReservation(t *testing.T) {
 				{UserId: "2", ItemId: "1", Stock: 96, IsKnown: true},
 			},
 			mockTotalSales: []*shelf.TotalSalesReq{
-				{UserId: "1", Index: 1, TotalSales: 105},
-				{UserId: "2", Index: 1, TotalSales: 104},
+				{Id: "s1", TotalSales: 105},
+				{Id: "s2", TotalSales: 104},
 			},
 		},
 		{

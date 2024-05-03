@@ -33,9 +33,9 @@ func TestCalcReservationApplication(t *testing.T) {
 				{UserId: "2", ItemId: "1", Stock: 202, IsKnown: true},
 			},
 			shelves: []*shelf.ShelfRepoRow{
-				{UserId: "1", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
-				{UserId: "1", ItemId: "2", Index: 2, SetPrice: 200, TotalSales: 200},
-				{UserId: "2", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
+				{Id: "s1", UserId: "1", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
+				{Id: "s2", UserId: "1", ItemId: "2", Index: 2, SetPrice: 200, TotalSales: 200},
+				{Id: "s3", UserId: "2", ItemId: "1", Index: 1, SetPrice: 100, TotalSales: 100},
 			},
 			reservationsRow: []*Reservation{
 				{TargetUser: "1", Index: 1, ScheduledTime: test.MockTime(), PurchaseNum: 5},
@@ -52,9 +52,9 @@ func TestCalcReservationApplication(t *testing.T) {
 				{UserId: "2", ItemId: "1", Stock: 199, IsKnown: true},
 			},
 			expectedTotalSales: []*shelf.TotalSalesReq{
-				{UserId: "1", Index: 1, TotalSales: 105},
-				{UserId: "1", Index: 2, TotalSales: 204},
-				{UserId: "2", Index: 1, TotalSales: 103},
+				{Id: "s1", TotalSales: 105},
+				{Id: "s2", TotalSales: 204},
+				{Id: "s3", TotalSales: 103},
 			},
 		},
 	}
