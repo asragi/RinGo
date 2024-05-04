@@ -84,6 +84,12 @@ func CreateInsertReservation(
 		shelfArgs := informationToShelfArg(indices, shelves, itemAttractionMap)
 		updatedShelf := shelves[index]
 		updatedItemAttractionData := itemAttractionMap[updatedShelf.ItemId]
+		probability := func() PurchaseProbability {
+			if updatedShelf.ItemId == core.EmptyItemId {
+				return 0
+			}
+			return updatedItemAttractionData.PurchaseProbability
+		}()
 		shopPopularity, err := fetchUserPopularity(ctx, userId)
 		if err != nil {
 			return handleError(err)
@@ -92,13 +98,16 @@ func CreateInsertReservation(
 			index,
 			updatedShelf.Price,
 			updatedShelf.SetPrice,
-			updatedItemAttractionData.PurchaseProbability,
+			probability,
 			userId,
 			shopPopularity.Popularity,
 			shelfArgs,
 			rand,
 			getCurrentTime,
 		)
+		if len(reservations) == 0 {
+			return &InsertReservationResult{[]*InsertedReservation{}}, nil
+		}
 		reservationRows := ToReservationRow(reservations)
 		err = insertReservation(ctx, reservationRows)
 		if err != nil {

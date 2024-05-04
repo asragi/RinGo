@@ -58,8 +58,15 @@ func CreateGetShelves(
 					}
 					return storageMap[userId][row.ItemId].Stock
 				}()
+				price := func() core.Price {
+					if row.ItemId == core.EmptyItemId {
+						return 0
+					}
+					return itemMasterMap[row.ItemId].Price
+				}()
 				result = append(
 					result, &Shelf{
+						Id:          row.Id,
 						UserId:      userId,
 						ItemId:      row.ItemId,
 						DisplayName: displayName,
@@ -67,6 +74,7 @@ func CreateGetShelves(
 						SetPrice:    row.SetPrice,
 						Stock:       stock,
 						TotalSales:  row.TotalSales,
+						Price:       price,
 					},
 				)
 			}

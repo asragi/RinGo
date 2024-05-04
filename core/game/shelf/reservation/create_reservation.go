@@ -19,10 +19,16 @@ func informationToShelfArg(
 	shelves := make([]*shelfArg, len(information))
 	for i, index := range indices {
 		info := information[index]
+		attraction := func() ItemAttraction {
+			if info.ItemId == core.EmptyItemId {
+				return ItemAttraction(0)
+			}
+			return itemAttractionMap[info.ItemId].Attraction
+		}()
 		shelves[i] = &shelfArg{
 			SetPrice:       info.SetPrice,
 			Price:          info.Price,
-			BaseAttraction: itemAttractionMap[info.ItemId].Attraction,
+			BaseAttraction: attraction,
 		}
 	}
 	return shelves

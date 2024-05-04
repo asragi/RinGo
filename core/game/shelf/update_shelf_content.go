@@ -48,14 +48,16 @@ func CreateUpdateShelfContent(
 		}
 		var shelves map[Index]*UpdateShelfContentShelfInformation
 		var indices []Index
-		storageRes, err := fetchStorage(ctx, []*game.UserItemPair{{UserId: userId, ItemId: itemId}})
+		storageReq := game.ToUserItemPair(userId, []core.ItemId{itemId})
+		storageRes, err := fetchStorage(ctx, storageReq)
 		if err != nil {
 			return handleError(err)
 		}
 		if len(storageRes) == 0 {
 			return handleError(fmt.Errorf("storage not found"))
 		}
-		userStorage := game.FindStorageData(storageRes, userId)
+		itemData := game.FillStorageData(storageRes, storageReq)
+		userStorage := game.FindStorageData(itemData, userId)
 		storage := game.FindItemStorageData(userStorage.ItemData, itemId)
 		shelvesRes, err := fetchShelf(ctx, []core.UserId{userId})
 		err = validateUpdateShelfContent(shelvesRes, storage, index)
@@ -83,15 +85,28 @@ func CreateUpdateShelfContent(
 		shelves = func() map[Index]*UpdateShelfContentShelfInformation {
 			result := make(map[Index]*UpdateShelfContentShelfInformation)
 			for _, v := range shelvesRes {
+				price := func() core.Price {
+					if v.ItemId == core.EmptyItemId {
+						return 0
+					}
+					return itemMasterMap[v.ItemId].Price
+				}()
 				result[v.Index] = &UpdateShelfContentShelfInformation{
 					ItemId:   v.ItemId,
 					Index:    v.Index,
-					Price:    itemMasterMap[v.ItemId].Price,
+					Price:    price,
 					SetPrice: v.SetPrice,
 				}
 			}
+			result[index] = &UpdateShelfContentShelfInformation{
+				ItemId:   itemId,
+				Index:    index,
+				Price:    itemMasterMap[itemId].Price,
+				SetPrice: setPrice,
+			}
 			return result
 		}()
+
 		return &UpdateShelfContentInformation{
 			UserId:       userId,
 			UpdatedIndex: index,

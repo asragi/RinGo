@@ -81,6 +81,9 @@ func createReservations(
 }
 
 func calcPurchaseDuration(customerNum CustomerNumPerHour) time.Duration {
+	if customerNum == 0 {
+		return time.Hour * 2
+	}
 	return time.Hour / time.Duration(customerNum)
 }
 
@@ -88,7 +91,7 @@ func calcCustomerNumPerHour(
 	shopPopularity ShopPopularity,
 	shelfAttraction ShelfAttraction,
 ) CustomerNumPerHour {
-	return CustomerNumPerHour(int(float64(shopPopularity) * float64(shelfAttraction)))
+	return CustomerNumPerHour(int((0.5 + float64(shopPopularity)) * float64(shelfAttraction)))
 }
 
 func calcShelfAttraction(items []ModifiedItemAttraction) ShelfAttraction {
