@@ -435,6 +435,15 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 		writeLogger,
 	)
 
+	getMyShelves := handler.CreateGetMyShelvesHandler(
+		endpoint.CreateGetMyShelvesEndpoint(
+			functions.shelfServices.GetShelves,
+			functions.validateToken,
+		),
+		functions.createContext,
+		writeLogger,
+	)
+
 	handleData := []*router.HandleDataRaw{
 		{
 			SamplePathString: "/health",
@@ -480,6 +489,11 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			SamplePathString: "/me/places/{placeId}/actions/{actionId}",
 			Method:           router.GET,
 			Handler:          getStageActionDetailHandler,
+		},
+		{
+			SamplePathString: "/me/shelves",
+			Method:           router.GET,
+			Handler:          getMyShelves,
 		},
 		{
 			SamplePathString: "/me/shelves/{shelfId}",

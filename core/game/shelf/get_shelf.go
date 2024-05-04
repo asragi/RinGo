@@ -12,7 +12,7 @@ type GetShelfFunc func(
 	[]core.UserId,
 ) ([]*Shelf, error)
 
-func CreateGetShelfFunc(
+func CreateGetShelves(
 	fetchShelf FetchShelf,
 	fetchItemMaster game.FetchItemMasterFunc,
 	fetchStorage game.FetchStorageFunc,
@@ -46,16 +46,27 @@ func CreateGetShelfFunc(
 		for _, userId := range userIds {
 			shelf := shelvesMap[userId]
 			for _, row := range shelf {
-				itemMaster := itemMasterMap[row.ItemId]
-				storage := storageMap[userId][row.ItemId]
+				displayName := func() core.DisplayName {
+					if row.ItemId == core.EmptyItemId {
+						return ""
+					}
+					return itemMasterMap[row.ItemId].DisplayName
+				}()
+				stock := func() core.Stock {
+					if row.ItemId == core.EmptyItemId {
+						return 0
+					}
+					return storageMap[userId][row.ItemId].Stock
+				}()
 				result = append(
 					result, &Shelf{
 						UserId:      userId,
 						ItemId:      row.ItemId,
-						DisplayName: itemMaster.DisplayName,
+						DisplayName: displayName,
 						Index:       row.Index,
 						SetPrice:    row.SetPrice,
-						Stock:       storage.Stock,
+						Stock:       stock,
+						TotalSales:  row.TotalSales,
 					},
 				)
 			}

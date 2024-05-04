@@ -14,6 +14,8 @@ github.com/asragi/RingoSuPBGo v0.0.0-20240415035811-ed372b323c41 h1:n1v6fls9KHgP
 github.com/asragi/RingoSuPBGo v0.0.0-20240415035811-ed372b323c41/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/asragi/RingoSuPBGo v0.0.0-20240416110326-815a817eae0e h1:qeMtDHOtui32RMVihv8Py2YqBjmaT5pJLEUr0ToCZFI=
 github.com/asragi/RingoSuPBGo v0.0.0-20240416110326-815a817eae0e/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
+github.com/asragi/RingoSuPBGo v0.0.0-20240504022200-6ec25eceee98 h1:Nk3NJNFBwxdgWYTm011U2kXer3BDAnyI6RohlS2tgEc=
+github.com/asragi/RingoSuPBGo v0.0.0-20240504022200-6ec25eceee98/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0/go.mod h1:E/eQpaFtUKGOOSEBZgmKAcn+zUUwWxqcaKZlF54wK8E=

@@ -16,8 +16,13 @@ type (
 		Stock       core.Stock
 		SetPrice    SetPrice
 		Price       core.Price
+		TotalSales  core.SalesFigures
 	}
 )
+
+func (id Id) String() string {
+	return string(id)
+}
 
 func (p SetPrice) CalculateProfit(purchaseNum core.Count) core.Profit {
 	return core.Profit(int(p) * int(purchaseNum))

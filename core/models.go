@@ -26,6 +26,10 @@ func CreateUserId(userId string) (UserId, error) {
 	return UserId(userId), nil
 }
 
+func (id UserId) String() string {
+	return string(id)
+}
+
 type UserName string
 
 type Fund int
@@ -93,6 +97,11 @@ func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceSta
 
 // display
 type DisplayName string
+
+func (name DisplayName) String() string {
+	return string(name)
+}
+
 type Description string
 
 // item master

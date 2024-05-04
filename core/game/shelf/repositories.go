@@ -64,6 +64,9 @@ func shelvesToItemIds(shelves []*ShelfRepoRow) []core.ItemId {
 		if _, ok := checked[shelf.ItemId]; ok {
 			continue
 		}
+		if shelf.ItemId == core.EmptyItemId {
+			continue
+		}
 		checked[shelf.ItemId] = struct{}{}
 		itemIds = append(itemIds, shelf.ItemId)
 	}
