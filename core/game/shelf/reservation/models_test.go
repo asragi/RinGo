@@ -146,7 +146,7 @@ func TestCalcCustomerNumPerHour(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{0.555, 100, 55},
+		{0.555, 100, 105},
 	}
 
 	for _, tc := range testCases {

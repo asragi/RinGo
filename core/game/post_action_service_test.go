@@ -145,7 +145,10 @@ func TestPostAction(t *testing.T) {
 			updatedItemStock = stocks
 			return nil
 		}
-		var updatedSkillGrowth SkillGrowthPost
+		updatedSkillGrowth := SkillGrowthPost{
+			UserId:      userId,
+			SkillGrowth: []*SkillGrowthPostRow{},
+		}
 		mockSkillUpdate := func(ctx context.Context, skillGrowth SkillGrowthPost) error {
 			updatedSkillGrowth = skillGrowth
 			return nil
@@ -220,7 +223,7 @@ func TestPostAction(t *testing.T) {
 			SkillGrowth: expectedSkillGrowth,
 		}
 		if !test.DeepEqual(expectedSkillGrowthPost, updatedSkillGrowth) {
-			t.Errorf("updatedSkillGrowth expect: %+v, got: %+v", expectedSkillGrowth, updatedSkillGrowth)
+			t.Errorf("updatedSkillGrowth expect: %+v, got: %+v", expectedSkillGrowthPost, updatedSkillGrowth)
 		}
 		if !test.DeepEqual(expectedResult, res) {
 			t.Errorf("res expect: %+v, got: %+v", expectedResult, res)
