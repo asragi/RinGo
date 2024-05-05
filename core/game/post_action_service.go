@@ -264,13 +264,19 @@ func createPostAction(
 		if err != nil {
 			return handleError(err)
 		}
-		err = updateSkill(
-			ctx,
-			SkillGrowthPost{
-				UserId:      args.userId,
-				SkillGrowth: skillGrowthReq,
-			},
-		)
+		execUpdateSkill := func() error {
+			if len(skillGrowthReq) == 0 {
+				return nil
+			}
+			return updateSkill(
+				ctx,
+				SkillGrowthPost{
+					UserId:      args.userId,
+					SkillGrowth: skillGrowthReq,
+				},
+			)
+		}
+		err = execUpdateSkill()
 		if err != nil {
 			return handleError(err)
 		}

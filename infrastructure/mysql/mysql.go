@@ -880,6 +880,9 @@ func CreateExec[S any](
 		handleError := func(err error) error {
 			return fmt.Errorf(errorMessageFormat, err)
 		}
+		if data == nil || len(data) <= 0 {
+			return nil
+		}
 		_, err := dbExec(ctx, query, data)
 		if err != nil {
 			return handleError(err)
