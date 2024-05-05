@@ -57,6 +57,7 @@ func createReservations(
 	probability ModifiedPurchaseProbability,
 	targetUser core.UserId,
 	targetIndex shelf.Index,
+	generateId func() string,
 ) []*Reservation {
 	reservations := make([]*Reservation, 0, int(customerNum))
 	currentTime := getCurrentTime()
@@ -71,9 +72,12 @@ func createReservations(
 		}()
 		reservations = append(
 			reservations, &Reservation{
+				Id:            Id(generateId()),
 				TargetUser:    targetUser,
 				Index:         targetIndex,
 				ScheduledTime: scheduledTime,
+				// TODO: PurchaseNum should be calculated based on the item data
+				PurchaseNum: 1,
 			},
 		)
 	}

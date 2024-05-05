@@ -8,6 +8,11 @@ import (
 )
 
 type Id string
+
+func NewReservationId(id string) Id {
+	return Id(id)
+}
+
 type ReservationRow struct {
 	Id            Id          `db:"reservation_id"`
 	UserId        core.UserId `db:"user_id"`

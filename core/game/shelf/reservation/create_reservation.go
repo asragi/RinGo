@@ -44,6 +44,7 @@ type createReservationFunc func(
 	shelves []*shelfArg,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
+	generateId func() string,
 ) []*Reservation
 
 func createReservation(
@@ -56,6 +57,7 @@ func createReservation(
 	shelves []*shelfArg,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
+	generateId func() string,
 ) []*Reservation {
 	itemAttractions := func(shelves []*shelfArg) []ModifiedItemAttraction {
 		modifiedItemAttractions := make([]ModifiedItemAttraction, len(shelves))
@@ -81,5 +83,6 @@ func createReservation(
 		probability,
 		targetUserId,
 		updatedIndex,
+		generateId,
 	)
 }

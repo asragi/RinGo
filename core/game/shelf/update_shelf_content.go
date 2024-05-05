@@ -77,7 +77,8 @@ func CreateUpdateShelfContent(
 			return handleError(err)
 		}
 		itemIds := shelvesToItemIds(shelvesRes)
-		itemMasters, err := fetchItemMaster(ctx, itemIds)
+		itemIdReq := append(itemIds, itemId)
+		itemMasters, err := fetchItemMaster(ctx, itemIdReq)
 		if err != nil {
 			return handleError(err)
 		}

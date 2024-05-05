@@ -75,13 +75,26 @@ func TestCreateUpdateShelfContent(t *testing.T) {
 	}
 
 	for _, v := range testCases {
+		allItemIds := func() []core.ItemId {
+			result := make([]core.ItemId, 0)
+			for _, w := range v.mockShelf {
+				if w.ItemId == core.EmptyItemId {
+					continue
+				}
+				result = append(result, w.ItemId)
+			}
+			result = append(result, v.mockItemId)
+			return result
+		}()
 		mockFetchStorage := func(ctx context.Context, userItemPair []*game.UserItemPair) (
 			[]*game.BatchGetStorageRes,
 			error,
 		) {
 			return v.mockStorage, nil
 		}
+		var passedItemMasterReq []core.ItemId
 		mockFetchItemMaster := func(ctx context.Context, itemIds []core.ItemId) ([]*game.GetItemMasterRes, error) {
+			passedItemMasterReq = itemIds
 			return v.mockItemMaster, nil
 		}
 		mockFetchShelf := func(ctx context.Context, userIds []core.UserId) ([]*ShelfRepoRow, error) {
@@ -161,6 +174,15 @@ func TestCreateUpdateShelfContent(t *testing.T) {
 					}
 				}
 			}
+		}
+		if len(allItemIds) != len(passedItemMasterReq) {
+			t.Errorf(
+				"got %+v: %d, expected %+v: %d",
+				passedItemMasterReq,
+				len(passedItemMasterReq),
+				allItemIds,
+				len(allItemIds),
+			)
 		}
 	}
 

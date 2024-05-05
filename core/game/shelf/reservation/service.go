@@ -26,6 +26,7 @@ func NewService(
 	deleteReservationToShelf DeleteReservationToShelfRepoFunc,
 	random core.EmitRandomFunc,
 	getTime core.GetCurrentTimeFunc,
+	generateId func() string,
 ) *Service {
 	applyReservation := CreateApplyReservation(
 		fetchReservation,
@@ -47,6 +48,7 @@ func NewService(
 		deleteReservationToShelf,
 		random,
 		getTime,
+		generateId,
 	)
 	return &Service{
 		ApplyReservation:  applyReservation,

@@ -79,6 +79,7 @@ func TestCreateInsertReservation(t *testing.T) {
 			shelves []*shelfArg,
 			rand core.EmitRandomFunc,
 			getCurrentTime core.GetCurrentTimeFunc,
+			_ func() string,
 		) []*Reservation {
 			return v.mockReservation
 		}
@@ -96,6 +97,7 @@ func TestCreateInsertReservation(t *testing.T) {
 			deleteReservationToShelf,
 			rand,
 			test.MockTime,
+			func() string { return "" },
 		)
 
 		_, err := insertReservationService(

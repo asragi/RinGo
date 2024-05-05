@@ -1,6 +1,7 @@
 package reservation
 
 import (
+	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
@@ -69,6 +70,15 @@ func TestCreateReservations(t *testing.T) {
 		expected       []*Reservation
 	}
 
+	createIdGenerator := func() func() string {
+		idIncr := 0
+		return func() string {
+			id := fmt.Sprintf("reservation_id_%d", idIncr)
+			idIncr++
+			return id
+		}
+	}
+
 	testCases := []testCase{
 		{
 			customerNum:    2,
@@ -79,14 +89,18 @@ func TestCreateReservations(t *testing.T) {
 			targetIndex:    1,
 			expected: []*Reservation{
 				{
+					Id:            "reservation_id_0",
 					TargetUser:    "user_id",
 					Index:         1,
 					ScheduledTime: test.MockTime().Add(time.Minute * 30),
+					PurchaseNum:   1,
 				},
 				{
+					Id:            "reservation_id_1",
 					TargetUser:    "user_id",
 					Index:         1,
 					ScheduledTime: test.MockTime().Add(time.Minute * 60),
+					PurchaseNum:   1,
 				},
 			},
 		},
@@ -100,6 +114,7 @@ func TestCreateReservations(t *testing.T) {
 			tc.probability,
 			tc.targetUser,
 			tc.targetIndex,
+			createIdGenerator(),
 		)
 		if !test.DeepEqual(actual, tc.expected) {
 			t.Errorf(

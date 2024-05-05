@@ -182,6 +182,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.deleteReservationToShelf,
 		random.Emit,
 		getTime,
+		generateUUID,
 	)
 	return &functionContainer{
 		generateUUID:        generateUUID,

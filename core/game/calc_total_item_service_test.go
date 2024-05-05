@@ -9,7 +9,7 @@ import (
 func TestCreateTotalItemService(t *testing.T) {
 	userId := core.UserId("passedId")
 	itemId := []core.ItemId{
-		"A", "B", "C",
+		"A", "B", "C", "D",
 	}
 	items := []*StorageData{
 		{
@@ -27,6 +27,11 @@ func TestCreateTotalItemService(t *testing.T) {
 			ItemId: itemId[2],
 			Stock:  10,
 		},
+		{
+			UserId: userId,
+			ItemId: itemId[3],
+			Stock:  10,
+		},
 	}
 	itemMaster := []*GetItemMasterRes{
 		{
@@ -39,6 +44,10 @@ func TestCreateTotalItemService(t *testing.T) {
 		},
 		{
 			ItemId:   itemId[2],
+			MaxStock: 100,
+		},
+		{
+			ItemId:   itemId[3],
 			MaxStock: 100,
 		},
 	}
@@ -81,6 +90,10 @@ func TestCreateTotalItemService(t *testing.T) {
 						ItemId: itemId[0],
 						Count:  core.Count(10),
 					},
+					{
+						ItemId: itemId[3],
+						Count:  core.Count(5),
+					},
 				},
 				storageItem: items,
 				itemMaster:  itemMaster,
@@ -98,6 +111,10 @@ func TestCreateTotalItemService(t *testing.T) {
 					{
 						ItemId: itemId[2],
 						Stock:  core.Stock(40),
+					},
+					{
+						ItemId: itemId[3],
+						Stock:  core.Stock(5),
 					},
 				},
 			},
@@ -117,6 +134,10 @@ func TestCreateTotalItemService(t *testing.T) {
 						ItemId: itemId[2],
 						Count:  core.Count(30),
 					},
+					{
+						ItemId: itemId[3],
+						Count:  core.Count(30),
+					},
 				},
 				consumedItem: []*ConsumedItem{},
 				storageItem:  []*StorageData{},
@@ -134,6 +155,10 @@ func TestCreateTotalItemService(t *testing.T) {
 					},
 					{
 						ItemId: itemId[2],
+						Stock:  core.Stock(30),
+					},
+					{
+						ItemId: itemId[3],
 						Stock:  core.Stock(30),
 					},
 				},

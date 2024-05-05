@@ -16,7 +16,7 @@ func CreateInsertReservation(dbExec database.DBExecFunc) reservation.InsertReser
 	return CreateExec[reservation.ReservationRow](
 		dbExec,
 		"insert reservation: %w",
-		"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :index, :scheduled_time, :purchase_num)",
+		"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :shelf_index, :scheduled_time, :purchase_num)",
 	)
 }
 

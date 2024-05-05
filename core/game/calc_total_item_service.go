@@ -68,7 +68,7 @@ func CalcTotalItem(
 		earnedItemMap map[core.ItemId]*EarnedItem,
 		consumedItemMap map[core.ItemId]*ConsumedItem,
 	) []*totalItem {
-		result := make([]*totalItem, len(earnedItemMap))
+		result := make([]*totalItem, len(idMap))
 		for i := 0; i < len(idMap); i++ {
 			id := idMap[i]
 			stock := func(storage map[core.ItemId]core.Stock, id core.ItemId) core.Stock {

@@ -50,6 +50,7 @@ func CreateInsertReservation(
 	deleteReservation DeleteReservationToShelfRepoFunc,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
+	generateId func() string,
 ) InsertReservationFunc {
 	return func(
 		ctx context.Context,
@@ -104,6 +105,7 @@ func CreateInsertReservation(
 			shelfArgs,
 			rand,
 			getCurrentTime,
+			generateId,
 		)
 		if len(reservations) == 0 {
 			return &InsertReservationResult{[]*InsertedReservation{}}, nil
