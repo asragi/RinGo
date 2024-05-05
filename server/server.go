@@ -22,6 +22,7 @@ import (
 
 type infrastructuresStruct struct {
 	checkUser                 core.CheckDoesUserExist
+	updateUserName            core.UpdateUserNameFunc
 	insertNewUser             auth.InsertNewUser
 	fetchPassword             auth.FetchHashedPassword
 	getResource               game.GetResourceFunc
@@ -73,6 +74,7 @@ type functionContainer struct {
 	login               auth.LoginFunc
 	register            auth.RegisterUserFunc
 	getTime             core.GetCurrentTimeFunc
+	coreServices        *core.Service
 	gameServices        *game.Services
 	shelfServices       *shelf.Services
 	reservationServices *reservation.Service
@@ -134,6 +136,9 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.insertNewUser,
 		initialName,
 	)
+	coreService := core.NewService(
+		infra.updateUserName,
+	)
 	gameServices := game.CreateServices(
 		infra.getResource,
 		infra.exploreMaster,
@@ -191,6 +196,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		login:               login,
 		register:            register,
 		getTime:             getTime,
+		coreServices:        coreService,
 		gameServices:        gameServices,
 		shelfServices:       shelfService,
 		reservationServices: reservationService,
@@ -232,6 +238,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		getTime,
 	)
 
+	updateUserName := mysql.CreateUpdateUserName(db.Exec)
+
 	updateFund := mysql.CreateUpdateFund(db.Exec)
 	updateSkill := mysql.CreateUpdateUserSkill(db.Exec)
 	updateStorage := mysql.CreateUpdateItemStorage(db.Exec)
@@ -252,6 +260,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
+		updateUserName:            updateUserName,
 		insertNewUser:             insertNewUser,
 		fetchPassword:             getUserPassword,
 		getResource:               getResource,
@@ -315,6 +324,14 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 		return handleError(err)
 	}
 	functions := createFunction(db, infrastructures)
+	updateUserNameHandler := handler.CreateUpdateUserNameHandler(
+		endpoint.CreateUpdateUserNameEndpoint(
+			functions.coreServices.UpdateUserName,
+			functions.validateToken,
+		),
+		functions.createContext,
+		writeLogger,
+	)
 	postActionHandler := handler.CreatePostActionHandler(
 		functions.gameServices.PostAction,
 		endpoint.CreatePostAction,
@@ -460,6 +477,11 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			SamplePathString: "/login",
 			Method:           router.POST,
 			Handler:          login,
+		},
+		{
+			SamplePathString: "/me/name",
+			Method:           router.PATCH,
+			Handler:          updateUserNameHandler,
 		},
 		{
 			SamplePathString: "/me/resource",

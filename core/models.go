@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -31,6 +32,26 @@ func (id UserId) String() string {
 }
 
 type UserName string
+
+var InvalidNameError = errors.New("invalid name")
+
+func NewName(name string) (UserName, error) {
+	const MaxNameLength = 10
+	isValid := func(name string) error {
+		if len(name) <= 0 || len(name) > MaxNameLength {
+			return InvalidNameError
+		}
+		return nil
+	}
+	if err := isValid(name); err != nil {
+		return "", err
+	}
+	return UserName(name), nil
+}
+
+func (name UserName) String() string {
+	return string(name)
+}
 
 type Fund int
 
