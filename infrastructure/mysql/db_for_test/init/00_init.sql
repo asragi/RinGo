@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `stamina_recover_time` DATETIME NOT NULL,
     `hashed_password` varchar(64),
     PRIMARY KEY (`id`),
+    UNIQUE (`user_id`),
     INDEX `user_id_index` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS ringo.item_masters(
     `attraction` mediumint(8) NOT NULL,
     `purchase_probability` float(8,4) NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`item_id`),
     INDEX `item_id_index` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -43,6 +45,7 @@ CREATE TABLE IF NOT EXISTS ringo.skill_masters(
     `skill_id` varchar(40) NOT NULL,
     `display_name` varchar(40) NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`skill_id`),
     INDEX `skill_id_index` (`skill_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -66,6 +69,7 @@ CREATE TABLE IF NOT EXISTS ringo.explore_masters(
     `consuming_stamina` int(10) NOT NULL,
     `required_payment` int(10) NOT NULL,
     `stamina_reducible_rate` float(6,5) NOT NULL,
+    UNIQUE (`explore_id`),
     PRIMARY KEY (`id`),
     INDEX `explore_id_index` (`explore_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -98,6 +102,7 @@ CREATE TABLE IF NOT EXISTS ringo.stage_masters(
     `display_name` varchar(40) NOT NULL,
     `description` varchar(40) NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`stage_id`),
     INDEX `stage_id_index` (`stage_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -187,6 +192,7 @@ CREATE TABLE IF NOT EXISTS ringo.shelves(
     `set_price` int(11) NOT NULL,
     `total_sales` int(11) NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`shelf_id`),
     INDEX `user_shelf_index` (`user_id`, `shelf_index`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
     FOREIGN KEY (`item_id`) REFERENCES `item_masters` (`item_id`),
@@ -201,6 +207,7 @@ CREATE TABLE IF NOT EXISTS ringo.reservations(
     `scheduled_time` DATETIME NOT NULL,
     `purchase_num` mediumint(8) NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE (`reservation_id`),
     INDEX `user_time_index` (`user_id`, `scheduled_time`),
     INDEX `reservation_id_index` (`reservation_id`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),

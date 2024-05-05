@@ -15,11 +15,12 @@ import (
 )
 
 type shelfReq struct {
-	UserId   core.UserId `db:"user_id"`
-	Index    shelf.Index `db:"shelf_index"`
-	SetPrice int         `db:"set_price"`
-	ItemId   core.ItemId `db:"item_id"`
-	ShelfId  string      `db:"shelf_id"`
+	UserId     core.UserId `db:"user_id"`
+	Index      shelf.Index `db:"shelf_index"`
+	SetPrice   int         `db:"set_price"`
+	ItemId     core.ItemId `db:"item_id"`
+	ShelfId    string      `db:"shelf_id"`
+	TotalSales int         `db:"total_sales"`
 }
 
 func shelvesFromReservations(reservations []*reservation.ReservationRow) []*shelfReq {
@@ -36,11 +37,12 @@ func shelvesFromReservations(reservations []*reservation.ReservationRow) []*shel
 		shelves = append(
 			shelves,
 			&shelfReq{
-				UserId:   r.UserId,
-				Index:    r.Index,
-				SetPrice: 100,
-				ItemId:   "1",
-				ShelfId:  fmt.Sprintf("shelf_id%d", i),
+				UserId:     r.UserId,
+				Index:      r.Index,
+				SetPrice:   100,
+				ItemId:     "1",
+				ShelfId:    fmt.Sprintf("shelf_id%d", i),
+				TotalSales: 0,
 			},
 		)
 	}
@@ -90,7 +92,7 @@ func TestCreateDeleteReservation(t *testing.T) {
 			ctx, func(ctx context.Context) error {
 				_, err := dba.Exec(
 					ctx,
-					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id)`,
+					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
 					shelves,
 				)
 				if err != nil {
@@ -172,7 +174,7 @@ func TestCreateDeleteReservationToShelf(t *testing.T) {
 					PurchaseNum:   1,
 				},
 				{
-					Id:            reservation.Id("reservation_id"),
+					Id:            reservation.Id("reservation_id2"),
 					UserId:        testUserId,
 					Index:         1,
 					ScheduledTime: test.MockTime().Add(100),
@@ -198,7 +200,7 @@ func TestCreateDeleteReservationToShelf(t *testing.T) {
 			ctx, func(ctx context.Context) error {
 				_, err := dba.Exec(
 					ctx,
-					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id)`,
+					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
 					shelves,
 				)
 				if err != nil {
@@ -340,14 +342,14 @@ func TestCreateFetchReservation(t *testing.T) {
 			},
 			exceptReservations: []*reservation.ReservationRow{
 				{
-					Id:            reservation.Id("target_id"),
+					Id:            reservation.Id("not_target_id1"),
 					UserId:        "fetch1",
 					Index:         1,
 					ScheduledTime: test.MockTime().Add(time.Hour * 2),
 					PurchaseNum:   1,
 				},
 				{
-					Id:            reservation.Id("target_id2"),
+					Id:            reservation.Id("not_target_id2"),
 					UserId:        "do-not-fetched",
 					Index:         1,
 					ScheduledTime: test.MockTime().Add(time.Minute * 10),
@@ -370,7 +372,7 @@ func TestCreateFetchReservation(t *testing.T) {
 		ctx := test.MockCreateContext()
 		_, err := dba.Exec(
 			ctx,
-			`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id)`,
+			`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
 			shelves,
 		)
 		if err != nil {
