@@ -23,6 +23,7 @@ import (
 type infrastructuresStruct struct {
 	checkUser                 core.CheckDoesUserExist
 	updateUserName            core.UpdateUserNameFunc
+	updateShopName            core.UpdateShopNameFunc
 	insertNewUser             auth.InsertNewUser
 	fetchPassword             auth.FetchHashedPassword
 	getResource               game.GetResourceFunc
@@ -128,16 +129,19 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 	generateUUID := utils.GenerateUUID
 	generatePassword := func() auth.RowPassword { return auth.RowPassword(generateUUID()) }
 	// TODO: initial name must be decided depending on locale
-	initialName := func() core.UserName { return "夢追い人" }
+	initialName := func() core.Name { return "夢追い人" }
+	initialShopName := func() core.Name { return "夢追い人の店" }
 	register := auth.RegisterUser(
 		createUserIdFunc,
 		generatePassword,
 		createHashedPassword,
 		infra.insertNewUser,
 		initialName,
+		initialShopName,
 	)
 	coreService := core.NewService(
 		infra.updateUserName,
+		infra.updateShopName,
 	)
 	gameServices := game.CreateServices(
 		infra.getResource,
@@ -239,6 +243,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	)
 
 	updateUserName := mysql.CreateUpdateUserName(db.Exec)
+	updateShopName := mysql.CreateUpdateShopName(db.Exec)
 
 	updateFund := mysql.CreateUpdateFund(db.Exec)
 	updateSkill := mysql.CreateUpdateUserSkill(db.Exec)
@@ -261,6 +266,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
 		updateUserName:            updateUserName,
+		updateShopName:            updateShopName,
 		insertNewUser:             insertNewUser,
 		fetchPassword:             getUserPassword,
 		getResource:               getResource,
@@ -327,6 +333,14 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	updateUserNameHandler := handler.CreateUpdateUserNameHandler(
 		endpoint.CreateUpdateUserNameEndpoint(
 			functions.coreServices.UpdateUserName,
+			functions.validateToken,
+		),
+		functions.createContext,
+		writeLogger,
+	)
+	updateShopName := handler.CreateUpdateShopNameHandler(
+		endpoint.CreateUpdateShopNameEndpoint(
+			functions.coreServices.UpdateShopName,
 			functions.validateToken,
 		),
 		functions.createContext,
@@ -482,6 +496,11 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			SamplePathString: "/me/name",
 			Method:           router.PATCH,
 			Handler:          updateUserNameHandler,
+		},
+		{
+			SamplePathString: "/me/shop/name",
+			Method:           router.PATCH,
+			Handler:          updateShopName,
 		},
 		{
 			SamplePathString: "/me/resource",

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(40) NOT NULL,
     `name` varchar(40) NOT NULL,
+    `shop_name` varchar(40) NOT NULL,
     `fund` bigint(20) NOT NULL,
     `max_stamina` mediumint(6) NOT NULL,
     `popularity` smallint(4) NOT NULL,

@@ -34,7 +34,7 @@ func CreateUserId(
 	return f
 }
 
-type decideInitialName func() core.UserName
+type decideInitialName func() core.Name
 type RegisterUserFunc func(context.Context) (registerResult, error)
 
 func RegisterUser(
@@ -43,6 +43,7 @@ func RegisterUser(
 	createHashedPassword createHashedPasswordFunc,
 	insertNewUser InsertNewUser,
 	decideName decideInitialName,
+	decideShopName decideInitialName,
 ) RegisterUserFunc {
 	f := func(ctx context.Context) (registerResult, error) {
 		handleError := func(err error) (registerResult, error) {
@@ -58,7 +59,8 @@ func RegisterUser(
 			return handleError(err)
 		}
 		initialName := decideName()
-		err = insertNewUser(ctx, userId, initialName, hashedPass)
+		initialShopName := decideShopName()
+		err = insertNewUser(ctx, userId, initialName, initialShopName, hashedPass)
 		if err != nil {
 			return handleError(err)
 		}

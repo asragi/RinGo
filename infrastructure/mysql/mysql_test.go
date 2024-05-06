@@ -19,7 +19,7 @@ import (
 
 type userTest struct {
 	UserId             core.UserId                `db:"user_id"`
-	Name               core.UserName              `db:"name"`
+	Name               core.Name                  `db:"name"`
 	MaxStamina         core.MaxStamina            `db:"max_stamina"`
 	Fund               core.Fund                  `db:"fund"`
 	StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
@@ -124,7 +124,7 @@ func TestCreateGetUserPassword(t *testing.T) {
 func TestCreateInsertNewUser(t *testing.T) {
 	type testCase struct {
 		UserId             core.UserId                `db:"user_id"`
-		Name               core.UserName              `db:"name"`
+		Name               core.Name                  `db:"name"`
 		HashedPassword     auth.HashedPassword        `db:"hashed_password"`
 		InitialFund        core.Fund                  `db:"fund"`
 		InitialStamina     core.MaxStamina            `db:"max_stamina"`

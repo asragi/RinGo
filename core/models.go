@@ -31,11 +31,11 @@ func (id UserId) String() string {
 	return string(id)
 }
 
-type UserName string
+type Name string
 
 var InvalidNameError = errors.New("invalid name")
 
-func NewName(name string) (UserName, error) {
+func NewName(name string) (Name, error) {
 	const MaxNameLength = 10
 	isValid := func(name string) error {
 		if len(name) <= 0 || len(name) > MaxNameLength {
@@ -46,10 +46,10 @@ func NewName(name string) (UserName, error) {
 	if err := isValid(name); err != nil {
 		return "", err
 	}
-	return UserName(name), nil
+	return Name(name), nil
 }
 
-func (name UserName) String() string {
+func (name Name) String() string {
 	return string(name)
 }
 

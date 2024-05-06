@@ -105,15 +105,22 @@ func CreateInsertNewUser(
 	initialPopularity reservation.ShopPopularity,
 	getTime core.GetCurrentTimeFunc,
 ) auth.InsertNewUser {
-	return func(ctx context.Context, id core.UserId, userName core.UserName, password auth.HashedPassword) error {
+	return func(
+		ctx context.Context,
+		id core.UserId,
+		userName core.Name,
+		shopName core.Name,
+		password auth.HashedPassword,
+	) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("insert new user: %w", err)
 		}
-		queryText := `INSERT INTO ringo.users (user_id, name, fund, max_stamina, stamina_recover_time, hashed_password, popularity) VALUES (:user_id, :name, :fund, :max_stamina, :stamina_recover_time, :hashed_password, :popularity);`
+		queryText := `INSERT INTO ringo.users (user_id, name, shop_name,  fund, max_stamina, stamina_recover_time, hashed_password, popularity) VALUES (:user_id, :name, :shop_name, :fund, :max_stamina, :stamina_recover_time, :hashed_password, :popularity);`
 
 		type UserToDB struct {
 			UserId             core.UserId                `db:"user_id"`
-			Name               core.UserName              `db:"name"`
+			Name               core.Name                  `db:"name"`
+			ShopName           core.Name                  `db:"shop_name"`
 			Fund               core.Fund                  `db:"fund"`
 			MaxStamina         core.MaxStamina            `db:"max_stamina"`
 			StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
@@ -124,6 +131,7 @@ func CreateInsertNewUser(
 		createUserData := UserToDB{
 			UserId:             id,
 			Name:               userName,
+			ShopName:           shopName,
 			Fund:               initialFund,
 			MaxStamina:         initialMaxStamina,
 			StaminaRecoverTime: getTime(),
