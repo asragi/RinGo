@@ -2,6 +2,7 @@ package reservation
 
 import (
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 )
 
@@ -40,7 +41,7 @@ type createReservationFunc func(
 	updatedItemSetPrice shelf.SetPrice,
 	baseProbability PurchaseProbability,
 	targetUserId core.UserId,
-	shopPopularity ShopPopularity,
+	shopPopularity game.ShopPopularity,
 	shelves []*shelfArg,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
@@ -53,7 +54,7 @@ func createReservation(
 	updatedItemSetPrice shelf.SetPrice,
 	baseProbability PurchaseProbability,
 	targetUserId core.UserId,
-	shopPopularity ShopPopularity,
+	shopPopularity game.ShopPopularity,
 	shelves []*shelfArg,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,

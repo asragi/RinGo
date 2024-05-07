@@ -8,6 +8,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
+	"time"
 )
 
 type nullableShelfRow struct {
@@ -172,6 +173,69 @@ func CreateDeleteShelfBySize(dbExec database.DBExecFunc) shelf.DeleteShelfBySize
 		)
 		if err != nil {
 			return fmt.Errorf("delete shelf by size: %w", err)
+		}
+		return nil
+	}
+}
+
+func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
+	return func(ctx context.Context, userIds []core.UserId, currentTime time.Time) ([]*shelf.UserScorePair, error) {
+		userIdStrings := infrastructure.UserIdsToString(userIds)
+		spreadUserIdStrings := spreadString(userIdStrings)
+		query := fmt.Sprintf(
+			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s);`,
+			spreadUserIdStrings,
+		)
+		rows, err := q(ctx, query, nil)
+		if err != nil {
+			return nil, fmt.Errorf("select scores: %w", err)
+		}
+		defer rows.Close()
+		var result []*shelf.UserScorePair
+		for rows.Next() {
+			var res *shelf.UserScorePair
+			err = rows.StructScan(res)
+			if err != nil {
+				return nil, fmt.Errorf("select scores: %w", err)
+			}
+			result = append(result, res)
+		}
+		return result, nil
+	}
+}
+
+func CreateUpdateScore(exec database.DBExecFunc) shelf.UpdateScoreFunc {
+	return func(ctx context.Context, userScorePair []*shelf.UserScorePair) error {
+		userIds := func() []core.UserId {
+			var result []core.UserId
+			for _, v := range userScorePair {
+				result = append(result, v.UserId)
+			}
+			return result
+		}()
+		userIdString := infrastructure.UserIdsToString(userIds)
+		spreadUserId := spreadString(userIdString)
+		scores := func() []string {
+			result := make([]string, len(userScorePair))
+			for i, v := range userScorePair {
+				result[i] = fmt.Sprintf(`%d`, v.TotalScore)
+			}
+			return result
+		}()
+		spreadScores := spreadString(scores)
+
+		_, err := exec(
+			ctx,
+			fmt.Sprintf(
+				`UPDATE ringo.scores SET total_score = ELT(FIELD(user_id,%s),%s)	WHERE user_id IN (%s)`,
+				spreadUserId,
+				spreadScores,
+				spreadUserId,
+			),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("update score: %w", err)
 		}
 		return nil
 	}

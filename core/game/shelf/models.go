@@ -1,6 +1,9 @@
 package shelf
 
-import "github.com/asragi/RinGo/core"
+import (
+	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
+)
 
 type (
 	Id       string
@@ -36,4 +39,17 @@ func (s Size) ValidSize() bool {
 	const MaxSize Size = 8
 	const MinSize Size = 0
 	return s >= MinSize && s <= MaxSize
+}
+
+type TotalScore int
+
+func NewTotalScore(gainingScore GainingScore, beforeTotalScore TotalScore) TotalScore {
+	return TotalScore(int(beforeTotalScore) + int(gainingScore))
+}
+
+type GainingScore int
+
+func NewGainingScore(setPrice SetPrice, popularity game.ShopPopularity) GainingScore {
+	score := float64(setPrice) * (float64(popularity) + 1)
+	return GainingScore(int(score))
 }

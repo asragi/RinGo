@@ -3,6 +3,7 @@ package reservation
 import (
 	"context"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
 	"testing"
@@ -12,7 +13,7 @@ func TestCreateInsertReservation(t *testing.T) {
 	type testCase struct {
 		mockReservation  []*Reservation
 		mockAttraction   []*ItemAttractionRes
-		mockPopularity   *ShopPopularityRes
+		mockPopularity   []*shelf.UserPopularity
 		mockUserId       core.UserId
 		mockUpdatedIndex shelf.Index
 		mockIndices      []shelf.Index
@@ -38,9 +39,11 @@ func TestCreateInsertReservation(t *testing.T) {
 					PurchaseProbability: PurchaseProbability(0.5),
 				},
 			},
-			mockPopularity: &ShopPopularityRes{
-				UserId:     "1",
-				Popularity: 0.5,
+			mockPopularity: []*shelf.UserPopularity{
+				{
+					UserId:     "1",
+					Popularity: 0.5,
+				},
 			},
 			mockUserId:       "1",
 			mockUpdatedIndex: 0,
@@ -63,7 +66,7 @@ func TestCreateInsertReservation(t *testing.T) {
 		fetchItemAttraction := func(ctx context.Context, itemIds []core.ItemId) ([]*ItemAttractionRes, error) {
 			return v.mockAttraction, nil
 		}
-		fetchUserPopularity := func(ctx context.Context, userId core.UserId) (*ShopPopularityRes, error) {
+		fetchUserPopularity := func(ctx context.Context, userIds []core.UserId) ([]*shelf.UserPopularity, error) {
 			return v.mockPopularity, nil
 		}
 		insertReservation := func(ctx context.Context, reservation []*ReservationRow) error {
@@ -75,7 +78,7 @@ func TestCreateInsertReservation(t *testing.T) {
 			updatedItemSetPrice shelf.SetPrice,
 			baseProbability PurchaseProbability,
 			targetUserId core.UserId,
-			shopPopularity ShopPopularity,
+			shopPopularity game.ShopPopularity,
 			shelves []*shelfArg,
 			rand core.EmitRandomFunc,
 			getCurrentTime core.GetCurrentTimeFunc,

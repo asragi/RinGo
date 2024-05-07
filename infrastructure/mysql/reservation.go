@@ -116,14 +116,22 @@ func CreateFetchItemAttraction(queryFunc queryFunc) reservation.FetchItemAttract
 	}
 }
 
-func CreateFetchUserPopularity(queryFunc queryFunc) reservation.FetchUserPopularityFunc {
-	f := CreateGetQuery[userReq, reservation.ShopPopularityRes](
+func CreateFetchUserPopularity(queryFunc queryFunc) shelf.FetchUserPopularityFunc {
+	f := CreateGetQuery[userReq, shelf.UserPopularity](
 		queryFunc,
 		"fetch user popularity: %w",
 		`SELECT user_id, popularity FROM ringo.users WHERE user_id IN (:user_id)`,
 	)
-	return func(ctx context.Context, userId core.UserId) (*reservation.ShopPopularityRes, error) {
-		req := []*userReq{{UserId: userId}}
+	return func(ctx context.Context, userIds []core.UserId) ([]*shelf.UserPopularity, error) {
+		req := func() []*userReq {
+			result := make([]*userReq, len(userIds))
+			for i, v := range userIds {
+				result[i] = &userReq{
+					UserId: v,
+				}
+			}
+			return result
+		}()
 		res, err := f(ctx, req)
 		if err != nil {
 			return nil, fmt.Errorf("fetch user popularity: %w", err)
@@ -131,6 +139,6 @@ func CreateFetchUserPopularity(queryFunc queryFunc) reservation.FetchUserPopular
 		if len(res) == 0 {
 			return nil, fmt.Errorf("user popularity not found")
 		}
-		return res[0], nil
+		return res, nil
 	}
 }

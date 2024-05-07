@@ -38,3 +38,6 @@ func ApplyReduction(s core.StaminaCost, reductionRate float64, reducibleRate Sta
 }
 
 type EarningProb float32
+
+// ShopPopularity ranges from 0 to 1
+type ShopPopularity float64

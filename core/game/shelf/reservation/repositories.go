@@ -88,9 +88,3 @@ func itemAttractionResToMap(res []*ItemAttractionRes) map[core.ItemId]*ItemAttra
 }
 
 type FetchItemAttractionFunc func(context.Context, []core.ItemId) ([]*ItemAttractionRes, error)
-
-type ShopPopularityRes struct {
-	UserId     core.UserId    `db:"user_id"`
-	Popularity ShopPopularity `db:"popularity"`
-}
-type FetchUserPopularityFunc func(context.Context, core.UserId) (*ShopPopularityRes, error)

@@ -51,6 +51,8 @@ type infrastructuresStruct struct {
 	updateStamina             game.UpdateStaminaFunc
 	updateFund                game.UpdateFundFunc
 
+	fetchScore            shelf.FetchUserScore
+	updateScore           shelf.UpdateScoreFunc
 	fetchShelf            shelf.FetchShelf
 	fetchSizeToAction     shelf.FetchSizeToActionRepoFunc
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc
@@ -61,7 +63,7 @@ type infrastructuresStruct struct {
 	fetchReservation         reservation.FetchReservationRepoFunc
 	deleteReservation        reservation.DeleteReservationRepoFunc
 	fetchItemAttraction      reservation.FetchItemAttractionFunc
-	fetchUserPopularity      reservation.FetchUserPopularityFunc
+	fetchUserPopularity      shelf.FetchUserPopularityFunc
 	insertReservationRepo    reservation.InsertReservationRepoFunc
 	deleteReservationToShelf reservation.DeleteReservationToShelfRepoFunc
 
@@ -165,6 +167,8 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		getTime,
 	)
 	shelfService := shelf.NewService(
+		infra.fetchScore,
+		infra.updateScore,
 		infra.fetchStorage,
 		infra.fetchItemMaster,
 		infra.fetchShelf,
@@ -174,9 +178,11 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.fetchSizeToAction,
 		gameServices.PostAction,
 		gameServices.ValidateAction,
+		getTime,
 		generateUUID,
 	)
 	reservationService := reservation.NewService(
+		shelfService.UpdateTotalScore,
 		infra.fetchReservation,
 		infra.deleteReservation,
 		infra.fetchStorage,
@@ -250,6 +256,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	updateStorage := mysql.CreateUpdateItemStorage(db.Exec)
 	updateStamina := mysql.CreateUpdateStamina(db.Exec)
 
+	fetchScore := mysql.CreateFetchScore(dbQuery)
+	updateScore := mysql.CreateUpdateScore(db.Exec)
 	fetchUserShelf := mysql.CreateFetchShelfRepo(dbQuery)
 	updateShelfContent := mysql.CreateUpdateShelfContentRepo(db.Exec)
 	updateTotalSales := mysql.CreateUpdateTotalSales(db.Exec)
@@ -293,6 +301,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		fetchReductionSkill:       getReductionSkill,
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
+		fetchScore:                fetchScore,
+		updateScore:               updateScore,
 		fetchShelf:                fetchUserShelf,
 		fetchSizeToAction:         in_memory.FetchSizeToActionRepoInMemory,
 		updateShelfTotalSales:     updateTotalSales,

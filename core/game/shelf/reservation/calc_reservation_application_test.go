@@ -60,7 +60,7 @@ func TestCalcReservationApplication(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		actualFund, actualStorage, actualTotalSales, err := calcReservationApplication(
+		result, err := calcReservationApplication(
 			tc.users,
 			tc.fundData,
 			tc.storageData,
@@ -78,18 +78,18 @@ func TestCalcReservationApplication(t *testing.T) {
 				err,
 			)
 		}
-		if !test.DeepEqual(actualFund, tc.expectedFund) {
-			t.Errorf("fund = %+v, want %+v", actualFund, tc.expectedFund)
+		if !test.DeepEqual(result.calculatedFund, tc.expectedFund) {
+			t.Errorf("fund = %+v, want %+v", result.calculatedFund, tc.expectedFund)
 		}
-		if !test.DeepEqual(actualStorage, tc.expectedStorage) {
-			for i, s := range actualStorage {
+		if !test.DeepEqual(result.afterStorage, tc.expectedStorage) {
+			for i, s := range result.afterStorage {
 				if !test.DeepEqual(s, tc.expectedStorage[i]) {
 					t.Errorf("storage[%d] = %+v, want %+v", i, s, tc.expectedStorage[i])
 				}
 			}
 		}
-		if !test.DeepEqual(actualTotalSales, tc.expectedTotalSales) {
-			t.Errorf("totalSales = %+v, want %+v", actualTotalSales, tc.expectedTotalSales)
+		if !test.DeepEqual(result.totalSales, tc.expectedTotalSales) {
+			t.Errorf("totalSales = %+v, want %+v", result.totalSales, tc.expectedTotalSales)
 		}
 	}
 }

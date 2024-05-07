@@ -15,11 +15,13 @@ func CreateApplyReservation(
 	fetchReservation FetchReservationRepoFunc,
 	deleteReservation DeleteReservationRepoFunc,
 	fetchUserStorage game.FetchStorageFunc,
+	fetchPopularity shelf.FetchUserPopularityFunc,
 	fetchShelf shelf.FetchShelf,
 	fetchFund game.FetchFundFunc,
 	updateFund game.UpdateFundFunc,
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
+	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
 	calcApplication calcReservationApplicationFunc,
 	getTime core.GetCurrentTimeFunc,
 ) ApplyReservationFunc {
@@ -82,22 +84,30 @@ func CreateApplyReservation(
 			return handleError(err)
 		}
 
-		appliedFunds, appliedStorages, totalSalesData, err := calcApplication(
+		calcApplyResult, err := calcApplication(
 			userIds,
 			fundData,
 			game.SpreadGetStorageRes(storageData),
 			allShelvesData,
 			ToReservationModel(reservations),
 		)
-		err = updateStorage(ctx, appliedStorages)
+		err = updateStorage(ctx, calcApplyResult.afterStorage)
 		if err != nil {
 			return handleError(err)
 		}
-		err = updateFund(ctx, appliedFunds)
+		err = updateFund(ctx, calcApplyResult.calculatedFund)
 		if err != nil {
 			return handleError(err)
 		}
-		err = updateShelfTotalSales(ctx, totalSalesData)
+		err = updateShelfTotalSales(ctx, calcApplyResult.totalSales)
+		if err != nil {
+			return handleError(err)
+		}
+		popularity, err := fetchPopularity(ctx, userIds)
+		if err != nil {
+			return handleError(err)
+		}
+		err = updateTotalScore(ctx, popularity, calcApplyResult.soldItems)
 		if err != nil {
 			return handleError(err)
 		}

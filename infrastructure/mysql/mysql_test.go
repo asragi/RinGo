@@ -8,7 +8,6 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
-	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/location"
 	"github.com/asragi/RinGo/test"
@@ -18,13 +17,13 @@ import (
 )
 
 type userTest struct {
-	UserId             core.UserId                `db:"user_id"`
-	Name               core.Name                  `db:"name"`
-	MaxStamina         core.MaxStamina            `db:"max_stamina"`
-	Fund               core.Fund                  `db:"fund"`
-	StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
-	HashedPassword     auth.HashedPassword        `db:"hashed_password"`
-	Popularity         reservation.ShopPopularity `db:"popularity"`
+	UserId             core.UserId         `db:"user_id"`
+	Name               core.Name           `db:"name"`
+	MaxStamina         core.MaxStamina     `db:"max_stamina"`
+	Fund               core.Fund           `db:"fund"`
+	StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
+	HashedPassword     auth.HashedPassword `db:"hashed_password"`
+	Popularity         game.ShopPopularity `db:"popularity"`
 }
 
 var TestCompleted = errors.New("test completed")
@@ -39,7 +38,7 @@ func createTestUser(options ...ApplyUserTestOption) *userTest {
 		Fund:               100000,
 		StaminaRecoverTime: test.MockTime(),
 		HashedPassword:     "test-password",
-		Popularity:         reservation.ShopPopularity(50),
+		Popularity:         game.ShopPopularity(50),
 	}
 	for _, option := range options {
 		option(&user)
@@ -123,19 +122,21 @@ func TestCreateGetUserPassword(t *testing.T) {
 
 func TestCreateInsertNewUser(t *testing.T) {
 	type testCase struct {
-		UserId             core.UserId                `db:"user_id"`
-		Name               core.Name                  `db:"name"`
-		HashedPassword     auth.HashedPassword        `db:"hashed_password"`
-		InitialFund        core.Fund                  `db:"fund"`
-		InitialStamina     core.MaxStamina            `db:"max_stamina"`
-		InitialPopularity  reservation.ShopPopularity `db:"popularity"`
-		StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
+		UserId             core.UserId         `db:"user_id"`
+		Name               core.Name           `db:"name"`
+		ShopName           core.Name           `db:"shop_name"`
+		HashedPassword     auth.HashedPassword `db:"hashed_password"`
+		InitialFund        core.Fund           `db:"fund"`
+		InitialStamina     core.MaxStamina     `db:"max_stamina"`
+		InitialPopularity  game.ShopPopularity `db:"popularity"`
+		StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
 	}
 
 	testCases := []testCase{
 		{
 			UserId:             "test-insert-user",
 			Name:               "test-name",
+			ShopName:           "test-shop-name",
 			HashedPassword:     "test-password",
 			InitialFund:        3456,
 			InitialStamina:     5678,
@@ -155,7 +156,7 @@ func TestCreateInsertNewUser(t *testing.T) {
 		)
 		txErr := dba.Transaction(
 			ctx, func(ctx context.Context) error {
-				err := insertNewUser(ctx, v.UserId, v.Name, v.HashedPassword)
+				err := insertNewUser(ctx, v.UserId, v.Name, v.ShopName, v.HashedPassword)
 				if err != nil {
 					t.Fatalf("failed to insert new user: %v", err)
 					return err

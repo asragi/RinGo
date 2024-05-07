@@ -406,14 +406,23 @@ func TestCreateFetchReservation(t *testing.T) {
 
 func TestCreateFetchUserPopularity(t *testing.T) {
 	type testCase struct {
-		userId     core.UserId
-		popularity reservation.ShopPopularity
+		userIds    []core.UserId
+		popularity []*shelf.UserPopularity
 	}
 
 	tests := []testCase{
 		{
-			userId:     "popularity-test-user",
-			popularity: 40,
+			userIds: []core.UserId{"popularity1", "popularity2"},
+			popularity: []*shelf.UserPopularity{
+				{
+					UserId:     "popularity1",
+					Popularity: 0.5,
+				},
+				{
+					UserId:     "popularity2",
+					Popularity: 0.4,
+				},
+			},
 		},
 	}
 
@@ -422,21 +431,24 @@ func TestCreateFetchUserPopularity(t *testing.T) {
 		fetchUserPopularity := CreateFetchUserPopularity(dba.Query)
 		txErr := dba.Transaction(
 			ctx, func(ctx context.Context) error {
-				err := addTestUser(
-					func(u *userTest) {
-						u.UserId = tt.userId
-						u.Popularity = tt.popularity
-					},
-				)
-				if err != nil {
-					t.Fatalf("failed to add test user: %v", err)
+				for _, v := range tt.popularity {
+					err := addTestUser(
+						func(u *userTest) {
+							u.UserId = v.UserId
+							u.Popularity = v.Popularity
+						},
+					)
+					if err != nil {
+						t.Fatalf("failed to add test user: %v", err)
+					}
+
 				}
-				popularity, err := fetchUserPopularity(ctx, tt.userId)
+				popularity, err := fetchUserPopularity(ctx, tt.userIds)
 				if err != nil {
 					return err
 				}
-				if popularity.Popularity != tt.popularity {
-					t.Errorf("expected: %f, got: %f", tt.popularity, popularity.Popularity)
+				if !test.DeepEqual(popularity, tt.popularity) {
+					t.Errorf("expected: %+v, got: %+v", utils.ToObjArray(tt.popularity), utils.ToObjArray(popularity))
 				}
 				return TestCompleted
 			},

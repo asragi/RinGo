@@ -12,6 +12,7 @@ type Service struct {
 }
 
 func NewService(
+	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
 	fetchReservation FetchReservationRepoFunc,
 	deleteReservation DeleteReservationRepoFunc,
 	fetchUserStorage game.FetchStorageFunc,
@@ -21,7 +22,7 @@ func NewService(
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
 	fetchItemAttraction FetchItemAttractionFunc,
-	fetchUserPopularity FetchUserPopularityFunc,
+	fetchUserPopularity shelf.FetchUserPopularityFunc,
 	insertReservationRepo InsertReservationRepoFunc,
 	deleteReservationToShelf DeleteReservationToShelfRepoFunc,
 	random core.EmitRandomFunc,
@@ -32,11 +33,13 @@ func NewService(
 		fetchReservation,
 		deleteReservation,
 		fetchUserStorage,
+		fetchUserPopularity,
 		fetchShelf,
 		fetchFund,
 		updateFund,
 		updateStorage,
 		updateShelfTotalSales,
+		updateTotalScore,
 		calcReservationApplication,
 		getTime,
 	)

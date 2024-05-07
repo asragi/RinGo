@@ -8,7 +8,6 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
-	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
 	_ "github.com/go-sql-driver/mysql"
@@ -102,7 +101,7 @@ func CreateInsertNewUser(
 	dbExec database.DBExecFunc,
 	initialFund core.Fund,
 	initialMaxStamina core.MaxStamina,
-	initialPopularity reservation.ShopPopularity,
+	initialPopularity game.ShopPopularity,
 	getTime core.GetCurrentTimeFunc,
 ) auth.InsertNewUser {
 	return func(
@@ -118,14 +117,14 @@ func CreateInsertNewUser(
 		queryText := `INSERT INTO ringo.users (user_id, name, shop_name,  fund, max_stamina, stamina_recover_time, hashed_password, popularity) VALUES (:user_id, :name, :shop_name, :fund, :max_stamina, :stamina_recover_time, :hashed_password, :popularity);`
 
 		type UserToDB struct {
-			UserId             core.UserId                `db:"user_id"`
-			Name               core.Name                  `db:"name"`
-			ShopName           core.Name                  `db:"shop_name"`
-			Fund               core.Fund                  `db:"fund"`
-			MaxStamina         core.MaxStamina            `db:"max_stamina"`
-			StaminaRecoverTime time.Time                  `db:"stamina_recover_time"`
-			HashedPassword     auth.HashedPassword        `db:"hashed_password"`
-			Popularity         reservation.ShopPopularity `db:"popularity"`
+			UserId             core.UserId         `db:"user_id"`
+			Name               core.Name           `db:"name"`
+			ShopName           core.Name           `db:"shop_name"`
+			Fund               core.Fund           `db:"fund"`
+			MaxStamina         core.MaxStamina     `db:"max_stamina"`
+			StaminaRecoverTime time.Time           `db:"stamina_recover_time"`
+			HashedPassword     auth.HashedPassword `db:"hashed_password"`
+			Popularity         game.ShopPopularity `db:"popularity"`
 		}
 
 		createUserData := UserToDB{

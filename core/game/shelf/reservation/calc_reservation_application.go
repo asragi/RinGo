@@ -7,13 +7,20 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf"
 )
 
+type calcReservationResult struct {
+	calculatedFund []*game.UserFundPair
+	afterStorage   []*game.StorageData
+	totalSales     []*shelf.TotalSalesReq
+	soldItems      []*shelf.SoldItem
+}
+
 type calcReservationApplicationFunc func(
 	users []core.UserId,
 	fundData []*game.FundRes,
 	storageData []*game.StorageData,
 	shelves []*shelf.ShelfRepoRow,
 	reservations []*Reservation,
-) ([]*game.UserFundPair, []*game.StorageData, []*shelf.TotalSalesReq, error)
+) (*calcReservationResult, error)
 
 func calcReservationApplication(
 	users []core.UserId,
@@ -21,9 +28,9 @@ func calcReservationApplication(
 	storageData []*game.StorageData,
 	shelves []*shelf.ShelfRepoRow,
 	reservationsRow []*Reservation,
-) ([]*game.UserFundPair, []*game.StorageData, []*shelf.TotalSalesReq, error) {
-	handleError := func(err error) ([]*game.UserFundPair, []*game.StorageData, []*shelf.TotalSalesReq, error) {
-		return nil, nil, nil, fmt.Errorf("calc reservation application: %w", err)
+) (*calcReservationResult, error) {
+	handleError := func(err error) (*calcReservationResult, error) {
+		return nil, fmt.Errorf("calc reservation application: %w", err)
 	}
 	shelfMap := func() map[core.UserId]map[shelf.Index]*shelf.ShelfRepoRow {
 		result := make(map[core.UserId]map[shelf.Index]*shelf.ShelfRepoRow)
@@ -131,7 +138,12 @@ func calcReservationApplication(
 		}
 	}
 
-	return appliedFunds, appliedStorages, appliedShelfSales, nil
+	return &calcReservationResult{
+		calculatedFund: appliedFunds,
+		afterStorage:   appliedStorages,
+		totalSales:     appliedShelfSales,
+		soldItems:      nil,
+	}, nil
 }
 
 func calcPurchaseResultPerItem(

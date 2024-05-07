@@ -20,6 +20,8 @@ func TestCreateApplyReservation(t *testing.T) {
 		mockAppliedFunds    []*game.UserFundPair
 		mockAppliedStorages []*game.StorageData
 		mockTotalSales      []*shelf.TotalSalesReq
+		mockPopularity      []*shelf.UserPopularity
+		mockSoldItems       []*shelf.SoldItem
 	}
 
 	testCases := []testCase{
@@ -63,6 +65,15 @@ func TestCreateApplyReservation(t *testing.T) {
 				{Id: "s1", TotalSales: 105},
 				{Id: "s2", TotalSales: 104},
 			},
+			mockPopularity: []*shelf.UserPopularity{
+				{UserId: "1", Popularity: 0.5},
+				{UserId: "2", Popularity: 0.5},
+			},
+			mockSoldItems: []*shelf.SoldItem{
+				{UserId: "1", SetPrice: 100},
+				{UserId: "1", SetPrice: 100},
+				{UserId: "2", SetPrice: 100},
+			},
 		},
 		{
 			mockReservations: []*ReservationRow{},
@@ -90,6 +101,9 @@ func TestCreateApplyReservation(t *testing.T) {
 		) ([]*game.BatchGetStorageRes, error) {
 			return tc.mockStorage, nil
 		}
+		mockFetchPop := func(ctx context.Context, userIds []core.UserId) ([]*shelf.UserPopularity, error) {
+			return tc.mockPopularity, nil
+		}
 		mockFetchFund := func(ctx context.Context, userIds []core.UserId) ([]*game.FundRes, error) {
 			return tc.mockFund, nil
 		}
@@ -108,19 +122,29 @@ func TestCreateApplyReservation(t *testing.T) {
 			storageData []*game.StorageData,
 			shelves []*shelf.ShelfRepoRow,
 			reservations []*Reservation,
-		) ([]*game.UserFundPair, []*game.StorageData, []*shelf.TotalSalesReq, error) {
-			return tc.mockAppliedFunds, tc.mockAppliedStorages, tc.mockTotalSales, nil
+		) (*calcReservationResult, error) {
+			return &calcReservationResult{
+				calculatedFund: tc.mockAppliedFunds,
+				afterStorage:   tc.mockAppliedStorages,
+				totalSales:     tc.mockTotalSales,
+				soldItems:      nil,
+			}, nil
+		}
+		updateTotalScoreService := func(context.Context, []*shelf.UserPopularity, []*shelf.SoldItem) error {
+			return nil
 		}
 
 		apply := CreateApplyReservation(
 			mockFetchReservation,
 			mockDeleteReservation,
 			mockFetchStorage,
+			mockFetchPop,
 			mockFetchShelf,
 			mockFetchFund,
 			mockUpdateFund,
 			mockUpdateStorage,
 			mockUpdateTotalSales,
+			updateTotalScoreService,
 			mockCalcApplication,
 			test.MockTime,
 		)

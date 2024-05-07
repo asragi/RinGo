@@ -3,6 +3,7 @@ package reservation
 import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
 	"testing"
@@ -140,7 +141,7 @@ func TestCreateReservations(t *testing.T) {
 
 func TestCalcCustomerNumPerHour(t *testing.T) {
 	type testCase struct {
-		shopPopularity  ShopPopularity
+		shopPopularity  game.ShopPopularity
 		shelfAttraction ShelfAttraction
 		expected        CustomerNumPerHour
 	}

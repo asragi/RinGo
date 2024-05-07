@@ -44,7 +44,7 @@ type InsertReservationFunc func(
 
 func CreateInsertReservation(
 	fetchItemAttraction FetchItemAttractionFunc,
-	fetchUserPopularity FetchUserPopularityFunc,
+	fetchUserPopularity shelf.FetchUserPopularityFunc,
 	createReservation createReservationFunc,
 	insertReservation InsertReservationRepoFunc,
 	deleteReservation DeleteReservationToShelfRepoFunc,
@@ -91,9 +91,12 @@ func CreateInsertReservation(
 			}
 			return updatedItemAttractionData.PurchaseProbability
 		}()
-		shopPopularity, err := fetchUserPopularity(ctx, userId)
+		shopPopularity, err := fetchUserPopularity(ctx, []core.UserId{userId})
 		if err != nil {
 			return handleError(err)
+		}
+		if len(shopPopularity) == 0 {
+			return handleError(fmt.Errorf("no user popularity data"))
 		}
 		reservations := createReservation(
 			index,
@@ -101,7 +104,7 @@ func CreateInsertReservation(
 			updatedShelf.SetPrice,
 			probability,
 			userId,
-			shopPopularity.Popularity,
+			shopPopularity[0].Popularity,
 			shelfArgs,
 			rand,
 			getCurrentTime,

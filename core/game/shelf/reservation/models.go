@@ -2,6 +2,7 @@ package reservation
 
 import (
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/utils"
 	"math"
@@ -16,7 +17,6 @@ type Reservation struct {
 	PurchaseNum   core.Count
 }
 
-type ShopPopularity float64
 type attraction int
 type ItemAttraction attraction
 type ModifiedItemAttraction attraction
@@ -92,7 +92,7 @@ func calcPurchaseDuration(customerNum CustomerNumPerHour) time.Duration {
 }
 
 func calcCustomerNumPerHour(
-	shopPopularity ShopPopularity,
+	shopPopularity game.ShopPopularity,
 	shelfAttraction ShelfAttraction,
 ) CustomerNumPerHour {
 	return CustomerNumPerHour(int((0.5 + float64(shopPopularity)) * float64(shelfAttraction)))
