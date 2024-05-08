@@ -12,6 +12,7 @@ type Service struct {
 }
 
 func NewService(
+	fetchItemMaster game.FetchItemMasterFunc,
 	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
 	fetchReservation FetchReservationRepoFunc,
 	deleteReservation DeleteReservationRepoFunc,
@@ -32,6 +33,7 @@ func NewService(
 	applyReservation := CreateApplyReservation(
 		fetchReservation,
 		deleteReservation,
+		fetchItemMaster,
 		fetchUserStorage,
 		fetchUserPopularity,
 		fetchShelf,

@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
@@ -13,6 +14,7 @@ type GetMyShelvesFunc func(context.Context, *gateway.GetMyShelfRequest) (*gatewa
 
 func CreateGetMyShelvesEndpoint(
 	getShelvesFunc shelf.GetShelfFunc,
+	applyReservation reservation.ApplyReservationFunc,
 	validateToken auth.ValidateTokenFunc,
 ) GetMyShelvesFunc {
 	return func(ctx context.Context, request *gateway.GetMyShelfRequest) (*gateway.GetMyShelfResponse, error) {
@@ -24,8 +26,12 @@ func CreateGetMyShelvesEndpoint(
 		if err != nil {
 			return handleError(err)
 		}
-		userId := tokenInfo.UserId
-		shelves, err := getShelvesFunc(ctx, []core.UserId{userId})
+		userIdReq := []core.UserId{tokenInfo.UserId}
+		err = applyReservation(ctx, userIdReq)
+		if err != nil {
+			return handleError(err)
+		}
+		shelves, err := getShelvesFunc(ctx, userIdReq)
 		if err != nil {
 			return handleError(err)
 		}

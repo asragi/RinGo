@@ -214,3 +214,13 @@ CREATE TABLE IF NOT EXISTS ringo.reservations(
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
     FOREIGN KEY (`user_id`, `shelf_index`) REFERENCES `shelves` (`user_id`, `shelf_index`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS ringo.scores(
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` varchar(40) NOT NULL,
+    `total_score` int(11) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX `created_at_index` (`created_at`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

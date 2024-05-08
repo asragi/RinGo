@@ -13,6 +13,7 @@ import (
 func TestCreateApplyReservation(t *testing.T) {
 	type testCase struct {
 		userIds             []core.UserId
+		mockItemMaster      []*game.GetItemMasterRes
 		mockReservations    []*ReservationRow
 		mockShelves         []*shelf.ShelfRepoRow
 		mockStorage         []*game.BatchGetStorageRes
@@ -89,6 +90,9 @@ func TestCreateApplyReservation(t *testing.T) {
 		) ([]*ReservationRow, error) {
 			return tc.mockReservations, nil
 		}
+		mockItemMasterRes := func(ctx context.Context, itemIds []core.ItemId) ([]*game.GetItemMasterRes, error) {
+			return tc.mockItemMaster, nil
+		}
 		mockDeleteReservation := func(ctx context.Context, ids []Id) error {
 			return nil
 		}
@@ -118,6 +122,8 @@ func TestCreateApplyReservation(t *testing.T) {
 		}
 		mockCalcApplication := func(
 			users []core.UserId,
+			initialPopularity []*shelf.UserPopularity,
+			itemMasterReq []*game.GetItemMasterRes,
 			fundData []*game.FundRes,
 			storageData []*game.StorageData,
 			shelves []*shelf.ShelfRepoRow,
@@ -137,6 +143,7 @@ func TestCreateApplyReservation(t *testing.T) {
 		apply := CreateApplyReservation(
 			mockFetchReservation,
 			mockDeleteReservation,
+			mockItemMasterRes,
 			mockFetchStorage,
 			mockFetchPop,
 			mockFetchShelf,

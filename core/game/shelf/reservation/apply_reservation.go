@@ -14,6 +14,7 @@ type ApplyReservationFunc func(context.Context, []core.UserId) error
 func CreateApplyReservation(
 	fetchReservation FetchReservationRepoFunc,
 	deleteReservation DeleteReservationRepoFunc,
+	fetchItemMaster game.FetchItemMasterFunc,
 	fetchUserStorage game.FetchStorageFunc,
 	fetchPopularity shelf.FetchUserPopularityFunc,
 	fetchShelf shelf.FetchShelf,
@@ -83,9 +84,26 @@ func CreateApplyReservation(
 		if err != nil {
 			return handleError(err)
 		}
+		itemIds := func() []core.ItemId {
+			var result []core.ItemId
+			for _, pair := range userItemPairs {
+				result = append(result, pair.ItemId)
+			}
+			return result
+		}()
+		itemMasterRes, err := fetchItemMaster(ctx, itemIds)
+		if err != nil {
+			return handleError(err)
+		}
+		popularity, err := fetchPopularity(ctx, userIds)
+		if err != nil {
+			return handleError(err)
+		}
 
 		calcApplyResult, err := calcApplication(
 			userIds,
+			popularity,
+			itemMasterRes,
 			fundData,
 			game.SpreadGetStorageRes(storageData),
 			allShelvesData,
@@ -100,10 +118,6 @@ func CreateApplyReservation(
 			return handleError(err)
 		}
 		err = updateShelfTotalSales(ctx, calcApplyResult.totalSales)
-		if err != nil {
-			return handleError(err)
-		}
-		popularity, err := fetchPopularity(ctx, userIds)
 		if err != nil {
 			return handleError(err)
 		}

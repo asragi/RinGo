@@ -1,6 +1,6 @@
 package utils
 
-func RClamp(value, min, max float64) float64 {
+func Clamp(value, min, max float64) float64 {
 	if value < min {
 		return min
 	}
@@ -8,4 +8,8 @@ func RClamp(value, min, max float64) float64 {
 		return max
 	}
 	return value
+}
+
+func AlmostEqual(a, b, epsilon float64) bool {
+	return a+epsilon > b && a-epsilon < b
 }

@@ -39,5 +39,9 @@ func ApplyReduction(s core.StaminaCost, reductionRate float64, reducibleRate Sta
 
 type EarningProb float32
 
-// ShopPopularity ranges from 0 to 1
-type ShopPopularity float64
+type PricePenalty float32
+
+func NewPricePenalty(basePrice core.Price) PricePenalty {
+	// 100 -> 1, 10000 -> 2, 1000000 -> 3
+	return PricePenalty(math.Log10(float64(basePrice)) / 2)
+}

@@ -182,6 +182,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		generateUUID,
 	)
 	reservationService := reservation.NewService(
+		infra.fetchItemMaster,
 		shelfService.UpdateTotalScore,
 		infra.fetchReservation,
 		infra.deleteReservation,
@@ -480,6 +481,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	getMyShelves := handler.CreateGetMyShelvesHandler(
 		endpoint.CreateGetMyShelvesEndpoint(
 			functions.shelfServices.GetShelves,
+			functions.reservationServices.ApplyReservation,
 			functions.validateToken,
 		),
 		functions.createContext,

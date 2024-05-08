@@ -38,7 +38,7 @@ func calcModifiedPurchaseProbability(
 	const MinProbability float64 = 0
 	maxProbability := math.Min(MaxProbability, float64(baseProbability)*2)
 	priceRatio := float32(setPrice) / float32(price)
-	penaltyPower := calcPricePenalty(price)
+	penaltyPower := game.NewPricePenalty(price)
 	poweredRatio := math.Pow(float64(priceRatio), float64(penaltyPower))
 	if priceRatio >= 1 {
 		return ModifiedPurchaseProbability(float64(baseProbability) / poweredRatio)
@@ -46,7 +46,7 @@ func calcModifiedPurchaseProbability(
 	failedProbability := 1 - float64(baseProbability)
 	modifiedFailedProbability := failedProbability * poweredRatio
 	return ModifiedPurchaseProbability(
-		utils.RClamp(1.0-modifiedFailedProbability, MinProbability, maxProbability),
+		utils.Clamp(1.0-modifiedFailedProbability, MinProbability, maxProbability),
 	)
 }
 
@@ -92,7 +92,7 @@ func calcPurchaseDuration(customerNum CustomerNumPerHour) time.Duration {
 }
 
 func calcCustomerNumPerHour(
-	shopPopularity game.ShopPopularity,
+	shopPopularity shelf.ShopPopularity,
 	shelfAttraction ShelfAttraction,
 ) CustomerNumPerHour {
 	return CustomerNumPerHour(int((0.5 + float64(shopPopularity)) * float64(shelfAttraction)))
@@ -114,7 +114,7 @@ func calcItemAttraction(
 	const MaxAttractionRatio float64 = 4.0
 	const MinAttractionRatio float64 = 0.25
 	priceRatio := float32(setPrice) / float32(basePrice)
-	penaltyPower := calcPricePenalty(basePrice)
+	penaltyPower := game.NewPricePenalty(basePrice)
 	return ModifiedItemAttraction(
 		math.Min(
 			math.Max(
@@ -124,11 +124,4 @@ func calcItemAttraction(
 			MaxAttractionRatio*float64(baseAttraction),
 		),
 	)
-}
-
-type PricePenalty float32
-
-func calcPricePenalty(basePrice core.Price) PricePenalty {
-	// 100 -> 1, 10000 -> 2, 1000000 -> 3
-	return PricePenalty(math.Log10(float64(basePrice)) / 2)
 }

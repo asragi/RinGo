@@ -8,14 +8,17 @@ import (
 )
 
 type calcReservationResult struct {
-	calculatedFund []*game.UserFundPair
-	afterStorage   []*game.StorageData
-	totalSales     []*shelf.TotalSalesReq
-	soldItems      []*shelf.SoldItem
+	calculatedFund  []*game.UserFundPair
+	afterStorage    []*game.StorageData
+	totalSales      []*shelf.TotalSalesReq
+	soldItems       []*shelf.SoldItem
+	afterPopularity []*shelf.UserPopularity
 }
 
 type calcReservationApplicationFunc func(
 	users []core.UserId,
+	initialPopularity []*shelf.UserPopularity,
+	itemMasterReq []*game.GetItemMasterRes,
 	fundData []*game.FundRes,
 	storageData []*game.StorageData,
 	shelves []*shelf.ShelfRepoRow,
@@ -24,6 +27,8 @@ type calcReservationApplicationFunc func(
 
 func calcReservationApplication(
 	users []core.UserId,
+	initialPopularityArray []*shelf.UserPopularity,
+	itemMasterReq []*game.GetItemMasterRes,
 	fundData []*game.FundRes,
 	storageData []*game.StorageData,
 	shelves []*shelf.ShelfRepoRow,
@@ -32,6 +37,14 @@ func calcReservationApplication(
 	handleError := func(err error) (*calcReservationResult, error) {
 		return nil, fmt.Errorf("calc reservation application: %w", err)
 	}
+	itemMasterMap := game.ItemMasterResToMap(itemMasterReq)
+	initialPopularityMap := func() map[core.UserId]*shelf.UserPopularity {
+		result := make(map[core.UserId]*shelf.UserPopularity)
+		for _, p := range initialPopularityArray {
+			result[p.UserId] = p
+		}
+		return result
+	}()
 	shelfMap := func() map[core.UserId]map[shelf.Index]*shelf.ShelfRepoRow {
 		result := make(map[core.UserId]map[shelf.Index]*shelf.ShelfRepoRow)
 		for _, s := range shelves {
@@ -84,18 +97,27 @@ func calcReservationApplication(
 		}
 		return result
 	}()
+	afterPopularityForAllUser := make([]*shelf.UserPopularity, len(users))
 	appliedFunds := make([]*game.UserFundPair, len(users))
 	appliedStorages := make([]*game.StorageData, 0)
 	appliedShelfSales := make([]*shelf.TotalSalesReq, 0)
+	soldItems := make([]*shelf.SoldItem, 0)
 	for i, user := range users {
 		reservations := reservationMap[user]
 		itemArr := itemIdMap[user]
 		totalFund := fundMap[user].Fund
+		initialPopularity := initialPopularityMap[user]
+		afterPopularityForUser := initialPopularity.Popularity
 		for _, itemId := range itemArr {
 			if _, ok := reservations[itemId]; !ok {
 				continue
 			}
+			itemMaster := itemMasterMap[itemId]
 			reservationsToItem := reservations[itemId]
+			if len(reservationsToItem) == 0 {
+				// This should not happen
+				continue
+			}
 			index := reservationsToItem[0].Index
 			targetShelf := shelfMap[user][index]
 			purchaseNumArr := func() []core.Count {
@@ -108,77 +130,102 @@ func calcReservationApplication(
 			storageStock := storageMap[user][itemId].Stock
 			setPrice := targetShelf.SetPrice
 			totalSalesBefore := targetShelf.TotalSales
-			afterStock, itemProfit, totalSalesPerItem, err := calcPurchaseResultPerItem(
+			calcPurchasePerItemResult, err := calcPurchaseResultPerItem(
+				user,
 				storageStock,
+				afterPopularityForUser,
 				purchaseNumArr,
+				itemMaster.Price,
 				setPrice,
 			)
 			if err != nil {
 				return handleError(err)
 			}
+			afterPopularityForUser = calcPurchasePerItemResult.afterPopularity
 			appliedStorages = append(
 				appliedStorages, &game.StorageData{
 					UserId:  user,
 					ItemId:  itemId,
-					Stock:   afterStock,
+					Stock:   calcPurchasePerItemResult.afterStock,
 					IsKnown: true,
 				},
 			)
 			appliedShelfSales = append(
 				appliedShelfSales, &shelf.TotalSalesReq{
 					Id:         targetShelf.Id,
-					TotalSales: totalSalesBefore.TotalingSales(totalSalesPerItem),
+					TotalSales: totalSalesBefore.TotalingSales(calcPurchasePerItemResult.totalSalesFigures),
 				},
 			)
-			totalFund = totalFund.AddFund(itemProfit)
+			totalFund = totalFund.AddFund(calcPurchasePerItemResult.totalProfit)
+			soldItems = append(soldItems, calcPurchasePerItemResult.soldItems...)
 		}
 		appliedFunds[i] = &game.UserFundPair{
 			UserId: user,
 			Fund:   totalFund,
 		}
+		afterPopularityForAllUser[i] = &shelf.UserPopularity{
+			UserId:     user,
+			Popularity: afterPopularityForUser,
+		}
 	}
 
 	return &calcReservationResult{
-		calculatedFund: appliedFunds,
-		afterStorage:   appliedStorages,
-		totalSales:     appliedShelfSales,
-		soldItems:      nil,
+		calculatedFund:  appliedFunds,
+		afterStorage:    appliedStorages,
+		totalSales:      appliedShelfSales,
+		soldItems:       soldItems,
+		afterPopularity: afterPopularityForAllUser,
 	}, nil
 }
 
+type calcPurchaseResult struct {
+	afterStock        core.Stock
+	afterPopularity   shelf.ShopPopularity
+	totalProfit       core.Profit
+	totalSalesFigures core.SalesFigures
+	soldItems         []*shelf.SoldItem
+}
+
 func calcPurchaseResultPerItem(
+	userId core.UserId,
 	initialStock core.Stock,
+	initialPopularity shelf.ShopPopularity,
 	purchaseNumArray []core.Count,
+	price core.Price,
 	setPrice shelf.SetPrice,
-) (core.Stock, core.Profit, core.SalesFigures, error) {
-	var loop func(core.Stock, []core.Count, shelf.SetPrice, int, core.Profit, core.SalesFigures) (
-		core.Stock,
-		core.Profit,
-		core.SalesFigures,
-		error,
-	)
-	loop = func(
-		restStock core.Stock,
-		purchaseNumArray []core.Count,
-		setPrice shelf.SetPrice,
-		i int,
-		totalProfit core.Profit,
-		totalSales core.SalesFigures,
-	) (core.Stock, core.Profit, core.SalesFigures, error) {
-		if i == len(purchaseNumArray) {
-			return restStock, totalProfit, totalSales, nil
-		}
-		purchaseNum := purchaseNumArray[i]
+) (*calcPurchaseResult, error) {
+	restStock := initialStock
+	resultPopularity := initialPopularity
+	totalSales := core.SalesFigures(0)
+	totalProfit := core.Profit(0)
+	soldItems := make([]*shelf.SoldItem, len(purchaseNumArray))
+	for i, purchaseNum := range purchaseNumArray {
 		if !restStock.CheckIsStockEnough(purchaseNum) {
-			return loop(restStock, purchaseNumArray, setPrice, i+1, totalProfit, totalSales)
+			lostPopularity := shelf.NewPopularityLost(price, setPrice)
+			resultPopularity = resultPopularity.AddPopularityChange(lostPopularity)
+			continue
 		}
 		reducedRestStock, err := restStock.SubStock(purchaseNum)
 		if err != nil {
-			return 0, 0, 0, err
+			return nil, fmt.Errorf("invalid reducing stock action: %w", err)
 		}
-		totalSalesAfter := totalSales.AddSalesFigures(purchaseNum)
-		profit := setPrice.CalculateProfit(purchaseNum)
-		return loop(reducedRestStock, purchaseNumArray, setPrice, i+1, totalProfit+profit, totalSalesAfter)
+		restStock = reducedRestStock
+		totalSales = totalSales.AddSalesFigures(purchaseNum)
+		totalProfit = totalProfit + setPrice.CalculateProfit(purchaseNum)
+		gainPopularity := shelf.NewPopularityGain(price, setPrice)
+		resultPopularity = resultPopularity.AddPopularityChange(gainPopularity)
+		soldItems[i] = &shelf.SoldItem{
+			UserId:      userId,
+			SetPrice:    setPrice,
+			Popularity:  resultPopularity,
+			PurchaseNum: purchaseNum,
+		}
 	}
-	return loop(initialStock, purchaseNumArray, setPrice, 0, 0, 0)
+	return &calcPurchaseResult{
+		afterStock:        restStock,
+		afterPopularity:   resultPopularity,
+		totalProfit:       totalProfit,
+		totalSalesFigures: totalSales,
+		soldItems:         soldItems,
+	}, nil
 }

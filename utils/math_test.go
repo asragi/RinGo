@@ -19,7 +19,7 @@ func TestRClamp(t *testing.T) {
 	} {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				if got := RClamp(tc.value, tc.min, tc.max); got != tc.expected {
+				if got := Clamp(tc.value, tc.min, tc.max); got != tc.expected {
 					t.Errorf("Expected %f, got %f", tc.expected, got)
 				}
 			},

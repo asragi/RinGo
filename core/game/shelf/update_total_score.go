@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/core/game"
 )
 
 type SoldItem struct {
-	UserId   core.UserId
-	SetPrice SetPrice
+	UserId      core.UserId
+	SetPrice    SetPrice
+	Popularity  ShopPopularity
+	PurchaseNum core.Count
 }
 
 type UserPopularity struct {
-	UserId     core.UserId
-	Popularity game.ShopPopularity
+	UserId     core.UserId    `db:"user_id" json:"user_id"`
+	Popularity ShopPopularity `db:"popularity" json:"popularity"`
 }
 
 func userPopToId(popPair []*UserPopularity) []core.UserId {

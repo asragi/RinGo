@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/handler"
 	"github.com/asragi/RinGo/server"
 	"log"
@@ -15,7 +15,7 @@ func main() {
 	constants := &server.Constants{
 		InitialFund:       core.Fund(100000),
 		InitialMaxStamina: core.MaxStamina(6000),
-		InitialPopularity: game.ShopPopularity(0),
+		InitialPopularity: shelf.ShopPopularity(0),
 	}
 
 	writeLogger := handler.LogHttpWrite

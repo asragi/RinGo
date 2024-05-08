@@ -3,7 +3,6 @@ package reservation
 import (
 	"context"
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
 	"testing"
@@ -78,7 +77,7 @@ func TestCreateInsertReservation(t *testing.T) {
 			updatedItemSetPrice shelf.SetPrice,
 			baseProbability PurchaseProbability,
 			targetUserId core.UserId,
-			shopPopularity game.ShopPopularity,
+			shopPopularity shelf.ShopPopularity,
 			shelves []*shelfArg,
 			rand core.EmitRandomFunc,
 			getCurrentTime core.GetCurrentTimeFunc,

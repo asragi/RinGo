@@ -2,7 +2,8 @@ package shelf
 
 import (
 	"github.com/asragi/RinGo/core"
-	"github.com/asragi/RinGo/core/game"
+	"github.com/asragi/RinGo/utils"
+	"math"
 )
 
 type (
@@ -49,7 +50,37 @@ func NewTotalScore(gainingScore GainingScore, beforeTotalScore TotalScore) Total
 
 type GainingScore int
 
-func NewGainingScore(setPrice SetPrice, popularity game.ShopPopularity) GainingScore {
+func NewGainingScore(setPrice SetPrice, popularity ShopPopularity) GainingScore {
 	score := float64(setPrice) * (float64(popularity) + 1)
 	return GainingScore(int(score))
+}
+
+func NewPopularityGain(price core.Price, setPrice SetPrice) PopularityChange {
+	const percent = 0.01
+	const BasePopularityGain = 0.1 * percent
+	const MinPopularityGain = 0.005 * percent
+	const MaxPopularityGain = 0.5 * percent
+	priceEffect := math.Pow(2, math.Log10(float64(price)/100))
+	setPriceEffect := float64(price) / float64(setPrice)
+	return PopularityChange(
+		utils.Clamp(
+			BasePopularityGain*priceEffect*setPriceEffect,
+			MinPopularityGain,
+			MaxPopularityGain,
+		),
+	)
+}
+
+func NewPopularityLost(price core.Price, setPrice SetPrice) PopularityChange {
+	const lostRate = 2
+	return -1 * lostRate * NewPopularityGain(price, setPrice)
+}
+
+type PopularityChange float64
+
+// ShopPopularity ranges from 0 to 1
+type ShopPopularity float64
+
+func (p ShopPopularity) AddPopularityChange(change PopularityChange) ShopPopularity {
+	return ShopPopularity(utils.Clamp(float64(p)+float64(change), 0, 1))
 }

@@ -5,12 +5,15 @@ import (
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
+	"github.com/asragi/RinGo/utils"
 	"testing"
 )
 
 func TestCalcReservationApplication(t *testing.T) {
 	type testCase struct {
 		users              []core.UserId
+		initialPopularity  []*shelf.UserPopularity
+		mockItemMaster     []*game.GetItemMasterRes
 		fundData           []*game.FundRes
 		storageData        []*game.StorageData
 		shelves            []*shelf.ShelfRepoRow
@@ -23,6 +26,26 @@ func TestCalcReservationApplication(t *testing.T) {
 	testCases := []testCase{
 		{
 			users: []core.UserId{"1", "2"},
+			initialPopularity: []*shelf.UserPopularity{
+				{
+					UserId:     "1",
+					Popularity: 0.5,
+				},
+				{
+					UserId:     "2",
+					Popularity: 0.5,
+				},
+			},
+			mockItemMaster: []*game.GetItemMasterRes{
+				{
+					ItemId: "1",
+					Price:  50,
+				},
+				{
+					ItemId: "2",
+					Price:  400,
+				},
+			},
 			fundData: []*game.FundRes{
 				{UserId: "1", Fund: 100},
 				{UserId: "2", Fund: 200},
@@ -62,6 +85,8 @@ func TestCalcReservationApplication(t *testing.T) {
 	for _, tc := range testCases {
 		result, err := calcReservationApplication(
 			tc.users,
+			tc.initialPopularity,
+			tc.mockItemMaster,
 			tc.fundData,
 			tc.storageData,
 			tc.shelves,
@@ -96,45 +121,63 @@ func TestCalcReservationApplication(t *testing.T) {
 
 func TestCalcPurchaseResultPerItem(t *testing.T) {
 	type testCase struct {
-		initialStock     core.Stock
-		purchaseNumArray []core.Count
-		setPrice         shelf.SetPrice
-		expectedStock    core.Stock
-		expectedProfit   core.Profit
-		expectedSales    core.SalesFigures
+		userId             core.UserId
+		initialStock       core.Stock
+		initialPopularity  shelf.ShopPopularity
+		purchaseNumArray   []core.Count
+		price              core.Price
+		setPrice           shelf.SetPrice
+		expectedStock      core.Stock
+		expectedProfit     core.Profit
+		expectedSales      core.SalesFigures
+		expectedPopularity shelf.ShopPopularity
 	}
 
 	testCases := []testCase{
 		{
-			10,
-			[]core.Count{1, 2, 3},
-			100,
-			4,
-			600,
-			6,
+			userId:             "1",
+			initialStock:       10,
+			initialPopularity:  0.5,
+			purchaseNumArray:   []core.Count{1, 2, 3},
+			price:              50,
+			setPrice:           100,
+			expectedStock:      4,
+			expectedProfit:     600,
+			expectedSales:      6,
+			expectedPopularity: 0.501218,
 		},
 		{
-			2,
-			[]core.Count{1, 2, 3},
-			100,
-			1,
-			100,
-			1,
+			userId:             "1",
+			initialStock:       2,
+			initialPopularity:  0.5,
+			purchaseNumArray:   []core.Count{1, 2, 3},
+			price:              50,
+			setPrice:           100,
+			expectedStock:      1,
+			expectedProfit:     100,
+			expectedSales:      1,
+			expectedPopularity: 0.498782,
 		},
 		{
-			3,
-			[]core.Count{1, 3, 2},
-			100,
-			0,
-			300,
-			3,
+			userId:             "1",
+			initialStock:       3,
+			initialPopularity:  0.5,
+			purchaseNumArray:   []core.Count{1, 3, 2},
+			price:              50,
+			setPrice:           100,
+			expectedProfit:     300,
+			expectedSales:      3,
+			expectedPopularity: 0.5,
 		},
 	}
 
 	for _, tc := range testCases {
-		actualStock, actualProfit, actualSales, err := calcPurchaseResultPerItem(
+		result, err := calcPurchaseResultPerItem(
+			tc.userId,
 			tc.initialStock,
+			tc.initialPopularity,
 			tc.purchaseNumArray,
+			tc.price,
 			tc.setPrice,
 		)
 		if err != nil {
@@ -146,6 +189,9 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 				err,
 			)
 		}
+		actualStock := result.afterStock
+		actualProfit := result.totalProfit
+		actualSales := result.totalSalesFigures
 		if actualStock != tc.expectedStock || actualProfit != tc.expectedProfit || actualSales != tc.expectedSales {
 			t.Errorf(
 				"calcPurchaseResultPerItem(%d, %v, %d) = (%d, %d, %d), want (%d, %d, %d)",
@@ -158,6 +204,19 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 				tc.expectedStock,
 				tc.expectedProfit,
 				tc.expectedSales,
+			)
+		}
+
+		actualPopularity := result.afterPopularity
+		epsilon := 0.00001
+		if !utils.AlmostEqual(float64(actualPopularity), float64(tc.expectedPopularity), epsilon) {
+			t.Errorf(
+				"calcPurchaseResultPerItem(%d, %v, %d) = %.9f, want %f",
+				tc.initialStock,
+				tc.purchaseNumArray,
+				tc.setPrice,
+				actualPopularity,
+				tc.expectedPopularity,
 			)
 		}
 	}
