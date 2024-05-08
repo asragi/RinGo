@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ringo.users(
     `shop_name` varchar(40) NOT NULL,
     `fund` bigint(20) NOT NULL,
     `max_stamina` mediumint(6) NOT NULL,
-    `popularity` smallint(4) NOT NULL,
+    `popularity` float(7, 6) NOT NULL,
     `stamina_recover_time` DATETIME NOT NULL,
     `hashed_password` varchar(64),
     PRIMARY KEY (`id`),
@@ -219,8 +219,9 @@ CREATE TABLE IF NOT EXISTS ringo.scores(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(40) NOT NULL,
     `total_score` int(11) NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `date` DATE NOT NULL,
     PRIMARY KEY (`id`),
-    INDEX `created_at_index` (`created_at`),
+    INDEX `date_index` (`date`),
+    CONSTRAINT user_date_pair UNIQUE (`user_id`, `date`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

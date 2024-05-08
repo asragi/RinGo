@@ -73,9 +73,14 @@ func calcReservationApplication(
 		for _, r := range reservationsRow {
 			index := r.Index
 			itemId := shelfMap[r.TargetUser][index].ItemId
-			if _, ok := itemIdAlreadyAdded[r.TargetUser]; ok {
+			// Fix it
+			if _, ok := itemIdAlreadyAdded[r.TargetUser]; !ok {
+				itemIdAlreadyAdded[r.TargetUser] = make(map[core.ItemId]struct{})
+			}
+			if _, ok := itemIdAlreadyAdded[r.TargetUser][itemId]; ok {
 				continue
 			}
+			itemIdAlreadyAdded[r.TargetUser][itemId] = struct{}{}
 			result[r.TargetUser] = append(result[r.TargetUser], itemId)
 		}
 		return result
@@ -198,8 +203,8 @@ func calcPurchaseResultPerItem(
 	resultPopularity := initialPopularity
 	totalSales := core.SalesFigures(0)
 	totalProfit := core.Profit(0)
-	soldItems := make([]*shelf.SoldItem, len(purchaseNumArray))
-	for i, purchaseNum := range purchaseNumArray {
+	soldItems := make([]*shelf.SoldItem, 0)
+	for _, purchaseNum := range purchaseNumArray {
 		if !restStock.CheckIsStockEnough(purchaseNum) {
 			lostPopularity := shelf.NewPopularityLost(price, setPrice)
 			resultPopularity = resultPopularity.AddPopularityChange(lostPopularity)
@@ -214,12 +219,13 @@ func calcPurchaseResultPerItem(
 		totalProfit = totalProfit + setPrice.CalculateProfit(purchaseNum)
 		gainPopularity := shelf.NewPopularityGain(price, setPrice)
 		resultPopularity = resultPopularity.AddPopularityChange(gainPopularity)
-		soldItems[i] = &shelf.SoldItem{
+		soldItem := &shelf.SoldItem{
 			UserId:      userId,
 			SetPrice:    setPrice,
 			Popularity:  resultPopularity,
 			PurchaseNum: purchaseNum,
 		}
+		soldItems = append(soldItems, soldItem)
 	}
 	return &calcPurchaseResult{
 		afterStock:        restStock,

@@ -30,7 +30,7 @@ type UpdateTotalScoreServiceFunc func(context.Context, []*UserPopularity, []*Sol
 
 func CreateUpdateTotalScoreService(
 	fetchScore FetchUserScore,
-	updateScore UpdateScoreFunc,
+	updateScore UpsertScoreFunc,
 	currentTime core.GetCurrentTimeFunc,
 ) UpdateTotalScoreServiceFunc {
 	return func(
@@ -57,7 +57,12 @@ func CreateUpdateTotalScoreService(
 		resultScoreReq := make([]*UserScorePair, len(userIds))
 		for i, v := range userPopularity {
 			userId := v.UserId
-			beforeTotalScore := userScoreMap[v.UserId]
+			beforeTotalScore := func() TotalScore {
+				if score, ok := userScoreMap[userId]; ok {
+					return score
+				}
+				return 0
+			}()
 			resultTotalScore := beforeTotalScore
 			for _, soldItem := range soldItems {
 				if soldItem.UserId != userId {
@@ -71,7 +76,7 @@ func CreateUpdateTotalScoreService(
 				TotalScore: resultTotalScore,
 			}
 		}
-		err = updateScore(ctx, resultScoreReq)
+		err = updateScore(ctx, resultScoreReq, currentTime())
 		if err != nil {
 			return handleError(err)
 		}

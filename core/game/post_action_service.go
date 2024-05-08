@@ -135,7 +135,7 @@ func createGeneratePostActionArgs(
 			exploreId:              exploreId,
 			execCount:              execCount,
 			userFund:               userResources.Fund,
-			userStamina:            core.StaminaRecoverTime{},
+			userStamina:            userResources.StaminaRecoverTime,
 			exploreMaster:          exploreMasters[0],
 			skillGrowthList:        skillGrowthList,
 			skillsRes:              skillsRes,

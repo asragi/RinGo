@@ -22,9 +22,14 @@ type ReservationRow struct {
 }
 
 func ReservationRowsToUserIdArray(rows []*ReservationRow) []core.UserId {
-	userIdArray := make([]core.UserId, len(rows))
-	for i, r := range rows {
-		userIdArray[i] = r.UserId
+	checked := make(map[core.UserId]struct{})
+	userIdArray := make([]core.UserId, 0)
+	for _, r := range rows {
+		if _, ok := checked[r.UserId]; ok {
+			continue
+		}
+		checked[r.UserId] = struct{}{}
+		userIdArray = append(userIdArray, r.UserId)
 	}
 	return userIdArray
 }

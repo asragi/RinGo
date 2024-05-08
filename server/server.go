@@ -1,7 +1,6 @@
 package server
 
 import (
-	"flag"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
@@ -11,6 +10,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/crypto"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/debug"
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/handler"
 	"github.com/asragi/RinGo/infrastructure/in_memory"
@@ -53,7 +53,7 @@ type infrastructuresStruct struct {
 	updateFund                game.UpdateFundFunc
 
 	fetchScore            shelf.FetchUserScore
-	updateScore           shelf.UpdateScoreFunc
+	updateScore           shelf.UpsertScoreFunc
 	fetchShelf            shelf.FetchShelf
 	fetchSizeToAction     shelf.FetchSizeToActionRepoFunc
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc
@@ -61,6 +61,7 @@ type infrastructuresStruct struct {
 	insertEmptyShelf      shelf.InsertEmptyShelfFunc
 	deleteShelfBySize     shelf.DeleteShelfBySizeFunc
 
+	updatePopularity         shelf.UpdateUserPopularityFunc
 	fetchReservation         reservation.FetchReservationRepoFunc
 	deleteReservation        reservation.DeleteReservationRepoFunc
 	fetchItemAttraction      reservation.FetchItemAttractionFunc
@@ -68,7 +69,7 @@ type infrastructuresStruct struct {
 	insertReservationRepo    reservation.InsertReservationRepoFunc
 	deleteReservationToShelf reservation.DeleteReservationToShelfRepoFunc
 
-	getTime core.GetCurrentTimeFunc
+	timer *debug.Timer
 }
 
 type functionContainer struct {
@@ -82,6 +83,10 @@ type functionContainer struct {
 	gameServices        *game.Services
 	shelfServices       *shelf.Services
 	reservationServices *reservation.Service
+}
+
+func parseArgs() *debug.RunMode {
+	return debug.NewRunMode()
 }
 
 func createDB() (*database.DBAccessor, error) {
@@ -104,9 +109,10 @@ func createDB() (*database.DBAccessor, error) {
 	return database.NewDBAccessor(db, db), nil
 }
 
-func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *functionContainer {
+func createFunction(infra *infrastructuresStruct) *functionContainer {
 	random := core.RandomEmitter{}
-	getTime := infra.getTime
+	getTime := infra.timer.EmitTime
+	// TODO: secret key must be got from environment variable
 	key := auth.SecretHashKey("tmp")
 	sha256Func := func(key *auth.SecretHashKey, text *string) (*string, error) {
 		keyString := string(*key)
@@ -191,6 +197,7 @@ func createFunction(db *database.DBAccessor, infra *infrastructuresStruct) *func
 		infra.fetchShelf,
 		infra.fetchFund,
 		infra.updateFund,
+		infra.updatePopularity,
 		infra.updateStorage,
 		infra.updateShelfTotalSales,
 		infra.fetchItemAttraction,
@@ -258,8 +265,9 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	updateStorage := mysql.CreateUpdateItemStorage(db.Exec)
 	updateStamina := mysql.CreateUpdateStamina(db.Exec)
 
+	updatePopularity := mysql.CreateUpdateUserPopularity(db.Exec)
 	fetchScore := mysql.CreateFetchScore(dbQuery)
-	updateScore := mysql.CreateUpdateScore(db.Exec)
+	updateScore := mysql.CreateUpsertScore(db.Exec)
 	fetchUserShelf := mysql.CreateFetchShelfRepo(dbQuery)
 	updateShelfContent := mysql.CreateUpdateShelfContentRepo(db.Exec)
 	updateTotalSales := mysql.CreateUpdateTotalSales(db.Exec)
@@ -311,13 +319,14 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		updateShelfContent:        updateShelfContent,
 		insertEmptyShelf:          insertEmpty,
 		deleteShelfBySize:         deleteShelfBySize,
+		updatePopularity:          updatePopularity,
 		fetchReservation:          fetchReservation,
 		deleteReservation:         deleteReservation,
 		fetchItemAttraction:       fetchItemAttraction,
 		fetchUserPopularity:       fetchUserPopularity,
 		insertReservationRepo:     insertReservation,
 		deleteReservationToShelf:  deleteReservationToShelf,
-		getTime:                   getTime,
+		timer:                     debug.NewTimer(time.Now),
 	}, nil
 }
 
@@ -330,6 +339,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	handleError := func(err error) (error, CloseDB, Serve) {
 		return fmt.Errorf("initialize server: %w", err), closeDB, serve
 	}
+	runMode := parseArgs()
 
 	db, err := createDB()
 	closeDB = db.Close
@@ -341,7 +351,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	if err != nil {
 		return handleError(err)
 	}
-	functions := createFunction(db, infrastructures)
+	functions := createFunction(infrastructures)
 	updateUserNameHandler := handler.CreateUpdateUserNameHandler(
 		endpoint.CreateUpdateUserNameEndpoint(
 			functions.coreServices.UpdateUserName,
@@ -386,7 +396,7 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	)
 	getStageListHandler := handler.CreateGetStageListHandler(
 		diContainer.GetAllStage,
-		infrastructures.getTime,
+		infrastructures.timer.EmitTime,
 		endpoint.CreateGetStageList,
 		explore.FetchStageDataRepositories{
 			FetchAllStage:             infrastructures.fetchAllStage,
@@ -566,14 +576,26 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			Handler:          postActionHandler,
 		},
 	}
-	devMode := flag.Bool("dev", false, "Run in dev mode")
-	flag.Parse()
-	if *devMode {
+	if runMode.IsDevMode() {
+		mockTimeHandler := debug.ChangeMockTimeHandler(infrastructures.timer)
 		devRoute := []*router.HandleDataRaw{
 			{
 				SamplePathString: "/dev/health",
 				Method:           router.GET,
 				Handler:          devHealth,
+			},
+			{
+				SamplePathString: "/dev/time",
+				Method:           router.POST,
+				Handler:          mockTimeHandler,
+			},
+			{
+				SamplePathString: "/dev/test",
+				Method:           router.GET,
+				Handler: func(w http.ResponseWriter, _ *http.Request) {
+					currentTime := infrastructures.timer.EmitTime()
+					_, _ = fmt.Fprintln(w, currentTime)
+				},
 			},
 		}
 		handleData = append(handleData, devRoute...)

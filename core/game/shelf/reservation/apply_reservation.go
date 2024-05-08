@@ -20,6 +20,7 @@ func CreateApplyReservation(
 	fetchShelf shelf.FetchShelf,
 	fetchFund game.FetchFundFunc,
 	updateFund game.UpdateFundFunc,
+	updatePopularity shelf.UpdateUserPopularityFunc,
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
 	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
@@ -114,6 +115,10 @@ func CreateApplyReservation(
 			return handleError(err)
 		}
 		err = updateFund(ctx, calcApplyResult.calculatedFund)
+		if err != nil {
+			return handleError(err)
+		}
+		err = updatePopularity(ctx, calcApplyResult.afterPopularity)
 		if err != nil {
 			return handleError(err)
 		}

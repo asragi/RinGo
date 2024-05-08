@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-// common
-type CreatedAt time.Time
-type UpdatedAt time.Time
-
-// user
 type UserId string
 
 func CreateUserId(userId string) (UserId, error) {
@@ -102,21 +97,13 @@ func (recoverTime StaminaRecoverTime) CalcStamina(currentTime time.Time, maxStam
 }
 
 func CalcAfterStamina(
-	beforeStaminaTime StaminaRecoverTime,
-	reducedStaminaValue StaminaCost,
+	currentStamina StaminaRecoverTime,
+	reduceStamina StaminaCost,
 ) StaminaRecoverTime {
-	return CalcStaminaRecoverTimeOnReduce(
-		beforeStaminaTime,
-		reducedStaminaValue,
-	)
-}
-
-func CalcStaminaRecoverTimeOnReduce(currentStamina StaminaRecoverTime, reduceStamina StaminaCost) StaminaRecoverTime {
 	extendTime := int64(float64(reduceStamina) * StaminaSec)
-	return StaminaRecoverTime(time.Unix(time.Time(currentStamina).Unix()+extendTime, 0))
+	return StaminaRecoverTime(time.Time(currentStamina).Add(time.Second * time.Duration(extendTime)))
 }
 
-// display
 type DisplayName string
 
 func (name DisplayName) String() string {

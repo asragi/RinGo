@@ -20,6 +20,7 @@ import (
 type userTest struct {
 	UserId             core.UserId          `db:"user_id"`
 	Name               core.Name            `db:"name"`
+	ShopName           core.Name            `db:"shop_name"`
 	MaxStamina         core.MaxStamina      `db:"max_stamina"`
 	Fund               core.Fund            `db:"fund"`
 	StaminaRecoverTime time.Time            `db:"stamina_recover_time"`
@@ -35,6 +36,7 @@ func createTestUser(options ...ApplyUserTestOption) *userTest {
 	user := userTest{
 		UserId:             "created-test-user",
 		Name:               "test-name",
+		ShopName:           "test-shop-name",
 		MaxStamina:         6000,
 		Fund:               100000,
 		StaminaRecoverTime: test.MockTime(),

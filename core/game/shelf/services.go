@@ -15,7 +15,7 @@ type Services struct {
 
 func NewService(
 	fetchScore FetchUserScore,
-	updateScore UpdateScoreFunc,
+	updateScore UpsertScoreFunc,
 	fetchStorage game.FetchStorageFunc,
 	fetchItemMaster game.FetchItemMasterFunc,
 	fetchShelf FetchShelf,

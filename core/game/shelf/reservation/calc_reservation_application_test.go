@@ -7,6 +7,7 @@ import (
 	"github.com/asragi/RinGo/test"
 	"github.com/asragi/RinGo/utils"
 	"testing"
+	"time"
 )
 
 func TestCalcReservationApplication(t *testing.T) {
@@ -62,20 +63,21 @@ func TestCalcReservationApplication(t *testing.T) {
 			},
 			reservationsRow: []*Reservation{
 				{TargetUser: "1", Index: 1, ScheduledTime: test.MockTime(), PurchaseNum: 5},
+				{TargetUser: "1", Index: 1, ScheduledTime: test.MockTime().Add(time.Minute), PurchaseNum: 5},
 				{TargetUser: "1", Index: 2, ScheduledTime: test.MockTime(), PurchaseNum: 4},
 				{TargetUser: "2", Index: 1, ScheduledTime: test.MockTime(), PurchaseNum: 3},
 			},
 			expectedFund: []*game.UserFundPair{
-				{UserId: "1", Fund: 1400},
+				{UserId: "1", Fund: 1900},
 				{UserId: "2", Fund: 500},
 			},
 			expectedStorage: []*game.StorageData{
-				{UserId: "1", ItemId: "1", Stock: 96, IsKnown: true},
+				{UserId: "1", ItemId: "1", Stock: 91, IsKnown: true},
 				{UserId: "1", ItemId: "2", Stock: 197, IsKnown: true},
 				{UserId: "2", ItemId: "1", Stock: 199, IsKnown: true},
 			},
 			expectedTotalSales: []*shelf.TotalSalesReq{
-				{Id: "s1", TotalSales: 105},
+				{Id: "s1", TotalSales: 110},
 				{Id: "s2", TotalSales: 204},
 				{Id: "s3", TotalSales: 103},
 			},
@@ -104,7 +106,7 @@ func TestCalcReservationApplication(t *testing.T) {
 			)
 		}
 		if !test.DeepEqual(result.calculatedFund, tc.expectedFund) {
-			t.Errorf("fund = %+v, want %+v", result.calculatedFund, tc.expectedFund)
+			t.Errorf("fund = %+v, want %+v", utils.ToObjArray(result.calculatedFund), utils.ToObjArray(tc.expectedFund))
 		}
 		if !test.DeepEqual(result.afterStorage, tc.expectedStorage) {
 			for i, s := range result.afterStorage {
@@ -131,6 +133,7 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 		expectedProfit     core.Profit
 		expectedSales      core.SalesFigures
 		expectedPopularity shelf.ShopPopularity
+		expectedSoldItems  []*shelf.SoldItem
 	}
 
 	testCases := []testCase{
@@ -145,6 +148,23 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 			expectedProfit:     600,
 			expectedSales:      6,
 			expectedPopularity: 0.501218,
+			expectedSoldItems: []*shelf.SoldItem{
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 1,
+				},
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 2,
+				},
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 3,
+				},
+			},
 		},
 		{
 			userId:             "1",
@@ -157,6 +177,13 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 			expectedProfit:     100,
 			expectedSales:      1,
 			expectedPopularity: 0.498782,
+			expectedSoldItems: []*shelf.SoldItem{
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 1,
+				},
+			},
 		},
 		{
 			userId:             "1",
@@ -168,6 +195,18 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 			expectedProfit:     300,
 			expectedSales:      3,
 			expectedPopularity: 0.5,
+			expectedSoldItems: []*shelf.SoldItem{
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 1,
+				},
+				{
+					UserId:      "1",
+					SetPrice:    100,
+					PurchaseNum: 2,
+				},
+			},
 		},
 	}
 
@@ -218,6 +257,9 @@ func TestCalcPurchaseResultPerItem(t *testing.T) {
 				actualPopularity,
 				tc.expectedPopularity,
 			)
+		}
+		if len(result.soldItems) != len(tc.expectedSoldItems) {
+			t.Errorf("len(soldItems) = %d, want %d", len(result.soldItems), len(tc.expectedSoldItems))
 		}
 	}
 }

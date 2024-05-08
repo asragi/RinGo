@@ -123,12 +123,28 @@ func CreateUpdateTotalSales(dbExec database.DBExecFunc) shelf.UpdateShelfTotalSa
 		ctx context.Context,
 		reqs []*shelf.TotalSalesReq,
 	) error {
-		f := CreateExec[shelf.TotalSalesReq](
-			dbExec,
-			"update shelf total sales: %w",
-			"UPDATE ringo.shelves set total_sales = :total_sales WHERE shelf_id = :shelf_id",
+		shelfIdString, totalSalesString := func() (string, string) {
+			var shelfIds, totalSalesData []string
+			for _, r := range reqs {
+				shelfIds = append(shelfIds, fmt.Sprintf(`"%s"`, r.Id.String()))
+				totalSalesData = append(totalSalesData, fmt.Sprintf("%d", r.TotalSales))
+			}
+			return spreadString(shelfIds), spreadString(totalSalesData)
+		}()
+		_, err := dbExec(
+			ctx,
+			fmt.Sprintf(
+				`UPDATE ringo.shelves SET total_sales = ELT(FIELD(shelf_id,%s),%s) WHERE shelf_id IN (%s)`,
+				shelfIdString,
+				totalSalesString,
+				shelfIdString,
+			),
+			nil,
 		)
-		return f(ctx, reqs)
+		if err != nil {
+			return fmt.Errorf("update total sales: %w", err)
+		}
+		return nil
 	}
 }
 
@@ -182,9 +198,11 @@ func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
 	return func(ctx context.Context, userIds []core.UserId, currentTime time.Time) ([]*shelf.UserScorePair, error) {
 		userIdStrings := infrastructure.UserIdsToString(userIds)
 		spreadUserIdStrings := spreadString(userIdStrings)
+		dateString := currentTime.Format("2006-01-02")
 		query := fmt.Sprintf(
-			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s);`,
+			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s) AND date = "%s";`,
 			spreadUserIdStrings,
+			dateString,
 		)
 		rows, err := q(ctx, query, nil)
 		if err != nil {
@@ -204,35 +222,30 @@ func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
 	}
 }
 
-func CreateUpdateScore(exec database.DBExecFunc) shelf.UpdateScoreFunc {
-	return func(ctx context.Context, userScorePair []*shelf.UserScorePair) error {
-		userIds := func() []core.UserId {
-			var result []core.UserId
+func CreateUpsertScore(exec database.DBExecFunc) shelf.UpsertScoreFunc {
+	return func(ctx context.Context, userScorePair []*shelf.UserScorePair, currentTime time.Time) error {
+		type request struct {
+			UserId     core.UserId      `db:"user_id"`
+			TotalScore shelf.TotalScore `db:"total_score"`
+			Date       time.Time        `db:"date"`
+		}
+		req := func() []*request {
+			var result []*request
 			for _, v := range userScorePair {
-				result = append(result, v.UserId)
+				result = append(
+					result, &request{
+						UserId:     v.UserId,
+						TotalScore: v.TotalScore,
+						Date:       currentTime,
+					},
+				)
 			}
 			return result
 		}()
-		userIdString := infrastructure.UserIdsToString(userIds)
-		spreadUserId := spreadString(userIdString)
-		scores := func() []string {
-			result := make([]string, len(userScorePair))
-			for i, v := range userScorePair {
-				result[i] = fmt.Sprintf(`%d`, v.TotalScore)
-			}
-			return result
-		}()
-		spreadScores := spreadString(scores)
-
 		_, err := exec(
 			ctx,
-			fmt.Sprintf(
-				`UPDATE ringo.scores SET total_score = ELT(FIELD(user_id,%s),%s)	WHERE user_id IN (%s)`,
-				spreadUserId,
-				spreadScores,
-				spreadUserId,
-			),
-			nil,
+			`INSERT INTO ringo.scores (user_id, total_score, date) VALUES (:user_id, :total_score, :date) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
+			req,
 		)
 		if err != nil {
 			return fmt.Errorf("update score: %w", err)
@@ -265,5 +278,42 @@ func CreateFetchUserPopularity(queryFunc queryFunc) shelf.FetchUserPopularityFun
 			return nil, fmt.Errorf("user popularity not found")
 		}
 		return res, nil
+	}
+}
+
+func CreateUpdateUserPopularity(exec database.DBExecFunc) shelf.UpdateUserPopularityFunc {
+	return func(ctx context.Context, userPopularity []*shelf.UserPopularity) error {
+		userIds := func() []core.UserId {
+			var result []core.UserId
+			for _, v := range userPopularity {
+				result = append(result, v.UserId)
+			}
+			return result
+		}()
+		userIdString := infrastructure.UserIdsToString(userIds)
+		spreadUserId := spreadString(userIdString)
+		popularity := func() []string {
+			result := make([]string, len(userPopularity))
+			for i, v := range userPopularity {
+				result[i] = fmt.Sprintf(`%f`, v.Popularity)
+			}
+			return result
+		}()
+		spreadPopularity := spreadString(popularity)
+
+		_, err := exec(
+			ctx,
+			fmt.Sprintf(
+				`UPDATE ringo.users SET popularity = ELT(FIELD(user_id,%s),%s) WHERE user_id IN (%s)`,
+				spreadUserId,
+				spreadPopularity,
+				spreadUserId,
+			),
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("update popularity: %w", err)
+		}
+		return nil
 	}
 }

@@ -1,7 +1,9 @@
 package core
 
 import (
+	"github.com/asragi/RinGo/test"
 	"testing"
+	"time"
 )
 
 func TestUserId(t *testing.T) {
@@ -70,6 +72,30 @@ func TestCalcLv(t *testing.T) {
 		actual := v.input.CalcLv()
 		if v.expect != actual {
 			t.Errorf("Expect %d, actual %d", v.expect, actual)
+		}
+	}
+}
+
+func TestCalcAfterStamina(t *testing.T) {
+	type testCase struct {
+		initialStamina StaminaRecoverTime
+		stamina        StaminaCost
+		expectedTime   StaminaRecoverTime
+	}
+
+	testCases := []testCase{
+		{
+			initialStamina: StaminaRecoverTime(test.MockTime()),
+			stamina:        120,
+			expectedTime:   StaminaRecoverTime(test.MockTime().Add(time.Hour)),
+		},
+	}
+
+	for _, v := range testCases {
+		expected := time.Time(v.expectedTime)
+		actual := time.Time(CalcAfterStamina(v.initialStamina, v.stamina))
+		if !expected.Equal(actual) {
+			t.Errorf("Expect %s, actual %s", expected.Format(time.DateTime), actual.Format(time.DateTime))
 		}
 	}
 }

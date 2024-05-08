@@ -120,6 +120,7 @@ type UserScorePair struct {
 	UserId     core.UserId
 	TotalScore TotalScore
 }
-type UpdateScoreFunc func(context.Context, []*UserScorePair) error
+type UpsertScoreFunc func(context.Context, []*UserScorePair, time.Time) error
 
 type FetchUserPopularityFunc func(context.Context, []core.UserId) ([]*UserPopularity, error)
+type UpdateUserPopularityFunc func(context.Context, []*UserPopularity) error
