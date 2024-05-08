@@ -1,6 +1,7 @@
 package server
 
 import (
+	"flag"
 	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
@@ -565,6 +566,18 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			Handler:          postActionHandler,
 		},
 	}
+	devMode := flag.Bool("dev", false, "Run in dev mode")
+	flag.Parse()
+	if *devMode {
+		devRoute := []*router.HandleDataRaw{
+			{
+				SamplePathString: "/dev/health",
+				Method:           router.GET,
+				Handler:          devHealth,
+			},
+		}
+		handleData = append(handleData, devRoute...)
+	}
 	routeData, err := router.CreateHandleData(handleData)
 	if err != nil {
 		return handleError(err)
@@ -583,4 +596,8 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 
 func health(w http.ResponseWriter, _ *http.Request) {
 	_, _ = fmt.Fprintln(w, "Hello!")
+}
+
+func devHealth(w http.ResponseWriter, _ *http.Request) {
+	_, _ = fmt.Fprintln(w, "this is dev endpoint")
 }
