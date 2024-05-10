@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
-	"time"
 )
 
 type (
@@ -115,12 +114,10 @@ func findShelfRow(shelves []*ShelfRepoRow, userId core.UserId, index Index) *She
 	return nil
 }
 
-type FetchUserScore func(ctx context.Context, userId []core.UserId, currentTime time.Time) ([]*UserScorePair, error)
-type UserScorePair struct {
-	UserId     core.UserId
-	TotalScore TotalScore
+type UserPopularity struct {
+	UserId     core.UserId    `db:"user_id" json:"user_id"`
+	Popularity ShopPopularity `db:"popularity" json:"popularity"`
 }
-type UpsertScoreFunc func(context.Context, []*UserScorePair, time.Time) error
 
 type FetchUserPopularityFunc func(context.Context, []core.UserId) ([]*UserPopularity, error)
 type UpdateUserPopularityFunc func(context.Context, []*UserPopularity) error

@@ -2,20 +2,16 @@ package utils
 
 import "testing"
 
-type innerStructForTestSet struct {
-	id   int
-	body string
-}
-
-func (i *innerStructForTestSet) Id() int {
-	return i.id
-}
-
-type testCase struct {
-	data []*innerStructForTestSet
-}
-
 func TestSet(t *testing.T) {
+	type innerStructForTestSet struct {
+		id   int
+		body string
+	}
+
+	type testCase struct {
+		data []*innerStructForTestSet
+	}
+
 	testCases := []testCase{
 		{
 			data: []*innerStructForTestSet{
@@ -32,7 +28,7 @@ func TestSet(t *testing.T) {
 	}
 
 	for _, v := range testCases {
-		set := NewSet[int, *innerStructForTestSet](v.data)
+		set := NewSet[*innerStructForTestSet](v.data)
 		if set.Length() != len(v.data) {
 			t.Errorf("expected: %d, got: %d", len(v.data), set.Length())
 		}
@@ -42,11 +38,12 @@ func TestSet(t *testing.T) {
 			}
 		}
 		for _, w := range v.data {
-			if set.Find(w.id) != w {
-				t.Errorf("expected: %v, got: %v", w, set.Find(w.id))
+			foundData := set.Find(func(d *innerStructForTestSet) bool { return d.id == w.id })
+			if foundData != w {
+				t.Errorf("expected: %v, got: %v", w, foundData)
 			}
 		}
-		m := set.ToMap()
+		m := SetToMap(set, func(d *innerStructForTestSet) int { return d.id })
 		for _, w := range v.data {
 			if m[w.id] != w {
 				t.Errorf("expected: %v, got: %v", w, m[w.id])

@@ -42,19 +42,6 @@ func (s Size) ValidSize() bool {
 	return s >= MinSize && s <= MaxSize
 }
 
-type TotalScore int
-
-func NewTotalScore(gainingScore GainingScore, beforeTotalScore TotalScore) TotalScore {
-	return TotalScore(int(beforeTotalScore) + int(gainingScore))
-}
-
-type GainingScore int
-
-func NewGainingScore(setPrice SetPrice, popularity ShopPopularity) GainingScore {
-	score := float64(setPrice) * (float64(popularity) + 1)
-	return GainingScore(int(score))
-}
-
 func NewPopularityGain(price core.Price, setPrice SetPrice) PopularityChange {
 	const percent = 0.01
 	const BasePopularityGain = 0.1 * percent
@@ -83,4 +70,11 @@ type ShopPopularity float64
 
 func (p ShopPopularity) AddPopularityChange(change PopularityChange) ShopPopularity {
 	return ShopPopularity(utils.Clamp(float64(p)+float64(change), 0, 1))
+}
+
+type SoldItem struct {
+	UserId      core.UserId
+	SetPrice    SetPrice
+	Popularity  ShopPopularity
+	PurchaseNum core.Count
 }

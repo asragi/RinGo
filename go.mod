@@ -3,7 +3,7 @@ module github.com/asragi/RinGo
 go 1.21
 
 require (
-	github.com/asragi/RingoSuPBGo v0.0.0-20240506040205-d83e3985a08d
+	github.com/asragi/RingoSuPBGo v0.0.0-20240510011105-13815bfd7933
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.3.5

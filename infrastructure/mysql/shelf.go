@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/core/game/shelf/ranking"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
 	"time"
@@ -194,8 +195,8 @@ func CreateDeleteShelfBySize(dbExec database.DBExecFunc) shelf.DeleteShelfBySize
 	}
 }
 
-func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
-	return func(ctx context.Context, userIds []core.UserId, currentTime time.Time) ([]*shelf.UserScorePair, error) {
+func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
+	return func(ctx context.Context, userIds []core.UserId, currentTime time.Time) ([]*ranking.UserScorePair, error) {
 		userIdStrings := infrastructure.UserIdsToString(userIds)
 		spreadUserIdStrings := spreadString(userIdStrings)
 		dateString := currentTime.Format("2006-01-02")
@@ -209,9 +210,9 @@ func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
 			return nil, fmt.Errorf("select scores: %w", err)
 		}
 		defer rows.Close()
-		var result []*shelf.UserScorePair
+		var result []*ranking.UserScorePair
 		for rows.Next() {
-			var res *shelf.UserScorePair
+			var res *ranking.UserScorePair
 			err = rows.StructScan(res)
 			if err != nil {
 				return nil, fmt.Errorf("select scores: %w", err)
@@ -222,12 +223,12 @@ func CreateFetchScore(q queryFunc) shelf.FetchUserScore {
 	}
 }
 
-func CreateUpsertScore(exec database.DBExecFunc) shelf.UpsertScoreFunc {
-	return func(ctx context.Context, userScorePair []*shelf.UserScorePair, currentTime time.Time) error {
+func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
+	return func(ctx context.Context, userScorePair []*ranking.UserScorePair, currentTime time.Time) error {
 		type request struct {
-			UserId     core.UserId      `db:"user_id"`
-			TotalScore shelf.TotalScore `db:"total_score"`
-			Date       time.Time        `db:"date"`
+			UserId     core.UserId        `db:"user_id"`
+			TotalScore ranking.TotalScore `db:"total_score"`
+			Date       time.Time          `db:"date"`
 		}
 		req := func() []*request {
 			var result []*request

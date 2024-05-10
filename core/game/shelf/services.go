@@ -1,12 +1,10 @@
 package shelf
 
 import (
-	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 )
 
 type Services struct {
-	UpdateTotalScore   UpdateTotalScoreServiceFunc
 	UpdateShelfContent UpdateShelfContentFunc
 	UpdateShelfSize    UpdateShelfSizeFunc
 	InitializeShelf    InitializeShelfFunc
@@ -14,8 +12,6 @@ type Services struct {
 }
 
 func NewService(
-	fetchScore FetchUserScore,
-	updateScore UpsertScoreFunc,
 	fetchStorage game.FetchStorageFunc,
 	fetchItemMaster game.FetchItemMasterFunc,
 	fetchShelf FetchShelf,
@@ -25,14 +21,8 @@ func NewService(
 	fetchSizeToAction FetchSizeToActionRepoFunc,
 	postAction game.PostActionFunc,
 	validateAction game.ValidateActionFunc,
-	currentTime core.GetCurrentTimeFunc,
 	generateId func() string,
 ) *Services {
-	updateTotalScore := CreateUpdateTotalScoreService(
-		fetchScore,
-		updateScore,
-		currentTime,
-	)
 	updateShelfContentService := CreateUpdateShelfContent(
 		fetchStorage,
 		fetchItemMaster,
@@ -57,7 +47,6 @@ func NewService(
 	getShelves := CreateGetShelves(fetchShelf, fetchItemMaster, fetchStorage)
 
 	return &Services{
-		UpdateTotalScore:   updateTotalScore,
 		UpdateShelfContent: updateShelfContentService,
 		UpdateShelfSize:    updateShelfSizeService,
 		InitializeShelf:    initializeShelf,

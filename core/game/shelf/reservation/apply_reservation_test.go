@@ -139,6 +139,9 @@ func TestCreateApplyReservation(t *testing.T) {
 		updateTotalScoreService := func(context.Context, []*shelf.UserPopularity, []*shelf.SoldItem) error {
 			return nil
 		}
+		updatePopularity := func(context.Context, []*shelf.UserPopularity) error {
+			return nil
+		}
 
 		apply := CreateApplyReservation(
 			mockFetchReservation,
@@ -149,6 +152,7 @@ func TestCreateApplyReservation(t *testing.T) {
 			mockFetchShelf,
 			mockFetchFund,
 			mockUpdateFund,
+			updatePopularity,
 			mockUpdateStorage,
 			mockUpdateTotalSales,
 			updateTotalScoreService,

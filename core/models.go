@@ -233,3 +233,6 @@ const (
 	PossibleTypeStamina IsPossibleType = "Stamina"
 	PossibleTypeFund    IsPossibleType = "Func"
 )
+
+type Limit int
+type Offset int

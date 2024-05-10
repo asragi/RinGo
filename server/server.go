@@ -7,6 +7,7 @@ import (
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/explore"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/core/game/shelf/ranking"
 	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/crypto"
 	"github.com/asragi/RinGo/database"
@@ -52,8 +53,8 @@ type infrastructuresStruct struct {
 	updateStamina             game.UpdateStaminaFunc
 	updateFund                game.UpdateFundFunc
 
-	fetchScore            shelf.FetchUserScore
-	updateScore           shelf.UpsertScoreFunc
+	fetchScore            ranking.FetchUserScore
+	updateScore           ranking.UpsertScoreFunc
 	fetchShelf            shelf.FetchShelf
 	fetchSizeToAction     shelf.FetchSizeToActionRepoFunc
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc
@@ -174,8 +175,6 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		getTime,
 	)
 	shelfService := shelf.NewService(
-		infra.fetchScore,
-		infra.updateScore,
 		infra.fetchStorage,
 		infra.fetchItemMaster,
 		infra.fetchShelf,
@@ -185,12 +184,16 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.fetchSizeToAction,
 		gameServices.PostAction,
 		gameServices.ValidateAction,
-		getTime,
 		generateUUID,
+	)
+	rankingService := ranking.NewService(
+		infra.fetchScore,
+		infra.updateScore,
+		getTime,
 	)
 	reservationService := reservation.NewService(
 		infra.fetchItemMaster,
-		shelfService.UpdateTotalScore,
+		rankingService.UpdateTotalScore,
 		infra.fetchReservation,
 		infra.deleteReservation,
 		infra.fetchStorage,

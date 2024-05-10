@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/core/game/shelf/ranking"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func CreateApplyReservation(
 	updatePopularity shelf.UpdateUserPopularityFunc,
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
-	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
+	updateTotalScore ranking.UpdateTotalScoreServiceFunc,
 	calcApplication calcReservationApplicationFunc,
 	getTime core.GetCurrentTimeFunc,
 ) ApplyReservationFunc {

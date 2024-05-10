@@ -4,6 +4,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/core/game/shelf/ranking"
 )
 
 type Service struct {
@@ -13,7 +14,7 @@ type Service struct {
 
 func NewService(
 	fetchItemMaster game.FetchItemMasterFunc,
-	updateTotalScore shelf.UpdateTotalScoreServiceFunc,
+	updateTotalScore ranking.UpdateTotalScoreServiceFunc,
 	fetchReservation FetchReservationRepoFunc,
 	deleteReservation DeleteReservationRepoFunc,
 	fetchUserStorage game.FetchStorageFunc,
