@@ -16,3 +16,4 @@ type FetchUserNameRes struct {
 	ShopName Name
 }
 type FetchUserNameFunc func(context.Context, []UserId) ([]*FetchUserNameRes, error)
+type FetchAllUserId func(context.Context) ([]UserId, error)

@@ -24,8 +24,10 @@ import (
 
 type infrastructuresStruct struct {
 	checkUser                 core.CheckDoesUserExist
+	fetchAllUserId            core.FetchAllUserId
 	updateUserName            core.UpdateUserNameFunc
 	updateShopName            core.UpdateShopNameFunc
+	fetchName                 core.FetchUserNameFunc
 	insertNewUser             auth.InsertNewUser
 	fetchPassword             auth.FetchHashedPassword
 	getResource               game.GetResourceFunc
@@ -62,6 +64,7 @@ type infrastructuresStruct struct {
 	insertEmptyShelf      shelf.InsertEmptyShelfFunc
 	deleteShelfBySize     shelf.DeleteShelfBySizeFunc
 
+	fetchDailyRanking        ranking.FetchUserDailyRankingRepo
 	updatePopularity         shelf.UpdateUserPopularityFunc
 	fetchReservation         reservation.FetchReservationRepoFunc
 	deleteReservation        reservation.DeleteReservationRepoFunc
@@ -83,6 +86,7 @@ type functionContainer struct {
 	coreServices        *core.Service
 	gameServices        *game.Services
 	shelfServices       *shelf.Services
+	rankingService      *ranking.Services
 	reservationServices *reservation.Service
 }
 
@@ -187,11 +191,15 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		generateUUID,
 	)
 	rankingService := ranking.NewService(
+		shelfService.GetShelves,
+		infra.fetchName,
+		infra.fetchDailyRanking,
 		infra.fetchScore,
 		infra.updateScore,
 		getTime,
 	)
 	reservationService := reservation.NewService(
+		infra.fetchAllUserId,
 		infra.fetchItemMaster,
 		rankingService.UpdateTotalScore,
 		infra.fetchReservation,
@@ -221,6 +229,7 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		coreServices:        coreService,
 		gameServices:        gameServices,
 		shelfServices:       shelfService,
+		rankingService:      rankingService,
 		reservationServices: reservationService,
 	}
 }
@@ -229,6 +238,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	getTime := func() time.Time { return time.Now() }
 	dbQuery := db.Query
 
+	fetchAllUser := mysql.CreateFetchAllUserId(dbQuery)
 	checkUserExistence := mysql.CreateCheckUserExistence(dbQuery)
 	getUserPassword := mysql.CreateGetUserPassword(dbQuery)
 	getResource := mysql.CreateGetResourceMySQL(dbQuery)
@@ -260,6 +270,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		getTime,
 	)
 
+	fetchUserName := mysql.CreateFetchUserName(dbQuery)
 	updateUserName := mysql.CreateUpdateUserName(db.Exec)
 	updateShopName := mysql.CreateUpdateShopName(db.Exec)
 
@@ -277,6 +288,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	insertEmpty := mysql.CreateInsertEmptyShelf(db.Exec)
 	deleteShelfBySize := mysql.CreateDeleteShelfBySize(db.Exec)
 
+	fetchDailyRanking := mysql.CreateFetchDailyRanking(dbQuery)
+
 	fetchReservation := mysql.CreateFetchReservation(dbQuery)
 	insertReservation := mysql.CreateInsertReservation(db.Exec)
 	deleteReservation := mysql.CreateDeleteReservation(db.Exec)
@@ -286,8 +299,10 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 
 	return &infrastructuresStruct{
 		checkUser:                 checkUserExistence,
+		fetchAllUserId:            fetchAllUser,
 		updateUserName:            updateUserName,
 		updateShopName:            updateShopName,
+		fetchName:                 fetchUserName,
 		insertNewUser:             insertNewUser,
 		fetchPassword:             getUserPassword,
 		getResource:               getResource,
@@ -322,6 +337,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		updateShelfContent:        updateShelfContent,
 		insertEmptyShelf:          insertEmpty,
 		deleteShelfBySize:         deleteShelfBySize,
+		fetchDailyRanking:         fetchDailyRanking,
 		updatePopularity:          updatePopularity,
 		fetchReservation:          fetchReservation,
 		deleteReservation:         deleteReservation,
@@ -501,6 +517,14 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 		functions.createContext,
 		writeLogger,
 	)
+	getDailyRanking := handler.CreateGetRankingUserListHandler(
+		endpoint.CreateGetRankingUserList(
+			functions.reservationServices.ApplyAllReservations,
+			functions.rankingService.FetchUserDailyRanking,
+		),
+		functions.createContext,
+		writeLogger,
+	)
 
 	handleData := []*router.HandleDataRaw{
 		{
@@ -577,6 +601,11 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 			SamplePathString: "/actions",
 			Method:           router.POST,
 			Handler:          postActionHandler,
+		},
+		{
+			SamplePathString: "/ranking/daily",
+			Method:           router.GET,
+			Handler:          getDailyRanking,
 		},
 	}
 	if runMode.IsDevMode() {

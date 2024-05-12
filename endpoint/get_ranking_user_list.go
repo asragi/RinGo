@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
+	"github.com/asragi/RinGo/core/game/shelf/reservation"
 	"github.com/asragi/RinGo/utils"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
@@ -16,7 +17,8 @@ type GetRankingUserListEndpoint func(
 ) (*gateway.GetDailyRankingResponse, error)
 
 func CreateGetRankingUserList(
-	getUserList ranking.FetchUserDailyRanking,
+	applyAllReservation reservation.ApplyAllReservationsFunc,
+	getUserRankingList ranking.FetchUserDailyRanking,
 ) GetRankingUserListEndpoint {
 	return func(
 		ctx context.Context,
@@ -25,9 +27,13 @@ func CreateGetRankingUserList(
 		handleError := func(err error) (*gateway.GetDailyRankingResponse, error) {
 			return nil, fmt.Errorf("get ranking user list endpoint: %w", err)
 		}
+		err := applyAllReservation(ctx)
+		if err != nil {
+			return handleError(err)
+		}
 		limit := core.Limit(req.Limit)
 		offset := core.Offset(req.Offset)
-		res, err := getUserList(ctx, limit, offset)
+		res, err := getUserRankingList(ctx, limit, offset)
 		if err != nil {
 			return handleError(err)
 		}

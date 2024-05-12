@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"time"
 )
 
 type Rank int
@@ -12,7 +13,7 @@ type UserDailyRankingRes struct {
 	Rank   Rank
 }
 
-type FetchUserDailyRankingRepo func(context.Context, core.Limit, core.Offset) ([]*UserDailyRankingRes, error)
+type FetchUserDailyRankingRepo func(context.Context, core.Limit, core.Offset, time.Time) ([]*UserDailyRankingRes, error)
 
 type TotalScore int
 

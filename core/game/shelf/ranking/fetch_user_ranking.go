@@ -30,9 +30,13 @@ func CreateFetchUserDailyRanking(
 		handleError := func(err error) ([]*UserDailyRanking, error) {
 			return nil, fmt.Errorf("fetch user daily ranking: %w", err)
 		}
-		rankingData, err := fetchUserDailyRanking(ctx, limit, offset)
+		nowTime := getTime()
+		rankingData, err := fetchUserDailyRanking(ctx, limit, offset, nowTime)
 		if err != nil {
 			return handleError(err)
+		}
+		if len(rankingData) == 0 {
+			return []*UserDailyRanking{}, nil
 		}
 		rankingSet := utils.NewSet[*UserDailyRankingRes](rankingData)
 		rankingMap := utils.SetToMap(rankingSet, func(res *UserDailyRankingRes) core.UserId { return res.UserId })
@@ -58,7 +62,7 @@ func CreateFetchUserDailyRanking(
 		userNameSet := utils.NewSet(userNames)
 		userNameMap := utils.SetToMap(userNameSet, func(name *core.FetchUserNameRes) core.UserId { return name.UserId })
 
-		totalScores, err := fetchTotalScore(ctx, userIds.ToArray(), getTime())
+		totalScores, err := fetchTotalScore(ctx, userIds.ToArray(), nowTime)
 		if err != nil {
 			return handleError(err)
 		}

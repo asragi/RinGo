@@ -8,11 +8,13 @@ import (
 )
 
 type Service struct {
-	ApplyReservation  ApplyReservationFunc
-	InsertReservation InsertReservationFunc
+	ApplyReservation     ApplyReservationFunc
+	ApplyAllReservations ApplyAllReservationsFunc
+	InsertReservation    InsertReservationFunc
 }
 
 func NewService(
+	fetchAllUserId core.FetchAllUserId,
 	fetchItemMaster game.FetchItemMasterFunc,
 	updateTotalScore ranking.UpdateTotalScoreServiceFunc,
 	fetchReservation FetchReservationRepoFunc,
@@ -48,6 +50,10 @@ func NewService(
 		calcReservationApplication,
 		getTime,
 	)
+	applyAllReservations := CreateApplyAllReservations(
+		fetchAllUserId,
+		applyReservation,
+	)
 	insertReservation := CreateInsertReservation(
 		fetchItemAttraction,
 		fetchUserPopularity,
@@ -59,7 +65,8 @@ func NewService(
 		generateId,
 	)
 	return &Service{
-		ApplyReservation:  applyReservation,
-		InsertReservation: insertReservation,
+		ApplyReservation:     applyReservation,
+		InsertReservation:    insertReservation,
+		ApplyAllReservations: applyAllReservations,
 	}
 }

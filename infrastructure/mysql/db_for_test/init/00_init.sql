@@ -219,9 +219,9 @@ CREATE TABLE IF NOT EXISTS ringo.scores(
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` varchar(40) NOT NULL,
     `total_score` int(11) NOT NULL,
-    `date` DATE NOT NULL,
+    `score_date` DATE NOT NULL,
     PRIMARY KEY (`id`),
-    INDEX `date_index` (`date`),
-    CONSTRAINT user_date_pair UNIQUE (`user_id`, `date`),
+    INDEX `date_index` (`score_date`),
+    CONSTRAINT user_date_pair UNIQUE (`user_id`, `score_date`),
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

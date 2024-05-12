@@ -52,6 +52,9 @@ func toNullableShelfRow(shelfRow *shelf.ShelfRepoRow) *nullableShelfRow {
 
 func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 	return func(ctx context.Context, userIds []core.UserId) ([]*shelf.ShelfRepoRow, error) {
+		if len(userIds) == 0 {
+			return nil, nil
+		}
 		userIdStrings := infrastructure.UserIdsToString(userIds)
 		spreadUserIdStrings := spreadString(userIdStrings)
 
@@ -71,7 +74,7 @@ func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 		for rows.Next() {
 			var row nullableShelfRow
 			if err := rows.StructScan(&row); err != nil {
-				return nil, fmt.Errorf("fetch shelf: %w", err)
+				return nil, fmt.Errorf("fetch shelf scan: %w", err)
 			}
 			response = append(response, &row)
 		}
@@ -201,7 +204,7 @@ func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
 		spreadUserIdStrings := spreadString(userIdStrings)
 		dateString := currentTime.Format("2006-01-02")
 		query := fmt.Sprintf(
-			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s) AND date = "%s";`,
+			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s) AND score_date = "%s";`,
 			spreadUserIdStrings,
 			dateString,
 		)
@@ -212,12 +215,12 @@ func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
 		defer rows.Close()
 		var result []*ranking.UserScorePair
 		for rows.Next() {
-			var res *ranking.UserScorePair
-			err = rows.StructScan(res)
+			var res ranking.UserScorePair
+			err = rows.StructScan(&res)
 			if err != nil {
 				return nil, fmt.Errorf("select scores: %w", err)
 			}
-			result = append(result, res)
+			result = append(result, &res)
 		}
 		return result, nil
 	}
@@ -228,7 +231,7 @@ func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
 		type request struct {
 			UserId     core.UserId        `db:"user_id"`
 			TotalScore ranking.TotalScore `db:"total_score"`
-			Date       time.Time          `db:"date"`
+			Date       time.Time          `db:"score_date"`
 		}
 		req := func() []*request {
 			var result []*request
@@ -245,7 +248,7 @@ func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
 		}()
 		_, err := exec(
 			ctx,
-			`INSERT INTO ringo.scores (user_id, total_score, date) VALUES (:user_id, :total_score, :date) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
+			`INSERT INTO ringo.scores (user_id, total_score, score_date) VALUES (:user_id, :total_score, :score_date) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
 			req,
 		)
 		if err != nil {
