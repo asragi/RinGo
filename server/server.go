@@ -55,6 +55,7 @@ type infrastructuresStruct struct {
 	updateStamina             game.UpdateStaminaFunc
 	updateFund                game.UpdateFundFunc
 
+	fetchLatestPeriod     ranking.FetchLatestRankPeriod
 	fetchScore            ranking.FetchUserScore
 	updateScore           ranking.UpsertScoreFunc
 	fetchShelf            shelf.FetchShelf
@@ -67,6 +68,8 @@ type infrastructuresStruct struct {
 	fetchDailyRanking        ranking.FetchUserDailyRankingRepo
 	updatePopularity         shelf.UpdateUserPopularityFunc
 	fetchReservation         reservation.FetchReservationRepoFunc
+	fetchCheckedTime         reservation.FetchCheckedTimeFunc
+	updateCheckedTime        reservation.UpdateCheckedTime
 	deleteReservation        reservation.DeleteReservationRepoFunc
 	fetchItemAttraction      reservation.FetchItemAttractionFunc
 	fetchUserPopularity      shelf.FetchUserPopularityFunc
@@ -196,6 +199,7 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.fetchDailyRanking,
 		infra.fetchScore,
 		infra.updateScore,
+		infra.fetchLatestPeriod,
 		getTime,
 	)
 	reservationService := reservation.NewService(
@@ -203,6 +207,7 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.fetchItemMaster,
 		rankingService.UpdateTotalScore,
 		infra.fetchReservation,
+		infra.fetchCheckedTime,
 		infra.deleteReservation,
 		infra.fetchStorage,
 		infra.fetchShelf,
@@ -215,6 +220,7 @@ func createFunction(infra *infrastructuresStruct) *functionContainer {
 		infra.fetchUserPopularity,
 		infra.insertReservationRepo,
 		infra.deleteReservationToShelf,
+		infra.updateCheckedTime,
 		random.Emit,
 		getTime,
 		generateUUID,
@@ -288,9 +294,12 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 	insertEmpty := mysql.CreateInsertEmptyShelf(db.Exec)
 	deleteShelfBySize := mysql.CreateDeleteShelfBySize(db.Exec)
 
+	fetchLatestPeriod := mysql.CreateFetchLatestRankPeriod(dbQuery)
 	fetchDailyRanking := mysql.CreateFetchDailyRanking(dbQuery)
 
 	fetchReservation := mysql.CreateFetchReservation(dbQuery)
+	fetchCheckedTime := mysql.CreateFetchCheckedTime(dbQuery)
+	updateCheckedTime := mysql.CreateUpdateCheckedTime(db.Exec)
 	insertReservation := mysql.CreateInsertReservation(db.Exec)
 	deleteReservation := mysql.CreateDeleteReservation(db.Exec)
 	deleteReservationToShelf := mysql.CreateDeleteReservationToShelf(db.Exec)
@@ -329,6 +338,7 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		fetchReductionSkill:       getReductionSkill,
 		updateStamina:             updateStamina,
 		updateFund:                updateFund,
+		fetchLatestPeriod:         fetchLatestPeriod,
 		fetchScore:                fetchScore,
 		updateScore:               updateScore,
 		fetchShelf:                fetchUserShelf,
@@ -340,6 +350,8 @@ func createInfrastructures(constants *Constants, db *database.DBAccessor) (*infr
 		fetchDailyRanking:         fetchDailyRanking,
 		updatePopularity:          updatePopularity,
 		fetchReservation:          fetchReservation,
+		fetchCheckedTime:          fetchCheckedTime,
+		updateCheckedTime:         updateCheckedTime,
 		deleteReservation:         deleteReservation,
 		fetchItemAttraction:       fetchItemAttraction,
 		fetchUserPopularity:       fetchUserPopularity,
@@ -610,7 +622,18 @@ func InitializeServer(constants *Constants, writeLogger handler.WriteLogger) (er
 	}
 	if runMode.IsDevMode() {
 		mockTimeHandler := debug.ChangeMockTimeHandler(infrastructures.timer)
+		mockAutoInsertReservation := debug.MockAutoReservationApply(functions.reservationServices.AutoInsertReservation)
 		devRoute := []*router.HandleDataRaw{
+			{
+				SamplePathString: "/dev/initialize",
+				Method:           router.POST,
+				Handler:          debug.CreateAddInitialPeriod(db.Exec),
+			},
+			{
+				SamplePathString: "/dev/auto-insert",
+				Method:           router.POST,
+				Handler:          mockAutoInsertReservation,
+			},
 			{
 				SamplePathString: "/dev/health",
 				Method:           router.GET,

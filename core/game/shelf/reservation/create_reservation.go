@@ -3,6 +3,8 @@ package reservation
 import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
+	"github.com/asragi/RinGo/utils"
+	"time"
 )
 
 type shelfArg struct {
@@ -11,6 +13,7 @@ type shelfArg struct {
 	BaseAttraction ItemAttraction
 }
 
+// deprecated: use createReservation instead
 func informationToShelfArg(
 	indices []shelf.Index,
 	information map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
@@ -41,9 +44,10 @@ type createReservationFunc func(
 	baseProbability PurchaseProbability,
 	targetUserId core.UserId,
 	shopPopularity shelf.ShopPopularity,
-	shelves []*shelfArg,
+	shelves *utils.Set[*shelfArg],
 	rand core.EmitRandomFunc,
-	getCurrentTime core.GetCurrentTimeFunc,
+	fromTime time.Time,
+	toTime time.Time,
 	generateId func() string,
 ) []*Reservation
 
@@ -54,22 +58,18 @@ func createReservation(
 	baseProbability PurchaseProbability,
 	targetUserId core.UserId,
 	shopPopularity shelf.ShopPopularity,
-	shelves []*shelfArg,
+	shelves *utils.Set[*shelfArg],
 	rand core.EmitRandomFunc,
-	getCurrentTime core.GetCurrentTimeFunc,
+	fromTime time.Time,
+	toTime time.Time,
 	generateId func() string,
 ) []*Reservation {
-	itemAttractions := func(shelves []*shelfArg) []ModifiedItemAttraction {
-		modifiedItemAttractions := make([]ModifiedItemAttraction, len(shelves))
-		for _, s := range shelves {
-			modifiedItemAttractions = append(
-				modifiedItemAttractions,
-				calcItemAttraction(s.BaseAttraction, s.Price, s.SetPrice),
-			)
-		}
-		return modifiedItemAttractions
-	}(shelves)
-	shelfAttraction := calcShelfAttraction(itemAttractions)
+	modifiedItemAttractions := utils.SetSelect(
+		shelves, func(s *shelfArg) ModifiedItemAttraction {
+			return calcItemAttraction(s.BaseAttraction, s.Price, s.SetPrice)
+		},
+	)
+	shelfAttraction := calcShelfAttraction(modifiedItemAttractions.ToArray())
 	customerNum := calcCustomerNumPerHour(shopPopularity, shelfAttraction)
 	probability := calcModifiedPurchaseProbability(
 		baseProbability,
@@ -79,7 +79,8 @@ func createReservation(
 	return createReservations(
 		customerNum,
 		rand,
-		getCurrentTime,
+		fromTime,
+		toTime,
 		probability,
 		targetUserId,
 		updatedIndex,

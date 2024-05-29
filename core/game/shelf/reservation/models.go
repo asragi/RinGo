@@ -1,6 +1,7 @@
 package reservation
 
 import (
+	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
 	"github.com/asragi/RinGo/core/game/shelf"
@@ -10,17 +11,62 @@ import (
 )
 
 type Reservation struct {
-	Id            Id
-	TargetUser    core.UserId
-	Index         shelf.Index
-	ScheduledTime time.Time
-	PurchaseNum   core.Count
+	Id            Id          `db:"reservation_id"`
+	TargetUser    core.UserId `db:"user_id"`
+	Index         shelf.Index `db:"shelf_index"`
+	ScheduledTime time.Time   `db:"scheduled_time"`
+	PurchaseNum   core.Count  `db:"purchase_num"`
+}
+
+type CheckedTime struct {
+	time   time.Time
+	isNull bool
+}
+
+func NewCheckedTime(t time.Time, isValid bool) *CheckedTime {
+	return &CheckedTime{
+		time:   t,
+		isNull: !isValid,
+	}
+}
+
+func (c *CheckedTime) IsNull() bool {
+	return c.isNull
+}
+
+func (c *CheckedTime) Time() (time.Time, error) {
+	if c.isNull {
+		return time.Time{}, fmt.Errorf("time is nil")
+	}
+	return c.time, nil
+}
+
+func (c *CheckedTime) Add(d time.Duration) (time.Time, error) {
+	if c.isNull {
+		return time.Time{}, fmt.Errorf("time is nil")
+	}
+	return c.time.Add(d), nil
+}
+
+func (c *CheckedTime) String() string {
+	if c.isNull {
+		return "<Time is Null>"
+	}
+	return c.time.Format(time.DateTime)
 }
 
 type attraction int
 type ItemAttraction attraction
 type ModifiedItemAttraction attraction
 type ShelfAttraction attraction
+type CustomerNum int
+
+func NewCustomerNum(fromTime time.Time, toTime time.Time, customerNumPerHour CustomerNumPerHour) CustomerNum {
+	duration := toTime.Sub(fromTime)
+	hourRatio := duration.Hours() / time.Hour.Hours()
+	return CustomerNum(hourRatio * float64(customerNumPerHour))
+}
+
 type CustomerNumPerHour int
 type PurchaseProbability float64
 type ModifiedPurchaseProbability PurchaseProbability
@@ -51,23 +97,24 @@ func calcModifiedPurchaseProbability(
 }
 
 func createReservations(
-	customerNum CustomerNumPerHour,
+	customerNumPerHour CustomerNumPerHour,
 	rand core.EmitRandomFunc,
-	getCurrentTime core.GetCurrentTimeFunc,
+	fromTime time.Time,
+	toTime time.Time,
 	probability ModifiedPurchaseProbability,
 	targetUser core.UserId,
 	targetIndex shelf.Index,
 	generateId func() string,
 ) []*Reservation {
+	customerNum := NewCustomerNum(fromTime, toTime, customerNumPerHour)
 	reservations := make([]*Reservation, 0, int(customerNum))
-	currentTime := getCurrentTime()
-	purchaseDuration := calcPurchaseDuration(customerNum)
+	purchaseDuration := calcPurchaseDuration(customerNumPerHour)
 	for i := 0; i < int(customerNum); i++ {
 		if !probability.CheckWin(rand) {
 			continue
 		}
 		scheduledTime := func() time.Time {
-			result := currentTime.Add(purchaseDuration * time.Duration(i+1))
+			result := fromTime.Add(purchaseDuration * time.Duration(i+1))
 			return result
 		}()
 		reservations = append(

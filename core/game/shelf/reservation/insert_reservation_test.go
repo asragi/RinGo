@@ -5,7 +5,9 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/test"
+	"github.com/asragi/RinGo/utils"
 	"testing"
+	"time"
 )
 
 func TestCreateInsertReservation(t *testing.T) {
@@ -78,9 +80,10 @@ func TestCreateInsertReservation(t *testing.T) {
 			baseProbability PurchaseProbability,
 			targetUserId core.UserId,
 			shopPopularity shelf.ShopPopularity,
-			shelves []*shelfArg,
+			shelves *utils.Set[*shelfArg],
 			rand core.EmitRandomFunc,
-			getCurrentTime core.GetCurrentTimeFunc,
+			fromTime time.Time,
+			toTime time.Time,
 			_ func() string,
 		) []*Reservation {
 			return v.mockReservation
@@ -88,6 +91,7 @@ func TestCreateInsertReservation(t *testing.T) {
 		deleteReservationToShelf := func(context.Context, core.UserId, shelf.Index) error {
 			return nil
 		}
+		updateCheckedTime := func(context.Context, []*UpdateCheckedTimePair) error { return nil }
 
 		rand := func() float32 { return v.mockRand }
 
@@ -97,6 +101,7 @@ func TestCreateInsertReservation(t *testing.T) {
 			mockCreateReservation,
 			insertReservation,
 			deleteReservationToShelf,
+			updateCheckedTime,
 			rand,
 			test.MockTime,
 			func() string { return "" },

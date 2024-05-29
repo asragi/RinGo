@@ -8,9 +8,11 @@ import (
 )
 
 type Service struct {
-	ApplyReservation     ApplyReservationFunc
-	ApplyAllReservations ApplyAllReservationsFunc
-	InsertReservation    InsertReservationFunc
+	ApplyReservation       ApplyReservationFunc
+	ApplyAllReservations   ApplyAllReservationsFunc
+	InsertReservation      InsertReservationFunc
+	BatchInsertReservation BatchInsertReservationFunc
+	AutoInsertReservation  AutoInsertReservationFunc
 }
 
 func NewService(
@@ -18,6 +20,7 @@ func NewService(
 	fetchItemMaster game.FetchItemMasterFunc,
 	updateTotalScore ranking.UpdateTotalScoreServiceFunc,
 	fetchReservation FetchReservationRepoFunc,
+	fetchCheckedTime FetchCheckedTimeFunc,
 	deleteReservation DeleteReservationRepoFunc,
 	fetchUserStorage game.FetchStorageFunc,
 	fetchShelf shelf.FetchShelf,
@@ -30,6 +33,7 @@ func NewService(
 	fetchUserPopularity shelf.FetchUserPopularityFunc,
 	insertReservationRepo InsertReservationRepoFunc,
 	deleteReservationToShelf DeleteReservationToShelfRepoFunc,
+	updateCheckedTime UpdateCheckedTime,
 	random core.EmitRandomFunc,
 	getTime core.GetCurrentTimeFunc,
 	generateId func() string,
@@ -60,13 +64,30 @@ func NewService(
 		createReservation,
 		insertReservationRepo,
 		deleteReservationToShelf,
+		updateCheckedTime,
 		random,
 		getTime,
 		generateId,
 	)
+	batchInsertReservation := CreateBatchInsertReservation(
+		fetchItemMaster,
+		fetchShelf,
+		fetchItemAttraction,
+		fetchUserPopularity,
+		createReservation,
+		insertReservationRepo,
+		fetchCheckedTime,
+		updateCheckedTime,
+		random,
+		generateId,
+		getTime,
+	)
+	autoInsert := CreateAutoInsertReservation(fetchAllUserId, batchInsertReservation)
 	return &Service{
-		ApplyReservation:     applyReservation,
-		InsertReservation:    insertReservation,
-		ApplyAllReservations: applyAllReservations,
+		ApplyReservation:       applyReservation,
+		InsertReservation:      insertReservation,
+		ApplyAllReservations:   applyAllReservations,
+		BatchInsertReservation: batchInsertReservation,
+		AutoInsertReservation:  autoInsert,
 	}
 }

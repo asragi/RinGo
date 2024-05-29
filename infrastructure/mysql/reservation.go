@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
@@ -9,6 +10,7 @@ import (
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
 	"github.com/asragi/RinGo/location"
+	"github.com/asragi/RinGo/utils"
 	"time"
 )
 
@@ -25,7 +27,6 @@ func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRep
 		[]*reservation.ReservationRow,
 		error,
 	) {
-
 		layout := "2006-01-02 15:04:05"
 		userIdStrings := infrastructure.UserIdsToString(users)
 		spreadUserIdStrings := spreadString(userIdStrings)
@@ -57,6 +58,75 @@ func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRep
 			result = append(result, &row)
 		}
 		return result, nil
+	}
+}
+
+func CreateFetchCheckedTime(queryFunc queryFunc) reservation.FetchCheckedTimeFunc {
+	return func(ctx context.Context, shelves []shelf.Id) ([]*reservation.CheckedTimePair, error) {
+		shelfIds := func() []string {
+			var ids []string
+			for _, id := range shelves {
+				ids = append(ids, fmt.Sprintf(`"%s"`, id))
+			}
+			return ids
+		}()
+		idStrings := spreadString(shelfIds)
+		rows, err := queryFunc(
+			ctx,
+			fmt.Sprintf("SELECT shelf_id, checked_time FROM ringo.shelves WHERE shelf_id IN (%s)", idStrings),
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("fetch checked time: %w", err)
+		}
+		defer rows.Close()
+		var result []*reservation.CheckedTimePair
+		for rows.Next() {
+			var res reservation.CheckedTimePair
+			var checkedTime sql.NullTime
+			if err := rows.Scan(&res.ShelfId, &checkedTime); err != nil {
+				return nil, fmt.Errorf("fetch checked time: %w", err)
+			}
+			res.CheckedTime = reservation.NewCheckedTime(checkedTime.Time, checkedTime.Valid)
+			result = append(result, &res)
+		}
+		return result, nil
+	}
+}
+
+func CreateUpdateCheckedTime(dbExec database.DBExecFunc) reservation.UpdateCheckedTime {
+	return func(ctx context.Context, checkedTimePairs []*reservation.UpdateCheckedTimePair) error {
+		if len(checkedTimePairs) == 0 {
+			return nil
+		}
+		checkedTimePairSet := utils.NewSet(checkedTimePairs)
+		shelfIds := utils.SetSelect(
+			checkedTimePairSet,
+			func(p *reservation.UpdateCheckedTimePair) string { return fmt.Sprintf(`"%s"`, p.ShelfId.String()) },
+		)
+		spreadShelfId := spreadString(shelfIds.ToArray())
+		checkedTimeSet := utils.SetSelect(
+			checkedTimePairSet, func(p *reservation.UpdateCheckedTimePair) string {
+				return fmt.Sprintf(`"%s"`, p.CheckedTime.Format(time.DateTime))
+			},
+		)
+		spreadCheckedTime := spreadString(checkedTimeSet.ToArray())
+		queryText := fmt.Sprintf(
+			`UPDATE ringo.shelves SET checked_time = CAST(ELT(FIELD(shelf_id, %s), %s) AS DATETIME) WHERE shelf_id IN (%s)`,
+			spreadShelfId,
+			spreadCheckedTime,
+			spreadShelfId,
+		)
+
+		_, err := dbExec(
+			ctx,
+			queryText,
+			nil,
+		)
+		if err != nil {
+			return fmt.Errorf("update checked time: %w", err)
+		}
+		return nil
 	}
 }
 
@@ -94,7 +164,6 @@ func CreateDeleteReservation(dbExec database.DBExecFunc) reservation.DeleteReser
 		}
 		return nil
 	}
-
 }
 
 func CreateFetchItemAttraction(queryFunc queryFunc) reservation.FetchItemAttractionFunc {

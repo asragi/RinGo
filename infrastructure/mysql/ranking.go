@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
-	"time"
 )
 
 func CreateFetchDailyRanking(queryFunc queryFunc) ranking.FetchUserDailyRankingRepo {
@@ -13,15 +12,14 @@ func CreateFetchDailyRanking(queryFunc queryFunc) ranking.FetchUserDailyRankingR
 		ctx context.Context,
 		limit core.Limit,
 		offset core.Offset,
-		date time.Time,
+		latestPeriod ranking.RankPeriod,
 	) ([]*ranking.UserDailyRankingRes, error) {
 		handleError := func(err error) ([]*ranking.UserDailyRankingRes, error) {
 			return nil, fmt.Errorf("fetch daily ranking: %w", err)
 		}
-		dateString := date.Format("2006-01-02")
 		query := fmt.Sprintf(
-			`SELECT user_id FROM ringo.scores WHERE score_date = "%s" ORDER BY total_score DESC LIMIT %d OFFSET %d`,
-			dateString,
+			`SELECT user_id FROM ringo.scores WHERE rank_period = %d ORDER BY total_score DESC LIMIT %d OFFSET %d`,
+			latestPeriod.ToInt(),
 			limit,
 			offset,
 		)
@@ -47,5 +45,27 @@ func CreateFetchDailyRanking(queryFunc queryFunc) ranking.FetchUserDailyRankingR
 			rankIndex += 1
 		}
 		return res, nil
+	}
+}
+
+func CreateFetchLatestRankPeriod(queryFunc queryFunc) ranking.FetchLatestRankPeriod {
+	return func(ctx context.Context) (ranking.RankPeriod, error) {
+		handleError := func(err error) (ranking.RankPeriod, error) {
+			return 0, fmt.Errorf("fetch latest rank period: %w", err)
+		}
+		query := `SELECT rank_period FROM ringo.rank_period_table ORDER BY rank_period DESC LIMIT 1`
+		rows, err := queryFunc(ctx, query, nil)
+		if err != nil {
+			return handleError(err)
+		}
+		defer rows.Close()
+
+		var latestPeriod ranking.RankPeriod
+		if rows.Next() {
+			if err := rows.Scan(&latestPeriod); err != nil {
+				return handleError(err)
+			}
+		}
+		return latestPeriod, nil
 	}
 }

@@ -16,10 +16,12 @@ func NewService(
 	fetchUserDailyRanking FetchUserDailyRankingRepo,
 	fetchScore FetchUserScore,
 	updateScore UpsertScoreFunc,
+	fetchLatestPeriod FetchLatestRankPeriod,
 	currentTime core.GetCurrentTimeFunc,
 ) *Services {
 	updateTotalScore := CreateUpdateTotalScoreService(
 		fetchScore,
+		fetchLatestPeriod,
 		updateScore,
 		currentTime,
 	)
@@ -27,8 +29,8 @@ func NewService(
 		fetchUserName,
 		fetchUserDailyRanking,
 		fetchScore,
+		fetchLatestPeriod,
 		getShelvesService,
-		currentTime,
 	)
 
 	return &Services{

@@ -41,7 +41,7 @@ func createTestUser(options ...ApplyUserTestOption) *userTest {
 		Fund:               100000,
 		StaminaRecoverTime: test.MockTime(),
 		HashedPassword:     "test-password",
-		Popularity:         shelf.ShopPopularity(50),
+		Popularity:         shelf.ShopPopularity(0.5),
 	}
 	for _, option := range options {
 		option(&user)
@@ -143,7 +143,7 @@ func TestCreateInsertNewUser(t *testing.T) {
 			HashedPassword:     "test-password",
 			InitialFund:        3456,
 			InitialStamina:     5678,
-			InitialPopularity:  50,
+			InitialPopularity:  0.5,
 			StaminaRecoverTime: test.MockTime().In(location.UTC()),
 		},
 	}

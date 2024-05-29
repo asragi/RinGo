@@ -93,3 +93,17 @@ func itemAttractionResToMap(res []*ItemAttractionRes) map[core.ItemId]*ItemAttra
 }
 
 type FetchItemAttractionFunc func(context.Context, []core.ItemId) ([]*ItemAttractionRes, error)
+
+type CheckedTimePair struct {
+	ShelfId     shelf.Id     `db:"shelf_id"`
+	CheckedTime *CheckedTime `db:"checked_time"`
+}
+
+type FetchCheckedTimeFunc func(context.Context, []shelf.Id) ([]*CheckedTimePair, error)
+
+type UpdateCheckedTimePair struct {
+	ShelfId     shelf.Id  `db:"shelf_id"`
+	CheckedTime time.Time `db:"checked_time"`
+}
+
+type UpdateCheckedTime func(context.Context, []*UpdateCheckedTimePair) error

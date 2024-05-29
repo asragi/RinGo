@@ -11,13 +11,14 @@ import (
 
 func TestCreateUpdateShelfContent(t *testing.T) {
 	type testCase struct {
-		mockStorage    []*game.BatchGetStorageRes
-		mockItemMaster []*game.GetItemMasterRes
-		mockShelf      []*ShelfRepoRow
-		mockUserId     core.UserId
-		mockItemId     core.ItemId
-		mockSetPrice   SetPrice
-		mockIndex      Index
+		mockStorage       []*game.BatchGetStorageRes
+		mockItemMaster    []*game.GetItemMasterRes
+		mockShelf         []*ShelfRepoRow
+		mockUserId        core.UserId
+		mockItemId        core.ItemId
+		mockSetPrice      SetPrice
+		mockTargetShelfId Id
+		mockIndex         Index
 	}
 
 	testCases := []testCase{
@@ -67,10 +68,11 @@ func TestCreateUpdateShelfContent(t *testing.T) {
 					TotalSales: 0,
 				},
 			},
-			mockUserId:   "test-user",
-			mockItemId:   "item2",
-			mockSetPrice: 230,
-			mockIndex:    1,
+			mockUserId:        "test-user",
+			mockItemId:        "item2",
+			mockSetPrice:      230,
+			mockIndex:         1,
+			mockTargetShelfId: Id("s2"),
 		},
 	}
 
@@ -143,6 +145,7 @@ func TestCreateUpdateShelfContent(t *testing.T) {
 							return itemMasterMap[v.ItemId].Price
 						}()
 						result[v.Index] = &UpdateShelfContentShelfInformation{
+							Id:       v.Id,
 							ItemId:   v.ItemId,
 							Index:    v.Index,
 							Price:    price,
@@ -151,6 +154,7 @@ func TestCreateUpdateShelfContent(t *testing.T) {
 					}
 					price := itemMasterMap[v.mockItemId].Price
 					result[v.mockIndex] = &UpdateShelfContentShelfInformation{
+						Id:       v.mockTargetShelfId,
 						ItemId:   v.mockItemId,
 						Index:    v.mockIndex,
 						Price:    price,

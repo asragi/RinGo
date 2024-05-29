@@ -8,6 +8,7 @@ import (
 )
 
 type UpdateShelfContentShelfInformation struct {
+	Id       Id
 	ItemId   core.ItemId
 	Index    Index
 	Price    core.Price
@@ -93,6 +94,7 @@ func CreateUpdateShelfContent(
 					return itemMasterMap[v.ItemId].Price
 				}()
 				result[v.Index] = &UpdateShelfContentShelfInformation{
+					Id:       v.Id,
 					ItemId:   v.ItemId,
 					Index:    v.Index,
 					Price:    price,
@@ -100,6 +102,7 @@ func CreateUpdateShelfContent(
 				}
 			}
 			result[index] = &UpdateShelfContentShelfInformation{
+				Id:       shelf.Id,
 				ItemId:   itemId,
 				Index:    index,
 				Price:    itemMasterMap[itemId].Price,

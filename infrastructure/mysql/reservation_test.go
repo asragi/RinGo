@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/asragi/RinGo/core"
@@ -370,36 +371,45 @@ func TestCreateFetchReservation(t *testing.T) {
 		fetchReservation := CreateFetchReservation(dba.Query)
 		shelves := shelvesFromReservations(append(tt.targetReservations, tt.exceptReservations...))
 		ctx := test.MockCreateContext()
-		_, err := dba.Exec(
-			ctx,
-			`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
-			shelves,
+		txErr := dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				_, err := dba.Exec(
+					ctx,
+					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
+					shelves,
+				)
+				if err != nil {
+					t.Fatalf("failed to insert shelves: %v", err)
+				}
+				_, err = dba.Exec(
+					ctx,
+					"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :shelf_index, :scheduled_time, :purchase_num)",
+					append(tt.targetReservations, tt.exceptReservations...),
+				)
+				if err != nil {
+					t.Fatalf("failed to insert reservations: %v", err)
+				}
+				result, err := fetchReservation(ctx, tt.users, tt.fromTime, tt.toTime)
+				if err != nil {
+					t.Fatalf("failed to fetch reservation: %v", err)
+				}
+				if len(result) != len(tt.targetReservations) {
+					t.Fatalf("expect: %+v, got: %+v", result, tt.targetReservations)
+				}
+				for j := range result {
+					if result[j].Id != tt.targetReservations[j].Id {
+						t.Errorf("expected: %s, got: %s", tt.targetReservations[j].Id, result[j].Id)
+					}
+					if result[j].UserId != tt.targetReservations[j].UserId {
+						t.Errorf("expected: %s, got: %s", tt.targetReservations[j].UserId, result[j].UserId)
+					}
+				}
+				return TestCompleted
+			},
 		)
-		if err != nil {
-			t.Fatalf("failed to insert shelves: %v", err)
-		}
-		_, err = dba.Exec(
-			ctx,
-			"INSERT INTO ringo.reservations (reservation_id, user_id, shelf_index, scheduled_time, purchase_num) VALUES (:reservation_id, :user_id, :shelf_index, :scheduled_time, :purchase_num)",
-			append(tt.targetReservations, tt.exceptReservations...),
-		)
-		if err != nil {
-			t.Fatalf("failed to insert reservations: %v", err)
-		}
-		result, err := fetchReservation(ctx, tt.users, tt.fromTime, tt.toTime)
-		if err != nil {
-			t.Fatalf("failed to fetch reservation: %v", err)
-		}
-		if len(result) != len(tt.targetReservations) {
-			t.Fatalf("expect: %+v, got: %+v", result, tt.targetReservations)
-		}
-		for j := range result {
-			if result[j].Id != tt.targetReservations[j].Id {
-				t.Errorf("expected: %s, got: %s", tt.targetReservations[j].Id, result[j].Id)
-			}
-			if result[j].UserId != tt.targetReservations[j].UserId {
-				t.Errorf("expected: %s, got: %s", tt.targetReservations[j].UserId, result[j].UserId)
-			}
+		if !errors.Is(txErr, TestCompleted) {
+			t.Errorf("FetchReservation() = %v", txErr)
+
 		}
 	}
 }
@@ -534,6 +544,222 @@ func TestCreateInsertReservation(t *testing.T) {
 		)
 		if errors.Is(txErr, TestCompleted) {
 			t.Errorf("InsertReservation() = %v", txErr)
+		}
+	}
+}
+
+func TestCreateFetchCheckedTime(t *testing.T) {
+	type checkedTimeStruct struct {
+		ShelfId     shelf.Id     `db:"shelf_id"`
+		CheckedTime sql.NullTime `db:"checked_time"`
+	}
+	type testCase struct {
+		mockShelves     []*shelf.ShelfRepoRow
+		mockCheckedTime []*checkedTimeStruct
+	}
+	tests := []*testCase{
+		{
+			mockShelves: []*shelf.ShelfRepoRow{
+				{
+					Id:         "shelf_id_for_checked_time_test",
+					UserId:     testUserId,
+					ItemId:     "1",
+					Index:      0,
+					SetPrice:   0,
+					TotalSales: 0,
+				},
+				{
+					Id:         "shelf_id_for_checked_time_test_2",
+					UserId:     testUserId,
+					ItemId:     "2",
+					Index:      1,
+					SetPrice:   0,
+					TotalSales: 0,
+				},
+			},
+			mockCheckedTime: []*checkedTimeStruct{
+				{
+					ShelfId: "shelf_id_for_checked_time_test",
+					CheckedTime: sql.NullTime{
+						Time:  test.MockTime(),
+						Valid: true,
+					},
+				},
+				{
+					ShelfId: "shelf_id_for_checked_time_test_2",
+					CheckedTime: sql.NullTime{
+						Time:  test.MockTime(),
+						Valid: false,
+					},
+				},
+			},
+		},
+	}
+
+	for _, v := range tests {
+		ctx := test.MockCreateContext()
+		txErr := dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				_, err := dba.Exec(
+					ctx,
+					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
+					v.mockShelves,
+				)
+				if err != nil {
+					return fmt.Errorf("insert shelves data: %w", err)
+				}
+				for _, shelfCheckedTime := range v.mockCheckedTime {
+					_, err = dba.Exec(
+						ctx,
+						"UPDATE ringo.shelves SET checked_time = :checked_time WHERE shelf_id = :shelf_id",
+						shelfCheckedTime,
+					)
+					if err != nil {
+						return fmt.Errorf("error on exec update checked time: %w", err)
+					}
+				}
+				fetchCheckedTime := CreateFetchCheckedTime(dba.Query)
+				result, err := fetchCheckedTime(
+					ctx,
+					[]shelf.Id{"shelf_id_for_checked_time_test", "shelf_id_for_checked_time_test_2"},
+				)
+				if err != nil {
+					return err
+				}
+				if len(v.mockCheckedTime) != len(result) {
+					t.Errorf("expected: %d, got: %d", len(v.mockCheckedTime), len(result))
+				}
+				for j := range result {
+					targetResult := result[j]
+					if targetResult.ShelfId != v.mockCheckedTime[j].ShelfId {
+						t.Errorf("expected: %s, got: %s", v.mockCheckedTime[j].ShelfId, targetResult.ShelfId)
+					}
+					if targetResult.CheckedTime.IsNull() != !v.mockCheckedTime[j].CheckedTime.Valid {
+						t.Errorf(
+							"expected: %t, got: %t",
+							!v.mockCheckedTime[j].CheckedTime.Valid,
+							targetResult.CheckedTime.IsNull(),
+						)
+					}
+					if targetResult.CheckedTime.IsNull() {
+						continue
+					}
+					checkedTime, err := targetResult.CheckedTime.Time()
+					if err != nil {
+						t.Fatalf("failed to get checked time: %v", err)
+					}
+					if !checkedTime.Equal(v.mockCheckedTime[j].CheckedTime.Time) {
+						t.Errorf(
+							"expected: %s, got: %s",
+							v.mockCheckedTime[j].CheckedTime.Time.String(),
+							result[j].CheckedTime.String(),
+						)
+					}
+				}
+				return TestCompleted
+			},
+		)
+		if !errors.Is(txErr, TestCompleted) {
+			t.Errorf("FetchCheckedTime() = %v", txErr)
+		}
+	}
+}
+
+func TestCreateUpdateCheckedTime(t *testing.T) {
+	type testCase struct {
+		mockShelves      []*shelf.ShelfRepoRow
+		checkedTimePairs []*reservation.UpdateCheckedTimePair
+	}
+	tests := []*testCase{
+		{
+			checkedTimePairs: []*reservation.UpdateCheckedTimePair{
+				{
+					ShelfId:     "shelf_id_for_checked_time_test",
+					CheckedTime: test.MockTime().Add(time.Minute * 30),
+				},
+				{
+					ShelfId:     "shelf_id_for_checked_time_test_2",
+					CheckedTime: test.MockTime(),
+				},
+			},
+			mockShelves: []*shelf.ShelfRepoRow{
+				{
+					Id:         "shelf_id_for_checked_time_test",
+					UserId:     testUserId,
+					ItemId:     "1",
+					Index:      0,
+					SetPrice:   0,
+					TotalSales: 0,
+				},
+				{
+					Id:         "shelf_id_for_checked_time_test_2",
+					UserId:     testUserId,
+					ItemId:     "2",
+					Index:      1,
+					SetPrice:   0,
+					TotalSales: 0,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		ctx := test.MockCreateContext()
+		updateCheckedTime := CreateUpdateCheckedTime(dba.Exec)
+		txErr := dba.Transaction(
+			ctx, func(ctx context.Context) error {
+				_, err := dba.Exec(
+					ctx,
+					`INSERT INTO ringo.shelves (user_id, shelf_index, item_id, set_price, shelf_id, total_sales) VALUES (:user_id, :shelf_index, :item_id, :set_price, :shelf_id, :total_sales)`,
+					tt.mockShelves,
+				)
+				if err != nil {
+					t.Fatalf("failed to insert shelves: %v", err)
+				}
+				err = updateCheckedTime(ctx, tt.checkedTimePairs)
+				if err != nil {
+					return err
+				}
+				rows, err := dba.Query(
+					ctx,
+					"SELECT shelf_id, checked_time FROM ringo.shelves",
+					nil,
+				)
+				if err != nil {
+					return err
+				}
+				defer rows.Close()
+				var resultSet []*reservation.CheckedTimePair
+				for rows.Next() {
+					var row reservation.CheckedTimePair
+					var checkedTime sql.NullTime
+					if err := rows.Scan(&row.ShelfId, &checkedTime); err != nil {
+						return err
+					}
+					row.CheckedTime = reservation.NewCheckedTime(checkedTime.Time, checkedTime.Valid)
+					resultSet = append(resultSet, &row)
+				}
+				for j := range resultSet {
+					if resultSet[j].ShelfId != tt.checkedTimePairs[j].ShelfId {
+						t.Errorf("expected: %s, got: %s", tt.checkedTimePairs[j].ShelfId, resultSet[j].ShelfId)
+					}
+					checkedTime, err := resultSet[j].CheckedTime.Time()
+					if err != nil {
+						t.Fatalf("failed to get checked time: %v", err)
+					}
+					expectedTime := tt.checkedTimePairs[j].CheckedTime
+					if !checkedTime.Equal(expectedTime) {
+						t.Errorf(
+							"expected: %s, got: %s",
+							expectedTime.String(),
+							checkedTime.String(),
+						)
+					}
+				}
+				return TestCompleted
+			},
+		)
+		if !errors.Is(txErr, TestCompleted) {
+			t.Errorf("UpdateCheckedTime() = %v", txErr)
 		}
 	}
 }

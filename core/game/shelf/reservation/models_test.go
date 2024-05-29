@@ -61,13 +61,12 @@ func TestCalcModifiedPurchaseProbability(t *testing.T) {
 
 func TestCreateReservations(t *testing.T) {
 	type testCase struct {
-		customerNum    CustomerNumPerHour
-		rand           core.EmitRandomFunc
-		getCurrentTime core.GetCurrentTimeFunc
-		probability    ModifiedPurchaseProbability
-		targetUser     core.UserId
-		targetIndex    shelf.Index
-		expected       []*Reservation
+		customerNum CustomerNumPerHour
+		rand        core.EmitRandomFunc
+		probability ModifiedPurchaseProbability
+		targetUser  core.UserId
+		targetIndex shelf.Index
+		expected    []*Reservation
 	}
 
 	createIdGenerator := func() func() string {
@@ -81,12 +80,11 @@ func TestCreateReservations(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			customerNum:    2,
-			rand:           test.MockEmitRandom,
-			getCurrentTime: test.MockTime,
-			probability:    0.6,
-			targetUser:     "user_id",
-			targetIndex:    1,
+			customerNum: 2,
+			rand:        test.MockEmitRandom,
+			probability: 0.6,
+			targetUser:  "user_id",
+			targetIndex: 1,
 			expected: []*Reservation{
 				{
 					Id:            "reservation_id_0",
@@ -110,7 +108,8 @@ func TestCreateReservations(t *testing.T) {
 		actual := createReservations(
 			tc.customerNum,
 			tc.rand,
-			tc.getCurrentTime,
+			test.MockTime(),
+			test.MockTime().Add(time.Hour),
 			tc.probability,
 			tc.targetUser,
 			tc.targetIndex,
@@ -209,6 +208,38 @@ func TestCalcItemAttraction(t *testing.T) {
 				tc.baseAttraction,
 				tc.basePrice,
 				tc.setPrice,
+				actual,
+				tc.expected,
+			)
+		}
+	}
+}
+
+func TestNewCustomerNum(t *testing.T) {
+	type testCase struct {
+		fromTime           time.Time
+		toTime             time.Time
+		customerNumPerHour CustomerNumPerHour
+		expected           CustomerNum
+	}
+
+	testCases := []testCase{
+		{
+			fromTime:           test.MockTime(),
+			toTime:             test.MockTime().Add(time.Minute * 30),
+			customerNumPerHour: 10,
+			expected:           5,
+		},
+	}
+
+	for _, tc := range testCases {
+		actual := NewCustomerNum(tc.fromTime, tc.toTime, tc.customerNumPerHour)
+		if actual != tc.expected {
+			t.Errorf(
+				"NewCustomerNum(%s, %s, %d) = %d, want %d",
+				tc.fromTime,
+				tc.toTime,
+				tc.customerNumPerHour,
 				actual,
 				tc.expected,
 			)

@@ -9,7 +9,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/infrastructure"
-	"time"
+	"github.com/asragi/RinGo/utils"
 )
 
 type nullableShelfRow struct {
@@ -199,14 +199,17 @@ func CreateDeleteShelfBySize(dbExec database.DBExecFunc) shelf.DeleteShelfBySize
 }
 
 func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
-	return func(ctx context.Context, userIds []core.UserId, currentTime time.Time) ([]*ranking.UserScorePair, error) {
+	return func(
+		ctx context.Context,
+		userIds []core.UserId,
+		rankPeriod ranking.RankPeriod,
+	) ([]*ranking.UserScorePair, error) {
 		userIdStrings := infrastructure.UserIdsToString(userIds)
 		spreadUserIdStrings := spreadString(userIdStrings)
-		dateString := currentTime.Format("2006-01-02")
 		query := fmt.Sprintf(
-			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s) AND score_date = "%s";`,
+			`SELECT user_id, total_score from ringo.scores WHERE user_id IN (%s) AND rank_period = %d;`,
 			spreadUserIdStrings,
-			dateString,
+			rankPeriod.ToInt(),
 		)
 		rows, err := q(ctx, query, nil)
 		if err != nil {
@@ -227,29 +230,26 @@ func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
 }
 
 func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
-	return func(ctx context.Context, userScorePair []*ranking.UserScorePair, currentTime time.Time) error {
+	return func(ctx context.Context, userScorePair []*ranking.UserScorePair, rankPeriod ranking.RankPeriod) error {
 		type request struct {
 			UserId     core.UserId        `db:"user_id"`
 			TotalScore ranking.TotalScore `db:"total_score"`
-			Date       time.Time          `db:"score_date"`
+			RankPeriod ranking.RankPeriod `db:"rank_period"`
 		}
-		req := func() []*request {
-			var result []*request
-			for _, v := range userScorePair {
-				result = append(
-					result, &request{
-						UserId:     v.UserId,
-						TotalScore: v.TotalScore,
-						Date:       currentTime,
-					},
-				)
-			}
-			return result
-		}()
+		reqSet := utils.NewSet(userScorePair)
+		req := utils.SetSelect(
+			reqSet, func(v *ranking.UserScorePair) *request {
+				return &request{
+					UserId:     v.UserId,
+					TotalScore: v.TotalScore,
+					RankPeriod: rankPeriod,
+				}
+			},
+		)
 		_, err := exec(
 			ctx,
-			`INSERT INTO ringo.scores (user_id, total_score, score_date) VALUES (:user_id, :total_score, :score_date) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
-			req,
+			`INSERT INTO ringo.scores (user_id, total_score, rank_period) VALUES (:user_id, :total_score, :rank_period) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
+			req.ToArray(),
 		)
 		if err != nil {
 			return fmt.Errorf("update score: %w", err)

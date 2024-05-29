@@ -23,15 +23,18 @@ func CreateFetchUserDailyRanking(
 	fetchUserName core.FetchUserNameFunc,
 	fetchUserDailyRanking FetchUserDailyRankingRepo,
 	fetchTotalScore FetchUserScore,
+	fetchPeriod FetchLatestRankPeriod,
 	getShelfService shelf.GetShelfFunc,
-	getTime core.GetCurrentTimeFunc,
 ) FetchUserDailyRanking {
 	return func(ctx context.Context, limit core.Limit, offset core.Offset) ([]*UserDailyRanking, error) {
 		handleError := func(err error) ([]*UserDailyRanking, error) {
 			return nil, fmt.Errorf("fetch user daily ranking: %w", err)
 		}
-		nowTime := getTime()
-		rankingData, err := fetchUserDailyRanking(ctx, limit, offset, nowTime)
+		latestPeriod, err := fetchPeriod(ctx)
+		if err != nil {
+			return handleError(err)
+		}
+		rankingData, err := fetchUserDailyRanking(ctx, limit, offset, latestPeriod)
 		if err != nil {
 			return handleError(err)
 		}
@@ -62,7 +65,7 @@ func CreateFetchUserDailyRanking(
 		userNameSet := utils.NewSet(userNames)
 		userNameMap := utils.SetToMap(userNameSet, func(name *core.FetchUserNameRes) core.UserId { return name.UserId })
 
-		totalScores, err := fetchTotalScore(ctx, userIds.ToArray(), nowTime)
+		totalScores, err := fetchTotalScore(ctx, userIds.ToArray(), latestPeriod)
 		if err != nil {
 			return handleError(err)
 		}

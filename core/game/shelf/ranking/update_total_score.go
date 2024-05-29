@@ -19,6 +19,7 @@ type UpdateTotalScoreServiceFunc func(context.Context, []*shelf.UserPopularity, 
 
 func CreateUpdateTotalScoreService(
 	fetchScore FetchUserScore,
+	fetchLatestPeriod FetchLatestRankPeriod,
 	updateScore UpsertScoreFunc,
 	currentTime core.GetCurrentTimeFunc,
 ) UpdateTotalScoreServiceFunc {
@@ -30,8 +31,12 @@ func CreateUpdateTotalScoreService(
 		handleError := func(err error) error {
 			return fmt.Errorf("on update total score service: %w", err)
 		}
+		latestPeriod, err := fetchLatestPeriod(ctx)
+		if err != nil {
+			return handleError(err)
+		}
 		userIds := userPopToId(userPopularity)
-		userScores, err := fetchScore(ctx, userIds, currentTime())
+		userScores, err := fetchScore(ctx, userIds, latestPeriod)
 		if err != nil {
 			return handleError(err)
 		}
@@ -65,7 +70,7 @@ func CreateUpdateTotalScoreService(
 				TotalScore: resultTotalScore,
 			}
 		}
-		err = updateScore(ctx, resultScoreReq, currentTime())
+		err = updateScore(ctx, resultScoreReq, latestPeriod)
 		if err != nil {
 			return handleError(err)
 		}
