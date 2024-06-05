@@ -1,13 +1,13 @@
 package core
 
-type Service struct {
+type Services struct {
 	UpdateUserName UpdateUserNameServiceFunc
 	UpdateShopName UpdateShopNameServiceFunc
 }
 
-func NewService(updateUserName UpdateUserNameFunc, updateShopName UpdateShopNameFunc) *Service {
-	return &Service{
-		UpdateUserName: CreateUpdateUserNameServiceFunc(updateUserName),
-		UpdateShopName: CreateUpdateShopNameServiceFunc(updateShopName),
+func NewService(updateUserName UpdateUserNameFunc, updateShopName UpdateShopNameFunc) *Services {
+	return &Services{
+		UpdateUserName: CreateUpdateUserNameService(updateUserName),
+		UpdateShopName: CreateUpdateShopNameService(updateShopName),
 	}
 }

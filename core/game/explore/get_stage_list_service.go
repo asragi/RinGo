@@ -26,7 +26,7 @@ type CreateGetStageListFunc func(
 	fetchStageDataFunc,
 ) GetStageListFunc
 
-func GetStageList(
+func CreateGetStageList(
 	getAllStage GetAllStageFunc,
 	fetchStageData fetchStageDataFunc,
 ) GetStageListFunc {
@@ -59,11 +59,17 @@ type FetchStageDataRepositories struct {
 	MakeUserExplore           game.MakeUserExploreFunc
 }
 type CreateFetchStageDataFunc func(
-	repositories FetchStageDataRepositories,
+	FetchAllStageFunc,
+	FetchUserStageFunc,
+	FetchStageExploreRelation,
+	game.MakeUserExploreFunc,
 ) fetchStageDataFunc
 
 func CreateFetchStageData(
-	args FetchStageDataRepositories,
+	fetchAllStage FetchAllStageFunc,
+	fetchUserStageFunc FetchUserStageFunc,
+	fetchStageExploreRelation FetchStageExploreRelation,
+	makeUserExplore game.MakeUserExploreFunc,
 ) fetchStageDataFunc {
 	fetch := func(
 		ctx context.Context,
@@ -72,7 +78,7 @@ func CreateFetchStageData(
 		handleError := func(err error) (*getAllStageArgs, error) {
 			return nil, fmt.Errorf("error on fetch stage data: %w", err)
 		}
-		allStageRes, err := args.FetchAllStage(ctx)
+		allStageRes, err := fetchAllStage(ctx)
 		if err != nil {
 			return handleError(err)
 		}
@@ -83,11 +89,11 @@ func CreateFetchStageData(
 			}
 			return result
 		}(allStageRes)
-		userStage, err := args.FetchUserStageFunc(ctx, userId, stageId)
+		userStage, err := fetchUserStageFunc(ctx, userId, stageId)
 		if err != nil {
 			return handleError(err)
 		}
-		stageExplorePair, err := args.FetchStageExploreRelation(ctx, stageId)
+		stageExplorePair, err := fetchStageExploreRelation(ctx, stageId)
 		exploreIds := func(stageExplore []*StageExploreIdPairRow) []game.ExploreId {
 			result := make([]game.ExploreId, len(stageExplore))
 			for i, v := range stageExplore {
@@ -95,7 +101,7 @@ func CreateFetchStageData(
 			}
 			return result
 		}(stageExplorePair)
-		userExplore, err := args.MakeUserExplore(ctx, userId, exploreIds, 1)
+		userExplore, err := makeUserExplore(ctx, userId, exploreIds, 1)
 		if err != nil {
 			return handleError(err)
 		}
@@ -125,7 +131,7 @@ type GetAllStageFunc func(
 	*getAllStageArgs,
 ) []*StageInformation
 
-func getAllStage(
+func GetAllStage(
 	args *getAllStageArgs,
 ) []*StageInformation {
 	stageMaster := args.allStageRes

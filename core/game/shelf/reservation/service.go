@@ -7,7 +7,7 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
 )
 
-type Service struct {
+type Services struct {
 	ApplyReservation       ApplyReservationFunc
 	ApplyAllReservations   ApplyAllReservationsFunc
 	InsertReservation      InsertReservationFunc
@@ -37,7 +37,7 @@ func NewService(
 	random core.EmitRandomFunc,
 	getTime core.GetCurrentTimeFunc,
 	generateId func() string,
-) *Service {
+) *Services {
 	applyReservation := CreateApplyReservation(
 		fetchReservation,
 		deleteReservation,
@@ -51,7 +51,7 @@ func NewService(
 		updateStorage,
 		updateShelfTotalSales,
 		updateTotalScore,
-		calcReservationApplication,
+		CalcReservationApplication,
 		getTime,
 	)
 	applyAllReservations := CreateApplyAllReservations(
@@ -61,7 +61,7 @@ func NewService(
 	insertReservation := CreateInsertReservation(
 		fetchItemAttraction,
 		fetchUserPopularity,
-		createReservation,
+		CreateReservation,
 		insertReservationRepo,
 		deleteReservationToShelf,
 		updateCheckedTime,
@@ -74,7 +74,7 @@ func NewService(
 		fetchShelf,
 		fetchItemAttraction,
 		fetchUserPopularity,
-		createReservation,
+		CreateReservation,
 		insertReservationRepo,
 		fetchCheckedTime,
 		updateCheckedTime,
@@ -83,7 +83,7 @@ func NewService(
 		getTime,
 	)
 	autoInsert := CreateAutoInsertReservation(fetchAllUserId, batchInsertReservation)
-	return &Service{
+	return &Services{
 		ApplyReservation:       applyReservation,
 		InsertReservation:      insertReservation,
 		ApplyAllReservations:   applyAllReservations,

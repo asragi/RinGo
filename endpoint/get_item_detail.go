@@ -11,21 +11,21 @@ import (
 )
 
 type (
-	getItemDetailEndpointRes func(
+	GetItemDetailEndpointFunc func(
 		context.Context,
 		*gateway.GetItemDetailRequest,
 	) (*gateway.GetItemDetailResponse, error)
 
-	GetItemDetailEndpoint func(
+	CreateGetItemDetailEndpointFunc func(
 		explore.GetItemDetailFunc,
 		auth.ValidateTokenFunc,
-	) getItemDetailEndpointRes
+	) GetItemDetailEndpointFunc
 )
 
 func CreateGetItemDetail(
 	getItemDetail explore.GetItemDetailFunc,
 	validateToken auth.ValidateTokenFunc,
-) getItemDetailEndpointRes {
+) GetItemDetailEndpointFunc {
 	return func(ctx context.Context, req *gateway.GetItemDetailRequest) (*gateway.GetItemDetailResponse, error) {
 		handleError := func(err error) (*gateway.GetItemDetailResponse, error) {
 			return &gateway.GetItemDetailResponse{}, fmt.Errorf("error on get item detail endpoint: %w", err)

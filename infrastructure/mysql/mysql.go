@@ -35,7 +35,6 @@ type (
 	skillReq struct {
 		SkillId core.SkillId `db:"skill_id"`
 	}
-	queryFunc database.QueryFunc
 )
 
 func (exploreReq) Create(v game.ExploreId) *exploreReq {
@@ -54,7 +53,7 @@ func (skillReq) Create(v core.SkillId) *skillReq {
 	return &skillReq{SkillId: v}
 }
 
-func CreateCheckUserExistence(queryFunc queryFunc) core.CheckDoesUserExist {
+func CreateCheckUserExistence(queryFunc database.QueryFunc) core.CheckDoesUserExist {
 	return func(ctx context.Context, userId core.UserId) error {
 		handleError := func(err error) error {
 			return fmt.Errorf("check user existence: %w", err)
@@ -72,7 +71,7 @@ func CreateCheckUserExistence(queryFunc queryFunc) core.CheckDoesUserExist {
 	}
 }
 
-func CreateGetUserPassword(queryFunc queryFunc) auth.FetchHashedPassword {
+func CreateGetUserPassword(queryFunc database.QueryFunc) auth.FetchHashedPassword {
 	type dbResponse struct {
 		HashedPassword auth.HashedPassword `db:"hashed_password"`
 	}
@@ -99,7 +98,7 @@ func CreateGetUserPassword(queryFunc queryFunc) auth.FetchHashedPassword {
 }
 
 func CreateInsertNewUser(
-	dbExec database.DBExecFunc,
+	dbExec database.ExecFunc,
 	initialFund core.Fund,
 	initialMaxStamina core.MaxStamina,
 	initialPopularity shelf.ShopPopularity,
@@ -147,7 +146,7 @@ func CreateInsertNewUser(
 	}
 }
 
-func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
+func CreateGetResourceMySQL(q database.QueryFunc) game.GetResourceFunc {
 	type responseStruct struct {
 		UserId             core.UserId     `db:"user_id"`
 		MaxStamina         core.MaxStamina `db:"max_stamina"`
@@ -188,7 +187,7 @@ func CreateGetResourceMySQL(q queryFunc) game.GetResourceFunc {
 	}
 }
 
-func CreateFetchFund(q queryFunc) game.FetchFundFunc {
+func CreateFetchFund(q database.QueryFunc) game.FetchFundFunc {
 	return func(ctx context.Context, userIds []core.UserId) ([]*game.FundRes, error) {
 		handleError := func(err error) ([]*game.FundRes, error) {
 			return nil, fmt.Errorf("fetch fund from mysql: %w", err)
@@ -216,7 +215,7 @@ func CreateFetchFund(q queryFunc) game.FetchFundFunc {
 	}
 }
 
-func CreateFetchStamina(q queryFunc) game.FetchStaminaFunc {
+func CreateFetchStamina(q database.QueryFunc) game.FetchStaminaFunc {
 	return func(ctx context.Context, userIds []core.UserId) ([]*game.StaminaRes, error) {
 		handleError := func(err error) ([]*game.StaminaRes, error) {
 			return nil, fmt.Errorf("fetch stamina from mysql: %w", err)
@@ -244,7 +243,7 @@ func CreateFetchStamina(q queryFunc) game.FetchStaminaFunc {
 	}
 }
 
-func CreateUpdateStamina(execDb database.DBExecFunc) game.UpdateStaminaFunc {
+func CreateUpdateStamina(execDb database.ExecFunc) game.UpdateStaminaFunc {
 	type updateStaminaReq struct {
 		StaminaRecoverTime time.Time `db:"stamina_recover_time"`
 	}
@@ -263,7 +262,7 @@ func CreateUpdateStamina(execDb database.DBExecFunc) game.UpdateStaminaFunc {
 	}
 }
 
-func CreateGetItemMasterMySQL(q queryFunc) game.FetchItemMasterFunc {
+func CreateGetItemMasterMySQL(q database.QueryFunc) game.FetchItemMasterFunc {
 	return CreateGetQueryFromReq[core.ItemId, itemReq, game.GetItemMasterRes](
 		q,
 		"get item master from mysql: %w",
@@ -271,7 +270,7 @@ func CreateGetItemMasterMySQL(q queryFunc) game.FetchItemMasterFunc {
 	)
 }
 
-func CreateGetStageMaster(q queryFunc) explore.FetchStageMasterFunc {
+func CreateGetStageMaster(q database.QueryFunc) explore.FetchStageMasterFunc {
 	return CreateGetQueryFromReq[explore.StageId, stageReq, explore.StageMaster](
 		q,
 		"get stage master: %w",
@@ -279,7 +278,7 @@ func CreateGetStageMaster(q queryFunc) explore.FetchStageMasterFunc {
 	)
 }
 
-func CreateGetAllStageMaster(q queryFunc) explore.FetchAllStageFunc {
+func CreateGetAllStageMaster(q database.QueryFunc) explore.FetchAllStageFunc {
 	f := func(ctx context.Context) ([]*explore.StageMaster, error) {
 		handleError := func(err error) ([]*explore.StageMaster, error) {
 			return nil, fmt.Errorf("get all stage master from mysql: %w", err)
@@ -306,7 +305,7 @@ func CreateGetAllStageMaster(q queryFunc) explore.FetchAllStageFunc {
 }
 
 func CreateGetQueryFromReq[S any, SReq reqInterface[S, SReq], T any](
-	q queryFunc,
+	q database.QueryFunc,
 	errorMessageFormat string,
 	queryText string,
 ) func(context.Context, []S) ([]*T, error) {
@@ -324,7 +323,7 @@ func CreateGetQueryFromReq[S any, SReq reqInterface[S, SReq], T any](
 	}
 }
 
-func CreateGetExploreMasterMySQL(q queryFunc) game.FetchExploreMasterFunc {
+func CreateGetExploreMasterMySQL(q database.QueryFunc) game.FetchExploreMasterFunc {
 	f := CreateGetQuery[exploreReq, game.GetExploreMasterRes](
 		q,
 		"get explore master from mysql: %w",
@@ -343,7 +342,7 @@ func CreateGetExploreMasterMySQL(q queryFunc) game.FetchExploreMasterFunc {
 	}
 }
 
-func CreateGetSkillMaster(q queryFunc) game.FetchSkillMasterFunc {
+func CreateGetSkillMaster(q database.QueryFunc) game.FetchSkillMasterFunc {
 	f := CreateGetQuery[skillReq, game.SkillMaster](
 		q,
 		"get skill master from mysql: %w",
@@ -362,7 +361,7 @@ func CreateGetSkillMaster(q queryFunc) game.FetchSkillMasterFunc {
 	}
 }
 
-func CreateGetEarningItem(q queryFunc) game.FetchEarningItemFunc {
+func CreateGetEarningItem(q database.QueryFunc) game.FetchEarningItemFunc {
 	f := CreateGetQuery[exploreReq, game.EarningItem](
 		q,
 		"get earning item data from mysql: %w",
@@ -375,7 +374,7 @@ func CreateGetEarningItem(q queryFunc) game.FetchEarningItemFunc {
 	}
 }
 
-func CreateGetConsumingItem(q queryFunc) game.FetchConsumingItemFunc {
+func CreateGetConsumingItem(q database.QueryFunc) game.FetchConsumingItemFunc {
 	f := CreateGetQuery[exploreReq, game.ConsumingItem](
 		q,
 		"get consuming item data from mysql: %w",
@@ -394,7 +393,7 @@ func CreateGetConsumingItem(q queryFunc) game.FetchConsumingItemFunc {
 	}
 }
 
-func CreateGetRequiredSkills(q queryFunc) game.FetchRequiredSkillsFunc {
+func CreateGetRequiredSkills(q database.QueryFunc) game.FetchRequiredSkillsFunc {
 	f := CreateGetQuery[exploreReq, game.RequiredSkill](
 		q,
 		"get required skill from mysql :%w",
@@ -412,7 +411,7 @@ func CreateGetRequiredSkills(q queryFunc) game.FetchRequiredSkillsFunc {
 	}
 }
 
-func CreateGetSkillGrowth(q queryFunc) game.FetchSkillGrowthData {
+func CreateGetSkillGrowth(q database.QueryFunc) game.FetchSkillGrowthData {
 	f := CreateGetQuery[exploreReq, game.SkillGrowthData](
 		q,
 		"get skill growth from mysql: %w",
@@ -425,7 +424,7 @@ func CreateGetSkillGrowth(q queryFunc) game.FetchSkillGrowthData {
 	}
 }
 
-func CreateGetReductionSkill(q queryFunc) game.FetchReductionStaminaSkillFunc {
+func CreateGetReductionSkill(q database.QueryFunc) game.FetchReductionStaminaSkillFunc {
 	f := CreateGetQuery[exploreReq, game.StaminaReductionSkillPair](
 		q,
 		"get stamina reduction skill from mysql: %w",
@@ -444,7 +443,7 @@ func CreateGetReductionSkill(q queryFunc) game.FetchReductionStaminaSkillFunc {
 	}
 }
 
-func CreateStageExploreRelation(q queryFunc) explore.FetchStageExploreRelation {
+func CreateStageExploreRelation(q database.QueryFunc) explore.FetchStageExploreRelation {
 	f := CreateGetQuery[stageReq, explore.StageExploreIdPairRow](
 		q,
 		"get stage explore relation from mysql: %w",
@@ -463,7 +462,7 @@ func CreateStageExploreRelation(q queryFunc) explore.FetchStageExploreRelation {
 	}
 }
 
-func CreateItemExploreRelation(q queryFunc) explore.FetchItemExploreRelationFunc {
+func CreateItemExploreRelation(q database.QueryFunc) explore.FetchItemExploreRelationFunc {
 	type fetchExploreIdRes struct {
 		ExploreId game.ExploreId `db:"explore_id"`
 	}
@@ -487,7 +486,7 @@ func CreateItemExploreRelation(q queryFunc) explore.FetchItemExploreRelationFunc
 	}
 }
 
-func CreateGetUserExplore(q queryFunc) game.GetUserExploreFunc {
+func CreateGetUserExplore(q database.QueryFunc) game.GetUserExploreFunc {
 	type exploreRes struct {
 		ExploreId game.ExploreId `db:"explore_id"`
 		IsKnown   int            `db:"is_known"`
@@ -523,7 +522,7 @@ func CreateGetUserExplore(q queryFunc) game.GetUserExploreFunc {
 	}
 }
 
-func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
+func CreateGetUserStageData(queryFunc database.QueryFunc) explore.FetchUserStageFunc {
 	type userStageRes struct {
 		StageId explore.StageId `db:"stage_id"`
 		IsKnown int             `db:"is_known"`
@@ -559,7 +558,7 @@ func CreateGetUserStageData(queryFunc queryFunc) explore.FetchUserStageFunc {
 	}
 }
 
-func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
+func CreateUpdateFund(dbExec database.ExecFunc) game.UpdateFundFunc {
 	return func(ctx context.Context, userFundPair []*game.UserFundPair) error {
 		userIds, fundIds := game.FundPairToUserId(userFundPair)
 		userIdsToString := func(userIds []core.UserId) []string {
@@ -590,7 +589,7 @@ func CreateUpdateFund(dbExec database.DBExecFunc) game.UpdateFundFunc {
 	}
 }
 
-func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
+func CreateGetStorage(queryF database.QueryFunc) game.FetchStorageFunc {
 	type ItemDataRes struct {
 		UserId core.UserId `db:"user_id"`
 		ItemId core.ItemId `db:"item_id"`
@@ -694,7 +693,7 @@ func CreateGetStorage(queryF queryFunc) game.FetchStorageFunc {
 	}
 }
 
-func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
+func CreateGetAllStorage(queryFunc database.QueryFunc) game.FetchAllStorageFunc {
 	type resStruct struct {
 		UserId  core.UserId `db:"user_id"`
 		ItemId  core.ItemId `db:"item_id"`
@@ -741,7 +740,7 @@ func CreateGetAllStorage(queryFunc queryFunc) game.FetchAllStorageFunc {
 	}
 }
 
-func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageFunc {
+func CreateUpdateItemStorage(dbExec database.ExecFunc) game.UpdateItemStorageFunc {
 	return func(ctx context.Context, data []*game.StorageData) error {
 		baseQuery := `INSERT INTO ringo.item_storages (user_id, item_id, stock, is_known) VALUES %s ON DUPLICATE KEY UPDATE stock = VALUES(stock);`
 		dataString := func(data []*game.StorageData) []string {
@@ -760,7 +759,7 @@ func CreateUpdateItemStorage(dbExec database.DBExecFunc) game.UpdateItemStorageF
 	}
 }
 
-func CreateGetUserSkill(dbExec queryFunc) game.FetchUserSkillFunc {
+func CreateGetUserSkill(dbExec database.QueryFunc) game.FetchUserSkillFunc {
 	type skillReq struct {
 		SkillId string `db:"skill_id"`
 	}
@@ -792,7 +791,7 @@ func CreateGetUserSkill(dbExec queryFunc) game.FetchUserSkillFunc {
 	return f
 }
 
-func CreateUpdateUserSkill(dbExec database.DBExecFunc) game.UpdateUserSkillExpFunc {
+func CreateUpdateUserSkill(dbExec database.ExecFunc) game.UpdateUserSkillExpFunc {
 	g := CreateExec[game.SkillGrowthPostRow]
 	f := func(ctx context.Context, growthData game.SkillGrowthPost) error {
 		query := `INSERT INTO ringo.user_skills (user_id, skill_id, skill_exp) VALUES (:user_id, :skill_id, :skill_exp) ON DUPLICATE KEY UPDATE skill_exp =VALUES(skill_exp);`
@@ -811,7 +810,7 @@ func CreateUpdateUserSkill(dbExec database.DBExecFunc) game.UpdateUserSkillExpFu
 }
 
 func CreateGetQuery[S any, T any](
-	queryFunc queryFunc,
+	queryFunc database.QueryFunc,
 	errorMessageFormat string,
 	queryText string,
 ) func(context.Context, []*S) ([]*T, error) {
@@ -848,7 +847,7 @@ func createQueryFromUserId(queryText string) func(core.UserId) string {
 }
 
 func CreateUserQuery[S any, T any](
-	queryFunc queryFunc,
+	queryFunc database.QueryFunc,
 	errorMessageFormat string,
 	queryTextFromUserId func(core.UserId) string,
 ) func(context.Context, core.UserId, []*S) ([]*T, error) {
@@ -880,7 +879,7 @@ func CreateUserQuery[S any, T any](
 }
 
 func CreateExec[S any](
-	dbExec database.DBExecFunc,
+	dbExec database.ExecFunc,
 	errorMessageFormat string,
 	query string,
 ) func(context.Context, []*S) error {

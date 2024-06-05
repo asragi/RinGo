@@ -47,13 +47,13 @@ type InsertReservationFunc func(
 func CreateInsertReservation(
 	fetchItemAttraction FetchItemAttractionFunc,
 	fetchUserPopularity shelf.FetchUserPopularityFunc,
-	createReservation createReservationFunc,
+	createReservation CreateReservationFunc,
 	insertReservation InsertReservationRepoFunc,
 	deleteReservation DeleteReservationToShelfRepoFunc,
 	updateCheckedTime UpdateCheckedTime,
 	rand core.EmitRandomFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
-	generateId func() string,
+	generateId core.GenerateUUIDFunc,
 ) InsertReservationFunc {
 	return func(
 		ctx context.Context,
@@ -148,7 +148,7 @@ func CreateBatchInsertReservation(
 	fetchShelves shelf.FetchShelf,
 	fetchItemAttraction FetchItemAttractionFunc,
 	fetchUserPopularity shelf.FetchUserPopularityFunc,
-	createReservation createReservationFunc,
+	createReservation CreateReservationFunc,
 	insertReservation InsertReservationRepoFunc,
 	fetchCheckedTime FetchCheckedTimeFunc,
 	updateCheckedTime UpdateCheckedTime,

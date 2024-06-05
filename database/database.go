@@ -126,7 +126,7 @@ func (dba *DBAccessor) Transaction(ctx context.Context, txFunc func(context.Cont
 	return nil
 }
 
-type DBExecFunc func(
+type ExecFunc func(
 	ctx context.Context,
 	query string,
 	arg interface{},

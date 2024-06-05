@@ -8,16 +8,16 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateRegisterEndpointFunc func(auth.RegisterUserFunc, shelf.InitializeShelfFunc) registerEndpointFunc
+type CreateRegisterEndpointFunc func(auth.RegisterUserFunc, shelf.InitializeShelfFunc) RegisterEndpointFunc
 type RegisterRequest struct{}
 
-type registerEndpointFunc func(context.Context, *RegisterRequest) (*gateway.RegisterUserResponse, error)
+type RegisterEndpointFunc func(context.Context, *gateway.RegisterUserRequest) (*gateway.RegisterUserResponse, error)
 
 func CreateRegisterEndpoint(
 	register auth.RegisterUserFunc,
 	initializeShelf shelf.InitializeShelfFunc,
-) registerEndpointFunc {
-	return func(ctx context.Context, _ *RegisterRequest) (*gateway.RegisterUserResponse, error) {
+) RegisterEndpointFunc {
+	return func(ctx context.Context, _ *gateway.RegisterUserRequest) (*gateway.RegisterUserResponse, error) {
 		res, err := register(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("register endpoint: %w", err)

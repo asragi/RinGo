@@ -7,7 +7,7 @@ import (
 
 type ValidateUpdateShelfSizeFunc func(targetSize Size, currentSize Size) error
 
-func validateUpdateShelfSize(size Size, currentSize Size) error {
+func ValidateUpdateShelfSize(size Size, currentSize Size) error {
 	if !size.ValidSize() {
 		return fmt.Errorf("invalid shelf size: %d :%w", size, game.InvalidActionError)
 	}

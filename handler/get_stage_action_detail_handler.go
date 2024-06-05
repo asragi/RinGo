@@ -22,7 +22,7 @@ func CreateGetStageActionDetailHandler(
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
 ) router.Handler {
-	getParams := func(
+	_ = func(
 		header requestHeader,
 		_ requestBody,
 		_ queryParameter,
@@ -62,8 +62,15 @@ func CreateGetStageActionDetailHandler(
 			ExploreId: actionId.String(),
 		}, nil
 	}
-	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)
-	service := createService(commonGetAction, fetchStageMaster)
-	endpointFunc := createEndpoint(service, validateToken)
-	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
+	return nil
+	/*
+		commonGetAction := createCommonGetActionDetail(
+			calcConsumingStamina,
+			createCommonGetActionRepositories,
+		)
+		service := createService(commonGetAction, fetchStageMaster)
+		endpointFunc := createEndpoint(service, validateToken)
+		return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
+
+	*/
 }

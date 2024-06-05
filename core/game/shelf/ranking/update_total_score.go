@@ -21,7 +21,6 @@ func CreateUpdateTotalScoreService(
 	fetchScore FetchUserScore,
 	fetchLatestPeriod FetchLatestRankPeriod,
 	updateScore UpsertScoreFunc,
-	currentTime core.GetCurrentTimeFunc,
 ) UpdateTotalScoreServiceFunc {
 	return func(
 		ctx context.Context,

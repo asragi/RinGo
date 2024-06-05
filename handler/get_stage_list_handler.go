@@ -14,7 +14,7 @@ import (
 func CreateGetStageListHandler(
 	getAllStage explore.GetAllStageFunc,
 	timer core.GetCurrentTimeFunc,
-	getStageListEndpoint endpoint.GetStageListEndpoint,
+	getStageListEndpoint endpoint.CreateGetStageListEndpointFunc,
 	fetchStageDataArgs explore.FetchStageDataRepositories,
 	createFetchStageData explore.CreateFetchStageDataFunc,
 	getStageList explore.CreateGetStageListFunc,
@@ -22,7 +22,7 @@ func CreateGetStageListHandler(
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
 ) router.Handler {
-	getParams := func(
+	_ = func(
 		header requestHeader,
 		_ requestBody,
 		_ queryParameter,
@@ -40,11 +40,15 @@ func CreateGetStageListHandler(
 			Token: token,
 		}, nil
 	}
-	fetchStageData := createFetchStageData(fetchStageDataArgs)
-	get := getStageList(
-		getAllStage,
-		fetchStageData,
-	)
-	endpointFunc := getStageListEndpoint(get, validateToken, timer)
-	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
+	return nil
+	/*
+		fetchStageData := createFetchStageData(fetchStageDataArgs)
+		get := getStageList(
+			getAllStage,
+			fetchStageData,
+		)
+		endpointFunc := getStageListEndpoint(get, validateToken, timer)
+		return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
+
+	*/
 }

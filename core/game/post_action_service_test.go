@@ -177,7 +177,7 @@ func TestPostAction(t *testing.T) {
 			return v.mocks.mockStamina
 		}
 
-		postAction := createPostAction(
+		postAction := CreatePostAction(
 			createArgs,
 			mockSkillGrowth,
 			mockGrowthApply,
@@ -315,20 +315,18 @@ func TestCreateGeneratePostActionArgs(t *testing.T) {
 			return v.mockReductionSkill, nil
 		}
 
-		createArgs := createGeneratePostActionArgs(
-			&getPostActionRepositories{
-				FetchResource:              mockResource,
-				FetchExploreMaster:         mockExploreMaster,
-				FetchSkillMaster:           mockSkillMaster,
-				FetchSkillGrowthData:       mockSkillGrowth,
-				FetchUserSkill:             mockUserSkill,
-				FetchEarningItem:           mockEarned,
-				FetchConsumingItem:         mockConsumed,
-				FetchRequiredSkill:         mockRequiredSkill,
-				FetchStorage:               mockStorage,
-				FetchItemMaster:            mockAllItemMaster,
-				FetchStaminaReductionSkill: mockReductionSkill,
-			},
+		createArgs := CreateGeneratePostActionArgs(
+			mockResource,
+			mockExploreMaster,
+			mockSkillMaster,
+			mockSkillGrowth,
+			mockUserSkill,
+			mockEarned,
+			mockConsumed,
+			mockRequiredSkill,
+			mockStorage,
+			mockAllItemMaster,
+			mockReductionSkill,
 		)
 
 		ctx := test.MockCreateContext()

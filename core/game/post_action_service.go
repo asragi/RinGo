@@ -20,11 +20,21 @@ type getPostActionRepositories struct {
 	FetchStaminaReductionSkill FetchReductionStaminaSkillFunc
 }
 
-type generatePostActionArgsFunc func(context.Context, core.UserId, int, ExploreId) (*postActionArgs, error)
+type GeneratePostActionArgsFunc func(context.Context, core.UserId, int, ExploreId) (*postActionArgs, error)
 
-func createGeneratePostActionArgs(
-	repo *getPostActionRepositories,
-) generatePostActionArgsFunc {
+func CreateGeneratePostActionArgs(
+	fetchResource GetResourceFunc,
+	fetchExploreMaster FetchExploreMasterFunc,
+	fetchSkillMaster FetchSkillMasterFunc,
+	fetchSkillGrowthData FetchSkillGrowthData,
+	fetchUserSkill FetchUserSkillFunc,
+	fetchEarningItem FetchEarningItemFunc,
+	fetchConsumingItem FetchConsumingItemFunc,
+	fetchRequiredSkill FetchRequiredSkillsFunc,
+	fetchStorage FetchStorageFunc,
+	fetchItemMaster FetchItemMasterFunc,
+	fetchStaminaReductionSkill FetchReductionStaminaSkillFunc,
+) GeneratePostActionArgsFunc {
 	return func(
 		ctx context.Context,
 		userId core.UserId,
@@ -34,16 +44,16 @@ func createGeneratePostActionArgs(
 		handleError := func(err error) (*postActionArgs, error) {
 			return nil, fmt.Errorf("error on creating post action args: %w", err)
 		}
-		userResources, err := repo.FetchResource(ctx, userId)
+		userResources, err := fetchResource(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}
 
-		exploreMasters, err := repo.FetchExploreMaster(ctx, []ExploreId{exploreId})
+		exploreMasters, err := fetchExploreMaster(ctx, []ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
-		skillGrowthList, err := repo.FetchSkillGrowthData(ctx, exploreId)
+		skillGrowthList, err := fetchSkillGrowthData(ctx, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -54,15 +64,15 @@ func createGeneratePostActionArgs(
 			}
 			return result
 		}(skillGrowthList)
-		skillsRes, err := repo.FetchUserSkill(ctx, userId, skillIds)
+		skillsRes, err := fetchUserSkill(ctx, userId, skillIds)
 		if err != nil {
 			return handleError(err)
 		}
-		earningItemData, err := repo.FetchEarningItem(ctx, exploreId)
+		earningItemData, err := fetchEarningItem(ctx, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItem, err := repo.FetchConsumingItem(ctx, []ExploreId{exploreId})
+		consumingItem, err := fetchConsumingItem(ctx, []ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -86,7 +96,7 @@ func createGeneratePostActionArgs(
 			}
 			return result
 		}(earningItemData, consumingItem)
-		storageRes, err := repo.FetchStorage(ctx, ToUserItemPair(userId, itemIds))
+		storageRes, err := fetchStorage(ctx, ToUserItemPair(userId, itemIds))
 		if err != nil {
 			return handleError(err)
 		}
@@ -99,22 +109,22 @@ func createGeneratePostActionArgs(
 			return userStorage.ItemData
 		}()
 
-		itemMaster, err := repo.FetchItemMaster(ctx, itemIds)
+		itemMaster, err := fetchItemMaster(ctx, itemIds)
 		if err != nil {
 			return handleError(err)
 		}
 
-		requiredSkills, err := repo.FetchRequiredSkill(ctx, []ExploreId{exploreId})
+		requiredSkills, err := fetchRequiredSkill(ctx, []ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
 
-		skillMaster, err := repo.FetchSkillMaster(ctx, skillIds)
+		skillMaster, err := fetchSkillMaster(ctx, skillIds)
 		if err != nil {
 			return handleError(err)
 		}
 
-		reductionSkills, err := repo.FetchStaminaReductionSkill(ctx, []ExploreId{exploreId})
+		reductionSkills, err := fetchStaminaReductionSkill(ctx, []ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -126,7 +136,7 @@ func createGeneratePostActionArgs(
 			return result
 		}()
 		// TODO: FetchUserSkill is called twice in this function.
-		reductionUserSkills, err := repo.FetchUserSkill(ctx, userId, allReductionSkillId)
+		reductionUserSkills, err := fetchUserSkill(ctx, userId, allReductionSkillId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -183,8 +193,8 @@ type postActionArgs struct {
 
 type PostActionFunc func(context.Context, core.UserId, int, ExploreId) (*PostActionResult, error)
 
-func createPostAction(
-	generateArgs generatePostActionArgsFunc,
+func CreatePostAction(
+	generateArgs GeneratePostActionArgsFunc,
 	calcSkillGrowth CalcSkillGrowthFunc,
 	calcGrowthApply GrowthApplyFunc,
 	calcEarnedItem CalcEarnedItemFunc,

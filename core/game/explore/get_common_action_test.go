@@ -204,17 +204,17 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 		mockRequiredSkills := func(ctx context.Context, exploreId []game.ExploreId) ([]*game.RequiredSkill, error) {
 			return v.mockRequiredSkills, nil
 		}
-		mockRepositories := CreateGetCommonActionRepositories{
-			FetchItemStorage:        mockItemStorage,
-			FetchExploreMaster:      mockExploreMaster,
-			FetchEarningItem:        mockEarningItem,
-			FetchConsumingItem:      mockConsumingItem,
-			FetchSkillMaster:        mockSkillMaster,
-			FetchUserSkill:          mockUserSkill,
-			FetchRequiredSkillsFunc: mockRequiredSkills,
-		}
 		ctx := test.MockCreateContext()
-		res, err := CreateGetCommonActionDetail(mockCalcConsumingStamina, mockRepositories)(ctx, v.userId, v.exploreId)
+		res, err := CreateGetCommonActionDetail(
+			mockCalcConsumingStamina,
+			mockItemStorage,
+			mockExploreMaster,
+			mockEarningItem,
+			mockConsumingItem,
+			mockSkillMaster,
+			mockUserSkill,
+			mockRequiredSkills,
+		)(ctx, v.userId, v.exploreId)
 		expectedRes := getCommonActionRes{
 			UserId:            v.userId,
 			ActionDisplayName: v.mockExploreMaster.DisplayName,

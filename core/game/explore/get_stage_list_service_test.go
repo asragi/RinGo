@@ -37,7 +37,7 @@ func TestGetStageList(t *testing.T) {
 		fetchStageData := func(context.Context, core.UserId) (*getAllStageArgs, error) {
 			return v.mockGetAllStageArgs, nil
 		}
-		getStageListFunc := GetStageList(
+		getStageListFunc := CreateGetStageList(
 			getAllStageFunc,
 			fetchStageData,
 		)
@@ -203,7 +203,7 @@ func TestGetAllStage(t *testing.T) {
 			}
 			return result
 		}(req.explores)
-		res := getAllStage(
+		res := GetAllStage(
 			&getAllStageArgs{
 				stageId:        req.stageIds,
 				allStageRes:    req.stageMaster,

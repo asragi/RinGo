@@ -62,7 +62,7 @@ func CreateGetItemActionDetailHandler(
 			AccessToken: token,
 		}, nil
 	}
-	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, createCommonGetActionRepositories)
+	commonGetAction := createCommonGetActionDetail(calcConsumingStamina, nil, nil, nil, nil, nil, nil, nil)
 	getItemActionFunc := service(commonGetAction, fetchItemMaster)
 	getEndpoint := createEndpoint(getItemActionFunc, validateToken)
 	return createHandlerWithParameter(getEndpoint, createContext, getParams, logger)

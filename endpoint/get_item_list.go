@@ -8,14 +8,14 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetItemListEndpoint func(game.GetItemListFunc, auth.ValidateTokenFunc) GetItemEndpoint
+type CreateGetItemListEndpoint func(game.GetItemListFunc, auth.ValidateTokenFunc) GetItemListEndpoint
 
-type GetItemEndpoint func(context.Context, *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
+type GetItemListEndpoint func(context.Context, *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
 
 func CreateGetItemService(
 	getItem game.GetItemListFunc,
 	validateToken auth.ValidateTokenFunc,
-) GetItemEndpoint {
+) GetItemListEndpoint {
 	get := func(ctx context.Context, req *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error) {
 		handleError := func(err error) (*gateway.GetItemListResponse, error) {
 			return nil, fmt.Errorf("get item list endpoint: %w", err)

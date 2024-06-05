@@ -8,7 +8,7 @@ type DependencyInjectionContainer struct {
 
 func CreateDIContainer() DependencyInjectionContainer {
 	return DependencyInjectionContainer{
-		GetAllStage:                      getAllStage,
+		GetAllStage:                      GetAllStage,
 		CreateGetUserResourceServiceFunc: CreateGetUserResourceService,
 	}
 }

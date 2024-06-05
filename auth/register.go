@@ -11,18 +11,18 @@ type registerResult struct {
 	Password RowPassword
 }
 
-type generateIdStringFunc func() string
-
 type createUserIdFunc func(context.Context) (core.UserId, error)
 
+type CreateUserIdChallengeNum int
+
 func CreateUserId(
-	challengeNum int,
+	challengeNum CreateUserIdChallengeNum,
 	checkUser core.CheckDoesUserExist,
-	generate generateIdStringFunc,
+	generate core.GenerateUUIDFunc,
 ) createUserIdFunc {
 	f := func(ctx context.Context) (core.UserId, error) {
 		var err error
-		for i := 0; i < challengeNum; i++ {
+		for i := 0; i < int(challengeNum); i++ {
 			userId := core.UserId(generate())
 			err = checkUser(ctx, userId)
 			if err == nil {
@@ -34,16 +34,15 @@ func CreateUserId(
 	return f
 }
 
-type decideInitialName func() core.Name
 type RegisterUserFunc func(context.Context) (registerResult, error)
 
 func RegisterUser(
 	generateUserId createUserIdFunc,
-	generateRowPassword createRowPasswordFunc,
+	generateRowPassword CreateRowPasswordFunc,
 	createHashedPassword createHashedPasswordFunc,
 	insertNewUser InsertNewUser,
-	decideName decideInitialName,
-	decideShopName decideInitialName,
+	decideName core.DecideInitialName,
+	decideShopName core.DecideInitialShopName,
 ) RegisterUserFunc {
 	f := func(ctx context.Context) (registerResult, error) {
 		handleError := func(err error) (registerResult, error) {

@@ -33,13 +33,25 @@ type (
 	}
 	CreateCommonGetActionDetailFunc func(
 		game.CalcConsumingStaminaFunc,
-		CreateGetCommonActionRepositories,
+		game.FetchStorageFunc,
+		game.FetchExploreMasterFunc,
+		game.FetchEarningItemFunc,
+		game.FetchConsumingItemFunc,
+		game.FetchSkillMasterFunc,
+		game.FetchUserSkillFunc,
+		game.FetchRequiredSkillsFunc,
 	) getCommonActionFunc
 )
 
 func CreateGetCommonActionDetail(
 	calcConsumingStamina game.CalcConsumingStaminaFunc,
-	args CreateGetCommonActionRepositories,
+	fetchItemStorage game.FetchStorageFunc,
+	fetchExploreMaster game.FetchExploreMasterFunc,
+	fetchEarningItem game.FetchEarningItemFunc,
+	fetchConsumingItem game.FetchConsumingItemFunc,
+	fetchSkillMaster game.FetchSkillMasterFunc,
+	fetchUserSkill game.FetchUserSkillFunc,
+	fetchRequiredSkillsFunc game.FetchRequiredSkillsFunc,
 ) getCommonActionFunc {
 	return func(
 		ctx context.Context,
@@ -49,12 +61,12 @@ func CreateGetCommonActionDetail(
 		handleError := func(err error) (getCommonActionRes, error) {
 			return getCommonActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
 		}
-		exploreMasterRes, err := args.FetchExploreMaster(ctx, []game.ExploreId{exploreId})
+		exploreMasterRes, err := fetchExploreMaster(ctx, []game.ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
 		exploreMaster := exploreMasterRes[0]
-		consumingItemsRes, err := args.FetchConsumingItem(ctx, []game.ExploreId{exploreId})
+		consumingItemsRes, err := fetchConsumingItem(ctx, []game.ExploreId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -67,7 +79,7 @@ func CreateGetCommonActionDetail(
 			return result
 		}(consumingItems)
 		userItemPair := game.ToUserItemPair(userId, consumingItemIds)
-		consumingItemStorage, err := args.FetchItemStorage(ctx, userItemPair)
+		consumingItemStorage, err := fetchItemStorage(ctx, userItemPair)
 		if err != nil {
 			return handleError(err)
 		}
@@ -116,7 +128,7 @@ func CreateGetCommonActionDetail(
 		if err != nil {
 			return handleError(err)
 		}
-		items, err := args.FetchEarningItem(ctx, exploreId)
+		items, err := fetchEarningItem(ctx, exploreId)
 		if err != nil {
 			return handleError(err)
 		}
@@ -132,7 +144,7 @@ func CreateGetCommonActionDetail(
 			return result
 		}(items)
 		requiredSkills, err := func(exploreId game.ExploreId) ([]*RequiredSkillsRes, error) {
-			res, err := args.FetchRequiredSkillsFunc(ctx, []game.ExploreId{exploreId})
+			res, err := fetchRequiredSkillsFunc(ctx, []game.ExploreId{exploreId})
 			if err != nil {
 				return nil, fmt.Errorf("error on getting required skills: %w", err)
 			}
@@ -148,7 +160,7 @@ func CreateGetCommonActionDetail(
 				return result
 			}(requiredSkill)
 			skillMasterMap, err := func(skillId []core.SkillId) (map[core.SkillId]*game.SkillMaster, error) {
-				res, err := args.FetchSkillMaster(ctx, skillId)
+				res, err := fetchSkillMaster(ctx, skillId)
 				if err != nil {
 					return nil, fmt.Errorf("error on getting skill master: %w", err)
 				}
@@ -161,7 +173,7 @@ func CreateGetCommonActionDetail(
 			if err != nil {
 				return nil, fmt.Errorf("error on getting required skills: %w", err)
 			}
-			userSkillRes, err := args.FetchUserSkill(ctx, userId, skillIds)
+			userSkillRes, err := fetchUserSkill(ctx, userId, skillIds)
 			if err != nil {
 				return nil, fmt.Errorf("error on getting required skills: %w", err)
 			}

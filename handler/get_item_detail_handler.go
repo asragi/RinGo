@@ -20,7 +20,7 @@ func CreateGetItemDetailHandler(
 	makeUserExplore game.MakeUserExploreFunc,
 	createGetItemDetailArgs explore.CreateGetItemDetailArgsFunc,
 	createGetItemDetailFunc explore.CreateGetItemDetailServiceFunc,
-	getItemDetailEndpoint endpoint.GetItemDetailEndpoint,
+	getItemDetailEndpoint endpoint.CreateGetItemDetailEndpointFunc,
 	validateToken auth.ValidateTokenFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,

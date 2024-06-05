@@ -152,17 +152,15 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 		}
 
 		generate := CreateGenerateMakeUserExploreArgs(
-			&CreateMakeUserExploreRepositories{
-				mockFetchResource,
-				mockFetchExploreUserData,
-				mockFetchRequiredSkill,
-				mockFetchConsumingItem,
-				mockFetchStorage,
-				mockFetchUserSkill,
-				mockFetchConsumingStamina,
-				mockFetchExploreMaster,
-				test.MockTime,
-			},
+			mockFetchResource,
+			mockFetchExploreUserData,
+			mockFetchRequiredSkill,
+			mockFetchConsumingItem,
+			mockFetchStorage,
+			mockFetchUserSkill,
+			mockFetchConsumingStamina,
+			mockFetchExploreMaster,
+			test.MockTime,
 		)
 		args, err := generate(test.MockCreateContext(), v.mockUserId, v.mockExploreId)
 		if err != nil {

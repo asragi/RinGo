@@ -24,12 +24,16 @@ type GenerateMakeUserExploreArgs func(
 	[]ExploreId,
 ) (*makeUserExploreArgs, error)
 
-type CreateFetchMakeUserExploreArgsFunc func(
-	repositories *CreateMakeUserExploreRepositories,
-) GenerateMakeUserExploreArgs
-
 func CreateGenerateMakeUserExploreArgs(
-	repositories *CreateMakeUserExploreRepositories,
+	fetchResource GetResourceFunc,
+	getAction GetUserExploreFunc,
+	getRequiredSkills FetchRequiredSkillsFunc,
+	getConsumingItems FetchConsumingItemFunc,
+	getStorage FetchStorageFunc,
+	getUserSkill FetchUserSkillFunc,
+	calcConsumingStamina CalcConsumingStaminaFunc,
+	getExploreMaster FetchExploreMasterFunc,
+	getCurrentTime core.GetCurrentTimeFunc,
 ) GenerateMakeUserExploreArgs {
 	return func(
 		ctx context.Context,
@@ -39,14 +43,14 @@ func CreateGenerateMakeUserExploreArgs(
 		handleError := func(err error) (*makeUserExploreArgs, error) {
 			return nil, fmt.Errorf("error on create make user explore args: %w", err)
 		}
-		resource, err := repositories.FetchResource(ctx, userId)
+		resource, err := fetchResource(ctx, userId)
 		if err != nil {
 			return handleError(err)
 		}
 		fund := resource.Fund
 		staminaRecoverTime := resource.StaminaRecoverTime
 		maxStamina := resource.MaxStamina
-		actionRes, err := repositories.GetAction(ctx, userId, exploreIds)
+		actionRes, err := getAction(ctx, userId, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -54,11 +58,11 @@ func CreateGenerateMakeUserExploreArgs(
 			UserId:   userId,
 			Explores: actionRes,
 		}
-		requiredSkillsResponse, err := repositories.GetRequiredSkills(ctx, exploreIds)
+		requiredSkillsResponse, err := getRequiredSkills(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItemRes, err := repositories.GetConsumingItems(ctx, exploreIds)
+		consumingItemRes, err := getConsumingItems(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -82,7 +86,7 @@ func CreateGenerateMakeUserExploreArgs(
 				return result
 			}(consumingItemRes)
 
-			storage, innerErr := repositories.GetStorage(ctx, ToUserItemPair(userId, itemIds))
+			storage, innerErr := getStorage(ctx, ToUserItemPair(userId, itemIds))
 			if innerErr != nil {
 				return handleError(innerErr)
 			}
@@ -105,11 +109,11 @@ func CreateGenerateMakeUserExploreArgs(
 			return result
 
 		}(requiredSkillsResponse)
-		skills, err := repositories.GetUserSkill(ctx, userId, skillIds)
+		skills, err := getUserSkill(ctx, userId, skillIds)
 		if err != nil {
 			return handleError(err)
 		}
-		consumingStaminaRes, err := repositories.CalcConsumingStamina(ctx, userId, exploreIds)
+		consumingStaminaRes, err := calcConsumingStamina(ctx, userId, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -120,7 +124,7 @@ func CreateGenerateMakeUserExploreArgs(
 			}
 			return result
 		}(consumingStaminaRes)
-		explores, err := repositories.GetExploreMaster(ctx, exploreIds)
+		explores, err := getExploreMaster(ctx, exploreIds)
 		if err != nil {
 			return handleError(err)
 		}
@@ -135,7 +139,7 @@ func CreateGenerateMakeUserExploreArgs(
 			fundRes:            fund,
 			staminaRecoverTime: staminaRecoverTime,
 			maxStamina:         maxStamina,
-			currentTimer:       repositories.GetCurrentTime,
+			currentTimer:       getCurrentTime,
 			actionsRes:         getActionsRes,
 			requiredSkillRes:   requiredSkillsResponse,
 			consumingItemRes:   consumingItemRes,

@@ -13,7 +13,7 @@ type shelfArg struct {
 	BaseAttraction ItemAttraction
 }
 
-// deprecated: use createReservation instead
+// deprecated: use CreateReservation instead
 func informationToShelfArg(
 	indices []shelf.Index,
 	information map[shelf.Index]*shelf.UpdateShelfContentShelfInformation,
@@ -37,7 +37,7 @@ func informationToShelfArg(
 	return shelves
 }
 
-type createReservationFunc func(
+type CreateReservationFunc func(
 	updatedIndex shelf.Index,
 	updatedItemPrice core.Price,
 	updatedItemSetPrice shelf.SetPrice,
@@ -51,7 +51,7 @@ type createReservationFunc func(
 	generateId func() string,
 ) []*Reservation
 
-func createReservation(
+func CreateReservation(
 	updatedIndex shelf.Index,
 	updatedItemPrice core.Price,
 	updatedItemSetPrice shelf.SetPrice,

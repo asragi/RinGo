@@ -11,13 +11,13 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type GetStageListEndpoint func(
+type CreateGetStageListEndpointFunc func(
 	explore.GetStageListFunc,
 	auth.ValidateTokenFunc,
 	core.GetCurrentTimeFunc,
-) getStageListRes
+) GetStageListEndpointFunc
 
-type getStageListRes func(
+type GetStageListEndpointFunc func(
 	context.Context,
 	*gateway.GetStageListRequest,
 ) (*gateway.GetStageListResponse, error)
@@ -26,7 +26,7 @@ func CreateGetStageList(
 	getStageList explore.GetStageListFunc,
 	validateToken auth.ValidateTokenFunc,
 	timer core.GetCurrentTimeFunc,
-) getStageListRes {
+) GetStageListEndpointFunc {
 	return func(
 		ctx context.Context,
 		req *gateway.GetStageListRequest,

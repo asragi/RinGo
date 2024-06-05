@@ -9,7 +9,7 @@ import (
 )
 
 func CreateGetMyShelvesHandler(
-	endpoint endpoint.GetMyShelvesFunc,
+	endpoint endpoint.GetMyShelvesEndpointFunc,
 	createContext utils.CreateContextFunc,
 	logger WriteLogger,
 ) router.Handler {

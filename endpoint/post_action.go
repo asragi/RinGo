@@ -9,13 +9,13 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreatePostActionEndpoint func(game.PostActionFunc, auth.ValidateTokenFunc) postActionEndpoint
-type postActionEndpoint func(context.Context, *gateway.PostActionRequest) (*gateway.PostActionResponse, error)
+type CreatePostActionEndpoint func(game.PostActionFunc, auth.ValidateTokenFunc) PostActionEndpointFunc
+type PostActionEndpointFunc func(context.Context, *gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
 	postAction game.PostActionFunc,
 	validateToken auth.ValidateTokenFunc,
-) postActionEndpoint {
+) PostActionEndpointFunc {
 	post := func(ctx context.Context, req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
 		handleError := func(err error) (*gateway.PostActionResponse, error) {
 			return &gateway.PostActionResponse{

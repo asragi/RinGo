@@ -50,7 +50,7 @@ func toNullableShelfRow(shelfRow *shelf.ShelfRepoRow) *nullableShelfRow {
 	}
 }
 
-func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
+func CreateFetchShelfRepo(query database.QueryFunc) shelf.FetchShelf {
 	return func(ctx context.Context, userIds []core.UserId) ([]*shelf.ShelfRepoRow, error) {
 		if len(userIds) == 0 {
 			return nil, nil
@@ -89,7 +89,7 @@ func CreateFetchShelfRepo(query queryFunc) shelf.FetchShelf {
 	}
 }
 
-func createUpdateShelf(dbExec database.DBExecFunc) func(
+func createUpdateShelf(dbExec database.ExecFunc) func(
 	context.Context,
 	shelf.Id,
 	core.ItemId,
@@ -122,7 +122,7 @@ func createUpdateShelf(dbExec database.DBExecFunc) func(
 	}
 }
 
-func CreateUpdateTotalSales(dbExec database.DBExecFunc) shelf.UpdateShelfTotalSalesFunc {
+func CreateUpdateTotalSales(dbExec database.ExecFunc) shelf.UpdateShelfTotalSalesFunc {
 	return func(
 		ctx context.Context,
 		reqs []*shelf.TotalSalesReq,
@@ -152,7 +152,7 @@ func CreateUpdateTotalSales(dbExec database.DBExecFunc) shelf.UpdateShelfTotalSa
 	}
 }
 
-func CreateUpdateShelfContentRepo(dbExec database.DBExecFunc) shelf.UpdateShelfContentRepoFunc {
+func CreateUpdateShelfContentRepo(dbExec database.ExecFunc) shelf.UpdateShelfContentRepoFunc {
 	return func(
 		ctx context.Context,
 		shelfId shelf.Id,
@@ -163,7 +163,7 @@ func CreateUpdateShelfContentRepo(dbExec database.DBExecFunc) shelf.UpdateShelfC
 	}
 }
 
-func CreateInsertEmptyShelf(dbExec database.DBExecFunc) shelf.InsertEmptyShelfFunc {
+func CreateInsertEmptyShelf(dbExec database.ExecFunc) shelf.InsertEmptyShelfFunc {
 	return func(ctx context.Context, userId core.UserId, shelves []*shelf.ShelfRepoRow) error {
 		shelvesReq := func() []*nullableShelfRow {
 			var result []*nullableShelfRow
@@ -184,7 +184,7 @@ func CreateInsertEmptyShelf(dbExec database.DBExecFunc) shelf.InsertEmptyShelfFu
 	}
 }
 
-func CreateDeleteShelfBySize(dbExec database.DBExecFunc) shelf.DeleteShelfBySizeFunc {
+func CreateDeleteShelfBySize(dbExec database.ExecFunc) shelf.DeleteShelfBySizeFunc {
 	return func(ctx context.Context, userId core.UserId, size shelf.Size) error {
 		_, err := dbExec(
 			ctx,
@@ -198,7 +198,7 @@ func CreateDeleteShelfBySize(dbExec database.DBExecFunc) shelf.DeleteShelfBySize
 	}
 }
 
-func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
+func CreateFetchScore(q database.QueryFunc) ranking.FetchUserScore {
 	return func(
 		ctx context.Context,
 		userIds []core.UserId,
@@ -229,7 +229,7 @@ func CreateFetchScore(q queryFunc) ranking.FetchUserScore {
 	}
 }
 
-func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
+func CreateUpsertScore(exec database.ExecFunc) ranking.UpsertScoreFunc {
 	return func(ctx context.Context, userScorePair []*ranking.UserScorePair, rankPeriod ranking.RankPeriod) error {
 		type request struct {
 			UserId     core.UserId        `db:"user_id"`
@@ -258,7 +258,7 @@ func CreateUpsertScore(exec database.DBExecFunc) ranking.UpsertScoreFunc {
 	}
 }
 
-func CreateFetchUserPopularity(queryFunc queryFunc) shelf.FetchUserPopularityFunc {
+func CreateFetchUserPopularity(queryFunc database.QueryFunc) shelf.FetchUserPopularityFunc {
 	f := CreateGetQuery[userReq, shelf.UserPopularity](
 		queryFunc,
 		"fetch user popularity: %w",
@@ -285,7 +285,7 @@ func CreateFetchUserPopularity(queryFunc queryFunc) shelf.FetchUserPopularityFun
 	}
 }
 
-func CreateUpdateUserPopularity(exec database.DBExecFunc) shelf.UpdateUserPopularityFunc {
+func CreateUpdateUserPopularity(exec database.ExecFunc) shelf.UpdateUserPopularityFunc {
 	return func(ctx context.Context, userPopularity []*shelf.UserPopularity) error {
 		userIds := func() []core.UserId {
 			var result []core.UserId

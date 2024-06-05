@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
+	"github.com/asragi/RinGo/database"
 )
 
-func CreateFetchDailyRanking(queryFunc queryFunc) ranking.FetchUserDailyRankingRepo {
+func CreateFetchDailyRanking(queryFunc database.QueryFunc) ranking.FetchUserDailyRankingRepo {
 	return func(
 		ctx context.Context,
 		limit core.Limit,
@@ -48,7 +49,7 @@ func CreateFetchDailyRanking(queryFunc queryFunc) ranking.FetchUserDailyRankingR
 	}
 }
 
-func CreateFetchLatestRankPeriod(queryFunc queryFunc) ranking.FetchLatestRankPeriod {
+func CreateFetchLatestRankPeriod(queryFunc database.QueryFunc) ranking.FetchLatestRankPeriod {
 	return func(ctx context.Context) (ranking.RankPeriod, error) {
 		handleError := func(err error) (ranking.RankPeriod, error) {
 			return 0, fmt.Errorf("fetch latest rank period: %w", err)

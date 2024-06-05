@@ -7,11 +7,11 @@ import (
 )
 
 type LoginFunc func(context.Context, core.UserId, RowPassword) (AccessToken, error)
-type compareHashedPassword func(hash, password string) error
+type CompareHashedPassword func(hash, password string) error
 
 func CreateLoginFunc(
 	fetchHashedPassword FetchHashedPassword,
-	comparePassword compareHashedPassword,
+	comparePassword CompareHashedPassword,
 	createToken createTokenFunc,
 ) LoginFunc {
 	return func(ctx context.Context, userId core.UserId, rowPass RowPassword) (AccessToken, error) {

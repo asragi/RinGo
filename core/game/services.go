@@ -28,22 +28,20 @@ func createPostActionService(
 	updateFund UpdateFundFunc,
 	emitRandom core.EmitRandomFunc,
 ) PostActionFunc {
-	generateArgs := createGeneratePostActionArgs(
-		&getPostActionRepositories{
-			FetchResource:              fetchResource,
-			FetchExploreMaster:         fetchExploreMaster,
-			FetchSkillMaster:           fetchSkillMaster,
-			FetchSkillGrowthData:       fetchSkillGrowthData,
-			FetchUserSkill:             fetchUserSkill,
-			FetchEarningItem:           fetchEarningItem,
-			FetchConsumingItem:         fetchConsumingItem,
-			FetchRequiredSkill:         fetchRequiredSkill,
-			FetchStorage:               fetchStorage,
-			FetchItemMaster:            fetchItemMaster,
-			FetchStaminaReductionSkill: fetchReductionStamina,
-		},
+	generateArgs := CreateGeneratePostActionArgs(
+		fetchResource,
+		fetchExploreMaster,
+		fetchSkillMaster,
+		fetchSkillGrowthData,
+		fetchUserSkill,
+		fetchEarningItem,
+		fetchConsumingItem,
+		fetchRequiredSkill,
+		fetchStorage,
+		fetchItemMaster,
+		fetchReductionStamina,
 	)
-	return createPostAction(
+	return CreatePostAction(
 		generateArgs,
 		CalcSkillGrowthService,
 		CalcApplySkillGrowth,
@@ -71,17 +69,15 @@ func createMakeUserExplore(
 	getTime core.GetCurrentTimeFunc,
 ) MakeUserExploreFunc {
 	generateArgs := CreateGenerateMakeUserExploreArgs(
-		&CreateMakeUserExploreRepositories{
-			FetchResource:        fetchResource,
-			GetAction:            fetchAction,
-			GetRequiredSkills:    fetchRequiredSkills,
-			GetConsumingItems:    fetchConsumingItems,
-			GetStorage:           fetchStorage,
-			GetUserSkill:         fetchUserSkill,
-			CalcConsumingStamina: calcConsumingStamina,
-			GetExploreMaster:     fetchExploreMaster,
-			GetCurrentTime:       getTime,
-		},
+		fetchResource,
+		fetchAction,
+		fetchRequiredSkills,
+		fetchConsumingItems,
+		fetchStorage,
+		fetchUserSkill,
+		calcConsumingStamina,
+		fetchExploreMaster,
+		getTime,
 	)
 	return CreateMakeUserExplore(generateArgs)
 }

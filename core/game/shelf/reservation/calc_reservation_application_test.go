@@ -85,7 +85,7 @@ func TestCalcReservationApplication(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		result, err := calcReservationApplication(
+		result, err := CalcReservationApplication(
 			tc.users,
 			tc.initialPopularity,
 			tc.mockItemMaster,

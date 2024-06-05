@@ -10,12 +10,12 @@ import (
 	"time"
 )
 
-type GetResourceFunc func(context.Context, *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error)
+type GetResourceEndpoint func(context.Context, *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error)
 
 func CreateGetResourceEndpoint(
 	serviceFunc explore.GetUserResourceServiceFunc,
 	validateToken auth.ValidateTokenFunc,
-) GetResourceFunc {
+) GetResourceEndpoint {
 	get := func(ctx context.Context, req *gateway.GetResourceRequest) (*gateway.GetResourceResponse, error) {
 		handleError := func(err error) (*gateway.GetResourceResponse, error) {
 			return &gateway.GetResourceResponse{}, fmt.Errorf("error on get resource: %w", err)

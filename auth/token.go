@@ -3,12 +3,20 @@ package auth
 import (
 	"fmt"
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/crypto"
 	"github.com/asragi/RinGo/utils"
 	"strings"
 )
 
 type createTokenFunc func(core.UserId) (AccessToken, error)
-type sha256Func func(*SecretHashKey, *string) (*string, error)
+
+// TODO: remove "*"
+type Sha256Func func(SecretHashKey, string) (string, error)
+
+func CryptWithSha256(key SecretHashKey, text string) (string, error) {
+	keyString := string(key)
+	return crypto.SHA256WithKey(keyString, text)
+}
 
 type AccessToken string
 
@@ -31,7 +39,7 @@ type AccessTokenInformationFromJson struct {
 }
 
 func (info *AccessTokenInformationFromJson) ToInformation() (*AccessTokenInformation, error) {
-	userId, err := core.CreateUserId(info.UserId)
+	userId, err := core.NewUserId(info.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("decode request: %w", err)
 	}
@@ -42,11 +50,11 @@ func (info *AccessTokenInformationFromJson) ToInformation() (*AccessTokenInforma
 }
 
 func CreateTokenFuncEmitter(
-	base64Encode base64EncodeFunc,
+	base64Encode Base64EncodeFunc,
 	getTime core.GetCurrentTimeFunc,
 	jsonFunc utils.StructToJsonFunc[AccessTokenInformation],
 	secret SecretHashKey,
-	sha256 sha256Func,
+	sha256 Sha256Func,
 ) createTokenFunc {
 	return func(userId core.UserId) (AccessToken, error) {
 		handleError := func(err error) (AccessToken, error) {
@@ -63,11 +71,11 @@ func CreateTokenFuncEmitter(
 			return handleError(err)
 		}
 		unsignedToken := fmt.Sprintf("%s.%s", base64Encode(header), base64Encode(*payload))
-		signature, err := sha256(&secret, &unsignedToken)
+		signature, err := sha256(secret, unsignedToken)
 		if err != nil {
 			return handleError(err)
 		}
-		jwt := fmt.Sprintf("%s.%s", unsignedToken, *signature)
+		jwt := fmt.Sprintf("%s.%s", unsignedToken, signature)
 		token := AccessToken(jwt)
 		return token, nil
 	}
@@ -76,7 +84,7 @@ func CreateTokenFuncEmitter(
 type GetTokenInformationFunc func(token *AccessToken) (*AccessTokenInformation, error)
 
 func CreateGetTokenInformation(
-	decodeBase64 base64DecodeFunc,
+	decodeBase64 Base64DecodeFunc,
 	unmarshalJson utils.JsonToStructFunc[AccessTokenInformationFromJson],
 ) GetTokenInformationFunc {
 	return func(token *AccessToken) (*AccessTokenInformation, error) {
@@ -108,7 +116,7 @@ func CreateGetTokenInformation(
 
 type CompareToken func(token *AccessToken) error
 
-func CreateCompareToken(key *SecretHashKey, sha256 sha256Func) CompareToken {
+func CreateCompareToken(key SecretHashKey, sha256 Sha256Func) CompareToken {
 	return func(token *AccessToken) error {
 		if len(*token) <= 0 {
 			return TokenIsInvalidError{token: *token}
@@ -120,11 +128,11 @@ func CreateCompareToken(key *SecretHashKey, sha256 sha256Func) CompareToken {
 		}
 		unsignedSignature := fmt.Sprintf("%s.%s", splitToken[0], splitToken[1])
 		signature := splitToken[2]
-		hashedUnsignedToken, err := sha256(key, &unsignedSignature)
+		hashedUnsignedToken, err := sha256(key, unsignedSignature)
 		if err != nil {
 			return fmt.Errorf("compare token: %w", err)
 		}
-		if *hashedUnsignedToken != signature {
+		if hashedUnsignedToken != signature {
 			return TokenIsInvalidError{token: *token}
 		}
 		return nil

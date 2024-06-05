@@ -8,7 +8,7 @@ import (
 	"github.com/asragi/RinGo/infrastructure"
 )
 
-func CreateUpdateUserName(execFunc database.DBExecFunc) core.UpdateUserNameFunc {
+func CreateUpdateUserName(execFunc database.ExecFunc) core.UpdateUserNameFunc {
 	return func(ctx context.Context, userId core.UserId, userName core.Name) error {
 		query := fmt.Sprintf(
 			`UPDATE ringo.users SET name = "%s" WHERE user_id = "%s"`,
@@ -22,7 +22,7 @@ func CreateUpdateUserName(execFunc database.DBExecFunc) core.UpdateUserNameFunc 
 		return nil
 	}
 }
-func CreateUpdateShopName(execFunc database.DBExecFunc) core.UpdateShopNameFunc {
+func CreateUpdateShopName(execFunc database.ExecFunc) core.UpdateShopNameFunc {
 	return func(ctx context.Context, userId core.UserId, shopName core.Name) error {
 		query := fmt.Sprintf(
 			`UPDATE ringo.users SET shop_name = "%s" WHERE user_id = "%s"`,
@@ -37,7 +37,7 @@ func CreateUpdateShopName(execFunc database.DBExecFunc) core.UpdateShopNameFunc 
 	}
 }
 
-func CreateFetchUserName(queryFunc queryFunc) core.FetchUserNameFunc {
+func CreateFetchUserName(queryFunc database.QueryFunc) core.FetchUserNameFunc {
 	return func(ctx context.Context, userIds []core.UserId) ([]*core.FetchUserNameRes, error) {
 		if len(userIds) == 0 {
 			return []*core.FetchUserNameRes{}, nil
@@ -65,7 +65,7 @@ func CreateFetchUserName(queryFunc queryFunc) core.FetchUserNameFunc {
 	}
 }
 
-func CreateFetchAllUserId(queryFunc queryFunc) core.FetchAllUserId {
+func CreateFetchAllUserId(queryFunc database.QueryFunc) core.FetchAllUserId {
 	return func(ctx context.Context) ([]core.UserId, error) {
 		handleError := func(err error) ([]core.UserId, error) {
 			return nil, fmt.Errorf("fetch all user id: %w", err)

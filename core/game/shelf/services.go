@@ -37,7 +37,7 @@ func NewService(
 		insertEmptyShelf,
 		deleteShelfBySize,
 		postAction,
-		validateUpdateShelfSize,
+		ValidateUpdateShelfSize,
 		validateAction,
 		generateId,
 	)

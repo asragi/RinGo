@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func CreateAddInitialPeriod(execFunc database.DBExecFunc) router.Handler {
+func CreateAddInitialPeriod(execFunc database.ExecFunc) router.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		err := addInitialPeriod(ctx, execFunc)
@@ -21,7 +21,7 @@ func CreateAddInitialPeriod(execFunc database.DBExecFunc) router.Handler {
 	}
 }
 
-func addInitialPeriod(ctx context.Context, execFunc database.DBExecFunc) error {
+func addInitialPeriod(ctx context.Context, execFunc database.ExecFunc) error {
 	query := `INSERT INTO ringo.rank_period_table (rank_period) VALUES (1)`
 	_, err := execFunc(ctx, query, nil)
 	if err != nil {

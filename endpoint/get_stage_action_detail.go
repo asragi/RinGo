@@ -13,9 +13,9 @@ import (
 type CreateGetStageActionDetailFunc func(
 	explore.GetStageActionDetailFunc,
 	auth.ValidateTokenFunc,
-) getStageActionEndpointRes
+) GetStageActionEndpointFunc
 
-type getStageActionEndpointRes func(
+type GetStageActionEndpointFunc func(
 	context.Context,
 	*gateway.GetStageActionDetailRequest,
 ) (*gateway.GetStageActionDetailResponse, error)
@@ -23,7 +23,7 @@ type getStageActionEndpointRes func(
 func CreateGetStageActionDetail(
 	createStageActionDetail explore.GetStageActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,
-) getStageActionEndpointRes {
+) GetStageActionEndpointFunc {
 	get := func(
 		ctx context.Context,
 		req *gateway.GetStageActionDetailRequest,

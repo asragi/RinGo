@@ -21,7 +21,7 @@ func CreateUpdateShelfSize(
 	postAction game.PostActionFunc,
 	validateUpdateShelfSize ValidateUpdateShelfSizeFunc,
 	validateAction game.ValidateActionFunc,
-	generateId func() string,
+	generateId core.GenerateUUIDFunc,
 ) UpdateShelfSizeFunc {
 	return func(ctx context.Context, userId core.UserId, targetShelfSize Size) error {
 		handleError := func(err error) error {

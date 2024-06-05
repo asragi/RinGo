@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func CreateInsertReservation(dbExec database.DBExecFunc) reservation.InsertReservationRepoFunc {
+func CreateInsertReservation(dbExec database.ExecFunc) reservation.InsertReservationRepoFunc {
 	return CreateExec[reservation.ReservationRow](
 		dbExec,
 		"insert reservation: %w",
@@ -22,7 +22,7 @@ func CreateInsertReservation(dbExec database.DBExecFunc) reservation.InsertReser
 	)
 }
 
-func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRepoFunc {
+func CreateFetchReservation(queryFunc database.QueryFunc) reservation.FetchReservationRepoFunc {
 	return func(ctx context.Context, users []core.UserId, from time.Time, to time.Time) (
 		[]*reservation.ReservationRow,
 		error,
@@ -61,7 +61,7 @@ func CreateFetchReservation(queryFunc queryFunc) reservation.FetchReservationRep
 	}
 }
 
-func CreateFetchCheckedTime(queryFunc queryFunc) reservation.FetchCheckedTimeFunc {
+func CreateFetchCheckedTime(queryFunc database.QueryFunc) reservation.FetchCheckedTimeFunc {
 	return func(ctx context.Context, shelves []shelf.Id) ([]*reservation.CheckedTimePair, error) {
 		shelfIds := func() []string {
 			var ids []string
@@ -94,7 +94,7 @@ func CreateFetchCheckedTime(queryFunc queryFunc) reservation.FetchCheckedTimeFun
 	}
 }
 
-func CreateUpdateCheckedTime(dbExec database.DBExecFunc) reservation.UpdateCheckedTime {
+func CreateUpdateCheckedTime(dbExec database.ExecFunc) reservation.UpdateCheckedTime {
 	return func(ctx context.Context, checkedTimePairs []*reservation.UpdateCheckedTimePair) error {
 		if len(checkedTimePairs) == 0 {
 			return nil
@@ -130,7 +130,7 @@ func CreateUpdateCheckedTime(dbExec database.DBExecFunc) reservation.UpdateCheck
 	}
 }
 
-func CreateDeleteReservationToShelf(dbExec database.DBExecFunc) reservation.DeleteReservationToShelfRepoFunc {
+func CreateDeleteReservationToShelf(dbExec database.ExecFunc) reservation.DeleteReservationToShelfRepoFunc {
 	return func(ctx context.Context, userId core.UserId, index shelf.Index) error {
 		_, err := dbExec(
 			ctx,
@@ -144,7 +144,7 @@ func CreateDeleteReservationToShelf(dbExec database.DBExecFunc) reservation.Dele
 	}
 }
 
-func CreateDeleteReservation(dbExec database.DBExecFunc) reservation.DeleteReservationRepoFunc {
+func CreateDeleteReservation(dbExec database.ExecFunc) reservation.DeleteReservationRepoFunc {
 	return func(ctx context.Context, reservationIds []reservation.Id) error {
 		ids := func() []string {
 			var ids []string
@@ -166,7 +166,7 @@ func CreateDeleteReservation(dbExec database.DBExecFunc) reservation.DeleteReser
 	}
 }
 
-func CreateFetchItemAttraction(queryFunc queryFunc) reservation.FetchItemAttractionFunc {
+func CreateFetchItemAttraction(queryFunc database.QueryFunc) reservation.FetchItemAttractionFunc {
 	f := CreateGetQuery[itemReq, reservation.ItemAttractionRes](
 		queryFunc,
 		"fetch item attraction: %w",

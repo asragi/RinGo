@@ -10,13 +10,13 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type GetMyShelvesFunc func(context.Context, *gateway.GetMyShelfRequest) (*gateway.GetMyShelfResponse, error)
+type GetMyShelvesEndpointFunc func(context.Context, *gateway.GetMyShelfRequest) (*gateway.GetMyShelfResponse, error)
 
 func CreateGetMyShelvesEndpoint(
 	getShelvesFunc shelf.GetShelfFunc,
 	applyReservation reservation.ApplyReservationFunc,
 	validateToken auth.ValidateTokenFunc,
-) GetMyShelvesFunc {
+) GetMyShelvesEndpointFunc {
 	return func(ctx context.Context, request *gateway.GetMyShelfRequest) (*gateway.GetMyShelfResponse, error) {
 		handleError := func(err error) (*gateway.GetMyShelfResponse, error) {
 			return nil, fmt.Errorf("error on get my shelves: %w", err)

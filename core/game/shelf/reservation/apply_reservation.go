@@ -25,7 +25,7 @@ func CreateApplyReservation(
 	updateStorage game.UpdateItemStorageFunc,
 	updateShelfTotalSales shelf.UpdateShelfTotalSalesFunc,
 	updateTotalScore ranking.UpdateTotalScoreServiceFunc,
-	calcApplication calcReservationApplicationFunc,
+	calcApplication CalcReservationApplicationFunc,
 	getTime core.GetCurrentTimeFunc,
 ) ApplyReservationFunc {
 	return func(ctx context.Context, users []core.UserId) error {

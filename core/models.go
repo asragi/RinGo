@@ -9,7 +9,7 @@ import (
 
 type UserId string
 
-func CreateUserId(userId string) (UserId, error) {
+func NewUserId(userId string) (UserId, error) {
 	isValid := func(userId string) error {
 		if len(userId) <= 0 {
 			return ThrowInvalidUserIdError(userId)

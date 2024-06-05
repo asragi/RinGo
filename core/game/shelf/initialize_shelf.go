@@ -10,7 +10,7 @@ type InitializeShelfFunc func(context.Context, core.UserId) error
 
 func CreateInitializeShelf(
 	insertEmptyShelf InsertEmptyShelfFunc,
-	generateId func() string,
+	generateId core.GenerateUUIDFunc,
 ) InitializeShelfFunc {
 	return func(ctx context.Context, userId core.UserId) error {
 		handleError := func(err error) error {

@@ -15,7 +15,7 @@ type calcReservationResult struct {
 	afterPopularity []*shelf.UserPopularity
 }
 
-type calcReservationApplicationFunc func(
+type CalcReservationApplicationFunc func(
 	users []core.UserId,
 	initialPopularity []*shelf.UserPopularity,
 	itemMasterReq []*game.GetItemMasterRes,
@@ -25,7 +25,7 @@ type calcReservationApplicationFunc func(
 	reservations []*Reservation,
 ) (*calcReservationResult, error)
 
-func calcReservationApplication(
+func CalcReservationApplication(
 	users []core.UserId,
 	initialPopularityArray []*shelf.UserPopularity,
 	itemMasterReq []*game.GetItemMasterRes,

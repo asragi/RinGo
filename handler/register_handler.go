@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/endpoint"
 	"github.com/asragi/RinGo/router"
 	"github.com/asragi/RinGo/utils"
+	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
 func CreateRegisterHandler(
@@ -20,8 +21,8 @@ func CreateRegisterHandler(
 		_ requestBody,
 		_ queryParameter,
 		_ pathString,
-	) (*endpoint.RegisterRequest, error) {
-		return &endpoint.RegisterRequest{}, nil
+	) (*gateway.RegisterUserRequest, error) {
+		return &gateway.RegisterUserRequest{}, nil
 	}
 	endpointFunc := createEndpoint(register, initializeShelf)
 	return createHandlerWithParameter(endpointFunc, createContext, getParams, logger)
