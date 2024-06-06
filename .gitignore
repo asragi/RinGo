@@ -23,3 +23,6 @@ go.work
 
 # Editor Settings
 .vscode
+
+# google/wire
+*_gen.go
