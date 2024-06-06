@@ -19,7 +19,7 @@ func CreateUpdateShopNameEndpoint(
 ) UpdateShopNameEndpoint {
 	return func(ctx context.Context, req *gateway.UpdateShopNameRequest) (*gateway.UpdateShopNameResponse, error) {
 		handleError := func(err error) (*gateway.UpdateShopNameResponse, error) {
-			return nil, fmt.Errorf("on update user name endpoint: %w", err)
+			return nil, fmt.Errorf("on update shop name endpoint: %w", err)
 		}
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
@@ -36,7 +36,6 @@ func CreateUpdateShopNameEndpoint(
 			return handleError(err)
 		}
 		return &gateway.UpdateShopNameResponse{
-			Error:    nil,
 			ShopName: shopName.String(),
 		}, nil
 	}

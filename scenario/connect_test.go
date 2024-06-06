@@ -14,7 +14,7 @@ func Connect(address string) ConnectFunc {
 	}
 }
 
-func closeConn(conn *grpc.ClientConn) {
+func closeConnection(conn *grpc.ClientConn) {
 	err := conn.Close()
 	if err == nil {
 		return

@@ -8,8 +8,6 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateLoginEndpointFunc func(auth.LoginFunc) LoginEndpoint
-
 type LoginEndpoint func(context.Context, *gateway.LoginRequest) (*gateway.LoginResponse, error)
 
 func CreateLoginEndpoint(loginFunc auth.LoginFunc) LoginEndpoint {
@@ -21,7 +19,6 @@ func CreateLoginEndpoint(loginFunc auth.LoginFunc) LoginEndpoint {
 			return nil, fmt.Errorf("login endpoint: %w", err)
 		}
 		return &gateway.LoginResponse{
-			Error:       nil,
 			AccessToken: string(res),
 		}, nil
 	}

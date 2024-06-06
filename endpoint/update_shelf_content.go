@@ -52,7 +52,6 @@ func CreateUpdateShelfContentEndpoint(
 			return handleError(err)
 		}
 		return &gateway.UpdateShelfContentResponse{
-			Error:        nil,
 			Index:        req.Index,
 			SetPrice:     req.SetPrice,
 			ItemId:       req.ItemId,

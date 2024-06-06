@@ -36,7 +36,6 @@ func CreateUpdateUserNameEndpoint(
 			return handleError(err)
 		}
 		return &gateway.UpdateUserNameResponse{
-			Error:    nil,
 			UserName: userName.String(),
 		}, nil
 	}

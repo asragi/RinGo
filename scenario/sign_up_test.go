@@ -22,9 +22,9 @@ func signUp(ctx context.Context, agent signUpAgent) error {
 	if err != nil {
 		return handleError(err)
 	}
-	defer closeConn(conn)
-	registerClient := gateway.NewRegisterClient(conn)
-	res, err := registerClient.RegisterUser(ctx, &gateway.RegisterUserRequest{})
+	defer closeConnection(conn)
+	registerClient := gateway.NewRingoClient(conn)
+	res, err := registerClient.SignUp(ctx, &gateway.SignUpRequest{})
 	if err != nil {
 		return handleError(err)
 	}

@@ -34,8 +34,7 @@ func CreateUpdateShelfSizeEndpoint(
 			return handleError(err)
 		}
 		return &gateway.UpdateShelfSizeResponse{
-			Error: nil,
-			Size:  sizeInt,
+			Size: sizeInt,
 		}, nil
 	}
 }

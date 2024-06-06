@@ -5,24 +5,6 @@ import (
 	"github.com/google/wire"
 )
 
-type Endpoints struct {
-	SignUp               endpoint.RegisterEndpointFunc
-	Login                endpoint.LoginEndpoint
-	UpdateUserName       endpoint.UpdateUserNameEndpoint
-	UpdateShopName       endpoint.UpdateShopNameEndpoint
-	GetResource          endpoint.GetResourceEndpoint
-	GetItemList          endpoint.GetItemListEndpoint
-	GetItemDetail        endpoint.GetItemDetailEndpointFunc
-	GetItemActionDetail  endpoint.GetItemActionDetailEndpoint
-	GetMyShelves         endpoint.GetMyShelvesEndpointFunc
-	GetRankingUserList   endpoint.GetRankingUserListEndpoint
-	GetStageList         endpoint.GetStageListEndpointFunc
-	GetStageActionDetail endpoint.GetStageActionEndpointFunc
-	PostAction           endpoint.PostActionEndpointFunc
-	UpdateShelfContent   endpoint.UpdateShelfContentEndpointFunc
-	UpdateShelfSize      endpoint.UpdateShelfSizeEndpoint
-}
-
 var endpointsSet = wire.NewSet(
 	endpoint.CreateRegisterEndpoint,
 	endpoint.CreateLoginEndpoint,

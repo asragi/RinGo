@@ -10,17 +10,10 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type (
-	GetItemDetailEndpointFunc func(
-		context.Context,
-		*gateway.GetItemDetailRequest,
-	) (*gateway.GetItemDetailResponse, error)
-
-	CreateGetItemDetailEndpointFunc func(
-		explore.GetItemDetailFunc,
-		auth.ValidateTokenFunc,
-	) GetItemDetailEndpointFunc
-)
+type GetItemDetailEndpointFunc func(
+	context.Context,
+	*gateway.GetItemDetailRequest,
+) (*gateway.GetItemDetailResponse, error)
 
 func CreateGetItemDetail(
 	getItemDetail explore.GetItemDetailFunc,

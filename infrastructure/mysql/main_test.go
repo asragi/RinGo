@@ -13,7 +13,7 @@ var dba *database.DBAccessor
 var testUserId = core.UserId("the-one-test-user")
 
 func TestMain(m *testing.M) {
-	db, purge, err := test.CreateTestDB("ringo-mysql-unittest-image", "./db_for_test/Dockerfile")
+	db, purge, err := test.CreateTestDB("ringo-mysql-unittest-image", "../../test/db_for_test/Dockerfile")
 	if err != nil {
 		log.Fatalf("Could not create test DB: %s", err)
 		return

@@ -6,6 +6,7 @@ package initialize
 import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/endpoint"
 	"github.com/google/wire"
 )
 
@@ -14,7 +15,7 @@ func CreateEndpoints(
 	constants *Constants,
 	exec database.ExecFunc,
 	query database.QueryFunc,
-) *Endpoints {
+) *endpoint.Endpoints {
 	wire.Build(
 		wire.FieldsOf(
 			new(*Constants),
@@ -27,7 +28,7 @@ func CreateEndpoints(
 		infrastructures,
 		services,
 		endpointsSet,
-		wire.Struct(new(Endpoints), "*"),
+		wire.Struct(new(endpoint.Endpoints), "*"),
 	)
 	return nil
 }

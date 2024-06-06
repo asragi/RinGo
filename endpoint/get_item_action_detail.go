@@ -15,11 +15,6 @@ type GetItemActionDetailEndpoint func(
 	*gateway.GetItemActionDetailRequest,
 ) (*gateway.GetItemActionDetailResponse, error)
 
-type CreateGetItemActionDetailEndpointFunc func(
-	explore.GetItemActionDetailFunc,
-	auth.ValidateTokenFunc,
-) GetItemActionDetailEndpoint
-
 func CreateGetItemActionDetailEndpoint(
 	getItemActionFunc explore.GetItemActionDetailFunc,
 	validateToken auth.ValidateTokenFunc,

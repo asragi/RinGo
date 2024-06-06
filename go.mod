@@ -3,9 +3,10 @@ module github.com/asragi/RinGo
 go 1.21
 
 require (
-	github.com/asragi/RingoSuPBGo v0.0.0-20240531004505-cffb24135558
+	github.com/asragi/RingoSuPBGo v0.0.0-20240606031646-3e3f966cf282
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
+	github.com/google/wire v0.6.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/ory/dockertest/v3 v3.10.0
 	golang.org/x/crypto v0.23.0
@@ -26,7 +27,6 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/wire v0.6.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -44,7 +44,7 @@ require (
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 

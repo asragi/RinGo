@@ -10,11 +10,6 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetStageActionDetailFunc func(
-	explore.GetStageActionDetailFunc,
-	auth.ValidateTokenFunc,
-) GetStageActionEndpointFunc
-
 type GetStageActionEndpointFunc func(
 	context.Context,
 	*gateway.GetStageActionDetailRequest,

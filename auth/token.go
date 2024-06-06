@@ -27,6 +27,10 @@ func NewAccessToken(token string) (AccessToken, error) {
 	return AccessToken(token), nil
 }
 
+func (token *AccessToken) String() string {
+	return string(*token)
+}
+
 type ExpirationTime int
 type AccessTokenInformation struct {
 	UserId         core.UserId

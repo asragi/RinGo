@@ -18,13 +18,13 @@ func TestSHA256WithKey(t *testing.T) {
 	}
 
 	for i, v := range testCases {
-		hashed, err := SHA256WithKey(&v.key, &v.msg)
+		hashed, err := SHA256WithKey(v.key, v.msg)
 		if err != nil {
 			t.Fatalf("case:%d, error: %s", i, err.Error())
 			return
 		}
-		if *hashed != v.expect {
-			t.Errorf("case:%d, expect: %s, got: %s", i, v.expect, *hashed)
+		if hashed != v.expect {
+			t.Errorf("case:%d, expect: %s, got: %s", i, v.expect, hashed)
 		}
 	}
 }

@@ -8,8 +8,6 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
-type CreateGetItemListEndpoint func(game.GetItemListFunc, auth.ValidateTokenFunc) GetItemListEndpoint
-
 type GetItemListEndpoint func(context.Context, *gateway.GetItemListRequest) (*gateway.GetItemListResponse, error)
 
 func CreateGetItemService(

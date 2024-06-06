@@ -26,6 +26,8 @@ github.com/asragi/RingoSuPBGo v0.0.0-20240510011105-13815bfd7933 h1:/nJw9mVVib97
 github.com/asragi/RingoSuPBGo v0.0.0-20240510011105-13815bfd7933/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/asragi/RingoSuPBGo v0.0.0-20240531004505-cffb24135558 h1:ZAVf5i8hGp/GPs/u+PcT1UTaeTDY8Dr4Ou/AUWsOe5I=
 github.com/asragi/RingoSuPBGo v0.0.0-20240531004505-cffb24135558/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
+github.com/asragi/RingoSuPBGo v0.0.0-20240606031646-3e3f966cf282 h1:L06u5fKEitQpLPNnKuXCEI1W4N6O8cIreymVtdUe5po=
+github.com/asragi/RingoSuPBGo v0.0.0-20240606031646-3e3f966cf282/go.mod h1:r+0ghPP/cY7FOxpEyGfp6GQ30/WU+2hWxsKGE79/DbE=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/checkpoint-restore/go-criu/v5 v5.3.0/go.mod h1:E/eQpaFtUKGOOSEBZgmKAcn+zUUwWxqcaKZlF54wK8E=
@@ -216,6 +218,8 @@ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 h1:go1bK/D/BFZV2I8cIQd1N
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 h1:Zy9XzmMEflZ/MAaA7vNcoebnRAld7FsPW1EeBB7V0m8=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157/go.mod h1:EfXuqaE1J41VCDicxHzUDm+8rk+7ZdXzHV0IhO/I6s0=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 h1:1GBuWVLM/KMVUv1t1En5Gs+gFZCNd360GGb4sSxtrhU=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117/go.mod h1:EfXuqaE1J41VCDicxHzUDm+8rk+7ZdXzHV0IhO/I6s0=
 google.golang.org/grpc v1.64.0 h1:KH3VH9y/MgNQg1dE7b3XfVK0GsPSIzJwdF617gUSbvY=
 google.golang.org/grpc v1.64.0/go.mod h1:oxjF8E3FBnjp+/gVFYdWacaLDx9na1aqy9oovLpxQYg=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=

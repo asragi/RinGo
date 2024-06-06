@@ -5,6 +5,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/initialize"
+	"github.com/asragi/RinGo/server"
 	"log"
 )
 
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	endpoints := initialize.CreateEndpoints(secretKey, constants, db.Exec, db.Query)
-	serve, stopDB, err := setUpServer(4444, endpoints)
+	serve, stopDB, err := server.SetUpServer(4444, endpoints)
 	if err != nil {
 		handleError(err)
 		return

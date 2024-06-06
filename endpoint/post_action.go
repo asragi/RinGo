@@ -2,14 +2,13 @@ package endpoint
 
 import (
 	"context"
-	"fmt"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core/game"
-
 	"github.com/asragi/RingoSuPBGo/gateway"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type CreatePostActionEndpoint func(game.PostActionFunc, auth.ValidateTokenFunc) PostActionEndpointFunc
 type PostActionEndpointFunc func(context.Context, *gateway.PostActionRequest) (*gateway.PostActionResponse, error)
 
 func CreatePostAction(
@@ -17,25 +16,17 @@ func CreatePostAction(
 	validateToken auth.ValidateTokenFunc,
 ) PostActionEndpointFunc {
 	post := func(ctx context.Context, req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
-		handleError := func(err error) (*gateway.PostActionResponse, error) {
-			return &gateway.PostActionResponse{
-				Error: &gateway.Error{
-					ErrorOccurred:  true,
-					DisplayMessage: err.Error(),
-				},
-			}, fmt.Errorf("error on post action: %w", err)
-		}
 		exploreId := game.ExploreId(req.ExploreId)
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		if err != nil {
-			return handleError(err)
+			return nil, status.Errorf(codes.Unauthenticated, "error on post action: %+v", err)
 		}
 		userId := tokenInfo.UserId
 		execCount := int(req.ExecCount)
 		res, err := postAction(ctx, userId, execCount, exploreId)
 		if err != nil {
-			return handleError(err)
+			return nil, status.Errorf(codes.Internal, "error on post action: %+v", err)
 		}
 
 		earnedItem := func() []*gateway.EarnedItems {
@@ -73,10 +64,6 @@ func CreatePostAction(
 			return result
 		}()
 		return &gateway.PostActionResponse{
-			Error: &gateway.Error{
-				ErrorOccurred:  false,
-				DisplayMessage: "",
-			},
 			EarnedItems:       earnedItem,
 			ConsumedItems:     consumedItem,
 			SkillGrowthResult: skillGrowth,

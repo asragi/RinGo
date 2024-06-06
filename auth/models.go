@@ -6,6 +6,10 @@ func NewRowPassword(password string) RowPassword {
 	return RowPassword(password)
 }
 
+func (p RowPassword) String() string {
+	return string(p)
+}
+
 type RowPasswordGenerator func() string
 
 func GenerateRowPassword(gen RowPasswordGenerator) CreateRowPasswordFunc {
