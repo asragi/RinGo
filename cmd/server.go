@@ -5,7 +5,6 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/initialize"
-	"github.com/asragi/RinGo/server"
 	"log"
 )
 
@@ -22,7 +21,7 @@ func main() {
 		UserIdChallengeNum: 3,
 	}
 
-	db, err := server.CreateDB()
+	db, err := CreateDB()
 	if err != nil {
 		handleError(err)
 		return

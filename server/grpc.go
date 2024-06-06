@@ -7,6 +7,7 @@ import (
 	"net"
 )
 
+type Serve func() error
 type StopDBFunc func()
 type RegisterServer func(grpc.ServiceRegistrar)
 

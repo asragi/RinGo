@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"github.com/asragi/RinGo/debug"
 	"github.com/asragi/RinGo/initialize"
 	"github.com/asragi/RinGo/server"
 	"github.com/asragi/RingoSuPBGo/gateway"
 	"google.golang.org/grpc"
 )
+
+func parseArgs() *debug.RunMode {
+	return debug.NewRunMode()
+}
 
 type gRPCServer struct {
 	gateway.UnimplementedRegisterServer
