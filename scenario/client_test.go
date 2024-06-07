@@ -13,6 +13,7 @@ type client struct {
 	userId      core.UserId
 	password    auth.RowPassword
 	token       auth.AccessToken
+	stageInfo   []*gateway.StageInformation
 }
 
 type closeConnectionType func()
@@ -62,4 +63,8 @@ func (c *client) useLoginData() (core.UserId, auth.RowPassword) {
 
 func (c *client) useToken() auth.AccessToken {
 	return c.token
+}
+
+func (c *client) storeStageInfo(info []*gateway.StageInformation) {
+	c.stageInfo = info
 }

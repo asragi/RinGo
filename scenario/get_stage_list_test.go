@@ -9,6 +9,7 @@ import (
 type getStageListAgent interface {
 	connectAgent
 	useToken
+	storeStageInfo([]*gateway.StageInformation)
 }
 
 func getStageList(ctx context.Context, agent getStageListAgent) error {
@@ -33,5 +34,6 @@ func getStageList(ctx context.Context, agent getStageListAgent) error {
 	if res == nil {
 		return handleError(fmt.Errorf("get stage list response is nil"))
 	}
+	agent.storeStageInfo(res.StageInformation)
 	return nil
 }
