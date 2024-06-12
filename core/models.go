@@ -112,10 +112,13 @@ func (name DisplayName) String() string {
 
 type Description string
 
-// item master
 type ItemId string
 
 var EmptyItemId = ItemId("empty")
+
+func NewItemId(id string) (ItemId, error) {
+	return ItemId(id), nil
+}
 
 func (id ItemId) String() string {
 	return string(id)

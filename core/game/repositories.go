@@ -221,12 +221,12 @@ type BatchGetUserSkillRes struct {
 type FetchUserSkillFunc func(context.Context, core.UserId, []core.SkillId) (BatchGetUserSkillRes, error)
 
 type SkillGrowthData struct {
-	ExploreId    ExploreId    `db:"explore_id"`
+	ExploreId    ActionId     `db:"explore_id"`
 	SkillId      core.SkillId `db:"skill_id"`
 	GainingPoint GainingPoint `db:"gaining_point"`
 }
 
-type FetchSkillGrowthData func(context.Context, ExploreId) ([]*SkillGrowthData, error)
+type FetchSkillGrowthData func(context.Context, ActionId) ([]*SkillGrowthData, error)
 
 type SkillGrowthPostRow struct {
 	UserId   core.UserId   `db:"user_id"`
@@ -242,36 +242,36 @@ type SkillGrowthPost struct {
 type UpdateUserSkillExpFunc func(context.Context, SkillGrowthPost) error
 
 type RequiredSkill struct {
-	ExploreId  ExploreId    `db:"explore_id"`
+	ExploreId  ActionId     `db:"explore_id"`
 	SkillId    core.SkillId `db:"skill_id"`
 	RequiredLv core.SkillLv `db:"skill_lv"`
 }
 
-type FetchRequiredSkillsFunc func(context.Context, []ExploreId) ([]*RequiredSkill, error)
+type FetchRequiredSkillsFunc func(context.Context, []ActionId) ([]*RequiredSkill, error)
 
 type RequiredSkillRow struct {
-	ExploreId      ExploreId
+	ExploreId      ActionId
 	RequiredSkills []RequiredSkill
 }
 
 type ConsumingItem struct {
-	ExploreId       ExploreId       `db:"explore_id"`
+	ExploreId       ActionId        `db:"explore_id"`
 	ItemId          core.ItemId     `db:"item_id"`
 	MaxCount        core.Count      `db:"max_count"`
 	ConsumptionProb ConsumptionProb `db:"consumption_prob"`
 }
 
-type FetchConsumingItemFunc func(context.Context, []ExploreId) ([]*ConsumingItem, error)
+type FetchConsumingItemFunc func(context.Context, []ActionId) ([]*ConsumingItem, error)
 
 type StaminaReductionSkillPair struct {
-	ExploreId ExploreId    `db:"explore_id"`
+	ExploreId ActionId     `db:"explore_id"`
 	SkillId   core.SkillId `db:"skill_id"`
 }
 
-type FetchReductionStaminaSkillFunc func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error)
+type FetchReductionStaminaSkillFunc func(context.Context, []ActionId) ([]*StaminaReductionSkillPair, error)
 
-func ReductionStaminaSkillToMap(res []*StaminaReductionSkillPair) map[ExploreId][]core.SkillId {
-	result := make(map[ExploreId][]core.SkillId)
+func ReductionStaminaSkillToMap(res []*StaminaReductionSkillPair) map[ActionId][]core.SkillId {
+	result := make(map[ActionId][]core.SkillId)
 	for _, v := range res {
 		result[v.ExploreId] = append(result[v.ExploreId], v.SkillId)
 	}
@@ -285,10 +285,10 @@ type EarningItem struct {
 	Probability EarningProb `db:"probability"`
 }
 
-type FetchEarningItemFunc func(context.Context, ExploreId) ([]*EarningItem, error)
+type FetchEarningItemFunc func(context.Context, ActionId) ([]*EarningItem, error)
 
 type GetExploreMasterRes struct {
-	ExploreId            ExploreId            `db:"explore_id"`
+	ExploreId            ActionId             `db:"explore_id"`
 	DisplayName          core.DisplayName     `db:"display_name"`
 	Description          core.Description     `db:"description"`
 	ConsumingStamina     core.StaminaCost     `db:"consuming_stamina"`
@@ -296,21 +296,21 @@ type GetExploreMasterRes struct {
 	StaminaReducibleRate StaminaReducibleRate `db:"stamina_reducible_rate"`
 }
 
-type FetchExploreMasterFunc func(context.Context, []ExploreId) ([]*GetExploreMasterRes, error)
+type FetchExploreMasterFunc func(context.Context, []ActionId) ([]*GetExploreMasterRes, error)
 
 type UserExplore struct {
-	ExploreId   ExploreId
+	ExploreId   ActionId
 	DisplayName core.DisplayName
 	IsKnown     core.IsKnown
 	IsPossible  core.IsPossible
 }
 
 type ExploreUserData struct {
-	ExploreId ExploreId    `db:"explore_id"`
+	ExploreId ActionId     `db:"explore_id"`
 	IsKnown   core.IsKnown `db:"is_known"`
 }
 
-type GetUserExploreFunc func(context.Context, core.UserId, []ExploreId) ([]*ExploreUserData, error)
+type GetUserExploreFunc func(context.Context, core.UserId, []ActionId) ([]*ExploreUserData, error)
 
 type GetActionsRes struct {
 	UserId   core.UserId

@@ -6,9 +6,14 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
+type itemListHolder interface {
+	storeItemList([]*gateway.GetItemListResponseRow)
+}
+
 type getItemListAgent interface {
 	connectAgent
 	useToken
+	itemListHolder
 }
 
 func getItemList(ctx context.Context, agent getItemListAgent) error {
@@ -33,5 +38,6 @@ func getItemList(ctx context.Context, agent getItemListAgent) error {
 	if res == nil {
 		return handleError(fmt.Errorf("get item list response is nil"))
 	}
+	agent.storeItemList(res.ItemList)
 	return nil
 }

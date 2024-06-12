@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ExploreId, error)
+	FetchSizeToActionRepoFunc func(context.Context, Size) (game.ActionId, error)
 	ShelfRepoRow              struct {
 		Id         Id                `db:"shelf_id"`
 		UserId     core.UserId       `db:"user_id"`

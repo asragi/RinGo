@@ -87,7 +87,7 @@ func TestGetAllStage(t *testing.T) {
 		},
 	}
 
-	exploreIds := []game.ExploreId{
+	exploreIds := []game.ActionId{
 		"A",
 		"B",
 	}
@@ -196,8 +196,8 @@ func TestGetAllStage(t *testing.T) {
 
 	for i, v := range testCases {
 		req := v.request
-		exploreIds := func(explores []*game.GetExploreMasterRes) []game.ExploreId {
-			result := make([]game.ExploreId, len(explores))
+		exploreIds := func(explores []*game.GetExploreMasterRes) []game.ActionId {
+			result := make([]game.ActionId, len(explores))
 			for j, w := range explores {
 				result[j] = w.ExploreId
 			}

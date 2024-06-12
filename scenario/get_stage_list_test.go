@@ -2,38 +2,36 @@ package scenario
 
 import (
 	"context"
-	"fmt"
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
+type stageInfoHolder interface {
+	storeStageInfo([]*gateway.StageInformation)
+}
 type getStageListAgent interface {
 	connectAgent
 	useToken
-	storeStageInfo([]*gateway.StageInformation)
+	stageInfoHolder
 }
 
 func getStageList(ctx context.Context, agent getStageListAgent) error {
-	handleError := func(err error) error {
-		return fmt.Errorf("get stage list: %w", err)
-	}
-
-	token := agent.useToken()
-	cli, closeConn, err := agent.getClient()
-	if err != nil {
-		return handleError(err)
-	}
-	defer closeConn()
-	res, err := cli.GetStageList(
-		ctx, &gateway.GetStageListRequest{
-			Token: token.String(),
+	return createScenario(
+		"get stage list:%w",
+		"get stage list res is nil",
+		func(token string) *gateway.GetStageListRequest {
+			return &gateway.GetStageListRequest{
+				Token: token,
+			}
 		},
-	)
-	if err != nil {
-		return handleError(err)
-	}
-	if res == nil {
-		return handleError(fmt.Errorf("get stage list response is nil"))
-	}
-	agent.storeStageInfo(res.StageInformation)
-	return nil
+		func(
+			ctx context.Context,
+			cli gateway.RingoClient,
+			req *gateway.GetStageListRequest,
+		) (*gateway.GetStageListResponse, error) {
+			return cli.GetStageList(ctx, req)
+		},
+		func(res *gateway.GetStageListResponse) {
+			agent.storeStageInfo(res.StageInformation)
+		},
+	)(ctx, agent)
 }

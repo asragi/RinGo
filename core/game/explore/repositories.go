@@ -19,15 +19,15 @@ func (p StageExploreIdPair) CreateSelf(id StageId, data []StageExploreIdPairRow)
 }
 
 type StageExploreIdPairRow struct {
-	StageId   StageId        `db:"stage_id"`
-	ExploreId game.ExploreId `db:"explore_id"`
+	StageId   StageId       `db:"stage_id"`
+	ExploreId game.ActionId `db:"explore_id"`
 }
 
 func (row StageExploreIdPairRow) GetId() StageId {
 	return row.StageId
 }
 
-type FetchItemExploreRelationFunc func(context.Context, core.ItemId) ([]game.ExploreId, error)
+type FetchItemExploreRelationFunc func(context.Context, core.ItemId) ([]game.ActionId, error)
 
 type FetchStageExploreRelation func(context.Context, []StageId) ([]*StageExploreIdPairRow, error)
 

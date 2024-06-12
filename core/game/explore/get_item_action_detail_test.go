@@ -13,7 +13,7 @@ func TestCreateGetItemActionDetailService(t *testing.T) {
 	type testCase struct {
 		userId              core.UserId
 		itemId              core.ItemId
-		exploreId           game.ExploreId
+		exploreId           game.ActionId
 		mockCommonActionRes getCommonActionRes
 		mockItemMaster      *game.GetItemMasterRes
 		expectedError       error
@@ -71,7 +71,7 @@ func TestCreateGetItemActionDetailService(t *testing.T) {
 		mockCommonAction := func(
 			ctx context.Context,
 			userId core.UserId,
-			exploreId game.ExploreId,
+			exploreId game.ActionId,
 		) (getCommonActionRes, error) {
 			return tc.mockCommonActionRes, nil
 		}

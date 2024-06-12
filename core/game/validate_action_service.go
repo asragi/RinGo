@@ -125,7 +125,7 @@ func CheckIsExplorePossible(
 	}
 }
 
-type CreateValidateActionArgsFunc func(context.Context, core.UserId, ExploreId, int) (*CheckIsPossibleArgs, error)
+type CreateValidateActionArgsFunc func(context.Context, core.UserId, ActionId, int) (*CheckIsPossibleArgs, error)
 
 func CreateShortValidateActionArgs(
 	fetchUserResource GetResourceFunc,
@@ -141,7 +141,7 @@ func CreateShortValidateActionArgs(
 	return func(
 		ctx context.Context,
 		userId core.UserId,
-		exploreId ExploreId,
+		exploreId ActionId,
 		execNum int,
 	) (*CheckIsPossibleArgs, error) {
 		handleError := func(err error) (*CheckIsPossibleArgs, error) {
@@ -152,7 +152,7 @@ func CreateShortValidateActionArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		exploreMasterRes, err := fetchActionMaster(ctx, []ExploreId{exploreId})
+		exploreMasterRes, err := fetchActionMaster(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -160,11 +160,11 @@ func CreateShortValidateActionArgs(
 			return handleError(&InvalidResponseFromInfrastructureError{Message: "no rows returned from fetchActionMaster"})
 		}
 		exploreMaster := exploreMasterRes[0]
-		consumingItems, err := fetchConsumingItem(ctx, []ExploreId{exploreId})
+		consumingItems, err := fetchConsumingItem(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
-		requiredSkills, err := fetchRequiredSkill(ctx, []ExploreId{exploreId})
+		requiredSkills, err := fetchRequiredSkill(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -201,7 +201,7 @@ func CreateShortValidateActionArgs(
 type ValidateActionFunc func(
 	context.Context,
 	core.UserId,
-	ExploreId,
+	ActionId,
 	int,
 ) (map[core.IsPossibleType]core.IsPossible, error)
 
@@ -217,7 +217,7 @@ func CreateValidateAction(
 	return func(
 		ctx context.Context,
 		userId core.UserId,
-		exploreId ExploreId,
+		exploreId ActionId,
 		execNum int,
 	) (map[core.IsPossibleType]core.IsPossible, error) {
 		args, err := CreateShortValidateActionArgs(

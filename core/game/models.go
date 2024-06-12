@@ -18,13 +18,13 @@ func (g GainingPoint) ApplyTo(exp core.SkillExp) core.SkillExp {
 	return exp + core.SkillExp(g)
 }
 
-type ExploreId string
+type ActionId string
 
-func CreateActionId(id string) (ExploreId, error) {
-	return ExploreId(id), nil
+func NewActionId(id string) (ActionId, error) {
+	return ActionId(id), nil
 }
 
-func (id ExploreId) String() string {
+func (id ActionId) String() string {
 	return string(id)
 }
 

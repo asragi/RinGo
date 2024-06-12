@@ -7,6 +7,6 @@ import (
 	"github.com/asragi/RinGo/core/game/shelf"
 )
 
-func FetchSizeToActionRepoInMemory(_ context.Context, size shelf.Size) (game.ExploreId, error) {
-	return game.ExploreId(fmt.Sprintf("size-to-%d", size)), nil
+func FetchSizeToActionRepoInMemory(_ context.Context, size shelf.Size) (game.ActionId, error) {
+	return game.ActionId(fmt.Sprintf("size-to-%d", size)), nil
 }

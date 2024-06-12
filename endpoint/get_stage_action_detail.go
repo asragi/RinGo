@@ -29,7 +29,7 @@ func CreateGetStageActionDetail(
 				err,
 			)
 		}
-		exploreId := game.ExploreId(req.ExploreId)
+		exploreId := game.ActionId(req.ExploreId)
 		stageId := explore.StageId(req.StageId)
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)

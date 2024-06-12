@@ -89,6 +89,7 @@ var reservationSet = wire.NewSet(
 var rankingSet = wire.NewSet(
 	ranking.CreateUpdateTotalScoreService,
 	ranking.CreateFetchUserDailyRanking,
+	ranking.CreateOnChangePeriod,
 )
 
 var services = wire.NewSet(

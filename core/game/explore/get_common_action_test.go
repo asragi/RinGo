@@ -13,7 +13,7 @@ import (
 func TestCreateGetCommonActionDetail(t *testing.T) {
 	type testCase struct {
 		userId                core.UserId
-		exploreId             game.ExploreId
+		exploreId             game.ActionId
 		mockExploreStamina    *game.ExploreStaminaPair
 		mockStorage           game.BatchGetStorageRes
 		mockExploreMaster     *game.GetExploreMasterRes
@@ -29,7 +29,7 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 	}
 
 	userId := core.UserId("userId")
-	exploreId := game.ExploreId("exploreId")
+	exploreId := game.ActionId("exploreId")
 	testCases := []testCase{
 		{
 			userId:    userId,
@@ -162,11 +162,11 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 
 	for _, v := range testCases {
 		var passedUserId core.UserId
-		var passedExploreIds []game.ExploreId
+		var passedExploreIds []game.ActionId
 		mockCalcConsumingStamina := func(
 			ctx context.Context,
 			userId core.UserId,
-			exploreIds []game.ExploreId,
+			exploreIds []game.ActionId,
 		) ([]*game.ExploreStaminaPair, error) {
 			passedUserId = userId
 			passedExploreIds = exploreIds
@@ -179,16 +179,16 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 		) ([]*game.BatchGetStorageRes, error) {
 			return []*game.BatchGetStorageRes{&v.mockStorage}, nil
 		}
-		mockExploreMaster := func(ctx context.Context, exploreId []game.ExploreId) (
+		mockExploreMaster := func(ctx context.Context, exploreId []game.ActionId) (
 			[]*game.GetExploreMasterRes,
 			error,
 		) {
 			return []*game.GetExploreMasterRes{v.mockExploreMaster}, nil
 		}
-		mockEarningItem := func(ctx context.Context, exploreId game.ExploreId) ([]*game.EarningItem, error) {
+		mockEarningItem := func(ctx context.Context, exploreId game.ActionId) ([]*game.EarningItem, error) {
 			return v.mockEarningItem, nil
 		}
-		mockConsumingItem := func(ctx context.Context, exploreId []game.ExploreId) ([]*game.ConsumingItem, error) {
+		mockConsumingItem := func(ctx context.Context, exploreId []game.ActionId) ([]*game.ConsumingItem, error) {
 			return v.mockConsumingItem, nil
 		}
 		mockSkillMaster := func(ctx context.Context, skillId []core.SkillId) ([]*game.SkillMaster, error) {
@@ -201,7 +201,7 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 		) (game.BatchGetUserSkillRes, error) {
 			return v.mockUserSkill, nil
 		}
-		mockRequiredSkills := func(ctx context.Context, exploreId []game.ExploreId) ([]*game.RequiredSkill, error) {
+		mockRequiredSkills := func(ctx context.Context, exploreId []game.ActionId) ([]*game.RequiredSkill, error) {
 			return v.mockRequiredSkills, nil
 		}
 		ctx := test.MockCreateContext()
@@ -230,7 +230,7 @@ func TestCreateGetCommonActionDetail(t *testing.T) {
 		if v.userId != passedUserId {
 			t.Errorf("expected: %s, got: %s", v.userId, passedUserId)
 		}
-		mockExploreArray := []game.ExploreId{v.exploreId}
+		mockExploreArray := []game.ActionId{v.exploreId}
 		if !reflect.DeepEqual(mockExploreArray, passedExploreIds) {
 			t.Errorf("expected: %s, got: %s", mockExploreArray, passedExploreIds)
 		}

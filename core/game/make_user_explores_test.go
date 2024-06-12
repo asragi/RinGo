@@ -18,7 +18,7 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 		mockConsumingStamina []*ExploreStaminaPair
 		mockExploreMaster    []*GetExploreMasterRes
 		mockUserId           core.UserId
-		mockExploreId        []ExploreId
+		mockExploreId        []ActionId
 	}
 
 	testCases := []testCase{
@@ -75,14 +75,14 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 				},
 			},
 			mockExploreMaster: []*GetExploreMasterRes{{ExploreId: "explore"}},
-			mockExploreId:     []ExploreId{"explore"},
+			mockExploreId:     []ActionId{"explore"},
 		},
 	}
 
 	for _, v := range testCases {
 		userId := v.mockResource.UserId
-		mockStaminaPair := func() map[ExploreId]core.StaminaCost {
-			result := make(map[ExploreId]core.StaminaCost)
+		mockStaminaPair := func() map[ActionId]core.StaminaCost {
+			result := make(map[ActionId]core.StaminaCost)
 			for _, w := range v.mockConsumingStamina {
 				result[w.ExploreId] = w.ReducedStamina
 			}
@@ -103,8 +103,8 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 			batchGetSkillRes:  v.mockUserSkill,
 			exploreIds:        v.mockExploreId,
 			calculatedStamina: mockStaminaPair,
-			exploreMasterMap: func() map[ExploreId]*GetExploreMasterRes {
-				result := make(map[ExploreId]*GetExploreMasterRes)
+			exploreMasterMap: func() map[ActionId]*GetExploreMasterRes {
+				result := make(map[ActionId]*GetExploreMasterRes)
 				for _, w := range v.mockExploreMaster {
 					result[w.ExploreId] = w
 				}
@@ -117,14 +117,14 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 		mockFetchExploreUserData := func(
 			ctx context.Context,
 			userId core.UserId,
-			exploreIds []ExploreId,
+			exploreIds []ActionId,
 		) ([]*ExploreUserData, error) {
 			return v.mockExploreUserData, nil
 		}
-		mockFetchRequiredSkill := func(ctx context.Context, exploreIds []ExploreId) ([]*RequiredSkill, error) {
+		mockFetchRequiredSkill := func(ctx context.Context, exploreIds []ActionId) ([]*RequiredSkill, error) {
 			return v.mockRequiredSkill, nil
 		}
-		mockFetchConsumingItem := func(ctx context.Context, exploreIds []ExploreId) ([]*ConsumingItem, error) {
+		mockFetchConsumingItem := func(ctx context.Context, exploreIds []ActionId) ([]*ConsumingItem, error) {
 			return v.mockConsumingItem, nil
 		}
 		mockFetchStorage := func(
@@ -143,11 +143,11 @@ func TestCreateGenerateMakeUserExploreArgs(t *testing.T) {
 		mockFetchConsumingStamina := func(
 			ctx context.Context,
 			userId core.UserId,
-			exploreIds []ExploreId,
+			exploreIds []ActionId,
 		) ([]*ExploreStaminaPair, error) {
 			return v.mockConsumingStamina, nil
 		}
-		mockFetchExploreMaster := func(ctx context.Context, exploreIds []ExploreId) ([]*GetExploreMasterRes, error) {
+		mockFetchExploreMaster := func(ctx context.Context, exploreIds []ActionId) ([]*GetExploreMasterRes, error) {
 			return v.mockExploreMaster, nil
 		}
 
@@ -183,7 +183,7 @@ func TestCreateMakeUserExplore(t *testing.T) {
 		mockConsumingStamina []*ExploreStaminaPair
 		mockExploreMaster    []*GetExploreMasterRes
 		mockUserId           core.UserId
-		mockExploreId        []ExploreId
+		mockExploreId        []ActionId
 	}
 
 	testCases := []testCase{
@@ -236,14 +236,14 @@ func TestCreateMakeUserExplore(t *testing.T) {
 			},
 			mockExploreMaster: []*GetExploreMasterRes{{ExploreId: "explore"}},
 			mockUserId:        "test_user",
-			mockExploreId:     []ExploreId{"explore"},
+			mockExploreId:     []ActionId{"explore"},
 		},
 	}
 
 	for _, v := range testCases {
 		userId := v.mockResource.UserId
-		mockStaminaPair := func() map[ExploreId]core.StaminaCost {
-			result := make(map[ExploreId]core.StaminaCost)
+		mockStaminaPair := func() map[ActionId]core.StaminaCost {
+			result := make(map[ActionId]core.StaminaCost)
 			for _, w := range v.mockConsumingStamina {
 				result[w.ExploreId] = w.ReducedStamina
 			}
@@ -264,8 +264,8 @@ func TestCreateMakeUserExplore(t *testing.T) {
 			batchGetSkillRes:  v.mockUserSkill,
 			exploreIds:        v.mockExploreId,
 			calculatedStamina: mockStaminaPair,
-			exploreMasterMap: func() map[ExploreId]*GetExploreMasterRes {
-				result := make(map[ExploreId]*GetExploreMasterRes)
+			exploreMasterMap: func() map[ActionId]*GetExploreMasterRes {
+				result := make(map[ActionId]*GetExploreMasterRes)
 				for _, w := range v.mockExploreMaster {
 					result[w.ExploreId] = w
 				}
@@ -276,7 +276,7 @@ func TestCreateMakeUserExplore(t *testing.T) {
 		generateMakeUserExploreArgs := func(
 			ctx context.Context,
 			userId core.UserId,
-			exploreIds []ExploreId,
+			exploreIds []ActionId,
 		) (*makeUserExploreArgs, error) {
 			return args, nil
 		}

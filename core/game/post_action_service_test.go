@@ -23,14 +23,14 @@ func TestPostAction(t *testing.T) {
 
 	type testCase struct {
 		requestUserId    core.UserId
-		requestExploreId ExploreId
+		requestExploreId ActionId
 		requestExecCount int
 		mocks            testMocks
 		expectedError    error
 	}
 
 	userId := core.UserId("passedId")
-	exploreId := ExploreId("explore")
+	exploreId := ActionId("explore")
 	currentFund := core.Fund(100000)
 	mockCheckIsPossibleArgs := &CheckIsPossibleArgs{
 		requiredStamina: 100,
@@ -168,7 +168,7 @@ func TestPostAction(t *testing.T) {
 			ctx context.Context,
 			userId core.UserId,
 			execNum int,
-			exploreId ExploreId,
+			exploreId ActionId,
 		) (*postActionArgs, error) {
 			return mocks.mockArgs, nil
 		}
@@ -284,25 +284,25 @@ func TestCreateGeneratePostActionArgs(t *testing.T) {
 		mockResource := func(context.Context, core.UserId) (*GetResourceRes, error) {
 			return v.mockResource, nil
 		}
-		mockExploreMaster := func(context.Context, []ExploreId) ([]*GetExploreMasterRes, error) {
+		mockExploreMaster := func(context.Context, []ActionId) ([]*GetExploreMasterRes, error) {
 			return v.mockExploreMaster, nil
 		}
 		mockSkillMaster := func(context.Context, []core.SkillId) ([]*SkillMaster, error) {
 			return v.mockSkillMaster, nil
 		}
-		mockSkillGrowth := func(context.Context, ExploreId) ([]*SkillGrowthData, error) {
+		mockSkillGrowth := func(context.Context, ActionId) ([]*SkillGrowthData, error) {
 			return v.mockSkillGrowth, nil
 		}
 		mockUserSkill := func(context.Context, core.UserId, []core.SkillId) (BatchGetUserSkillRes, error) {
 			return v.mockUserSkill, nil
 		}
-		mockEarned := func(context.Context, ExploreId) ([]*EarningItem, error) {
+		mockEarned := func(context.Context, ActionId) ([]*EarningItem, error) {
 			return v.mockEarned, nil
 		}
-		mockConsumed := func(context.Context, []ExploreId) ([]*ConsumingItem, error) {
+		mockConsumed := func(context.Context, []ActionId) ([]*ConsumingItem, error) {
 			return v.mockConsumed, nil
 		}
-		mockRequiredSkill := func(context.Context, []ExploreId) ([]*RequiredSkill, error) {
+		mockRequiredSkill := func(context.Context, []ActionId) ([]*RequiredSkill, error) {
 			return v.mockRequiredSkill, nil
 		}
 		mockStorage := func(context.Context, []*UserItemPair) ([]*BatchGetStorageRes, error) {
@@ -311,7 +311,7 @@ func TestCreateGeneratePostActionArgs(t *testing.T) {
 		mockAllItemMaster := func(context.Context, []core.ItemId) ([]*GetItemMasterRes, error) {
 			return v.mockAllItemMaster, nil
 		}
-		mockReductionSkill := func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error) {
+		mockReductionSkill := func(context.Context, []ActionId) ([]*StaminaReductionSkillPair, error) {
 			return v.mockReductionSkill, nil
 		}
 

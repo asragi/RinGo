@@ -18,7 +18,7 @@ func TestCreateGetItemDetailService(t *testing.T) {
 
 	userId := core.UserId("user")
 	itemId := core.ItemId("item")
-	exploreId := game.ExploreId("explore")
+	exploreId := game.ActionId("explore")
 	testCases := []testCase{
 		{
 			req: GetUserItemDetailReq{
@@ -117,7 +117,7 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 		mockGetItemMasterRes   *game.GetItemMasterRes
 		mockGetItemStorageRes  *game.StorageData
 		mockGetExploreRes      []*game.GetExploreMasterRes
-		mockItemExplore        []game.ExploreId
+		mockItemExplore        []game.ActionId
 		mockExploreStaminaPair []*game.ExploreStaminaPair
 		mockUserExplore        []*game.UserExplore
 	}
@@ -174,29 +174,29 @@ func TestFetchGetItemDetailArgs(t *testing.T) {
 				},
 			}, nil
 		}
-		var passedExploreArgs []game.ExploreId
-		mockExploreMaster := func(_ context.Context, exploreIds []game.ExploreId) ([]*game.GetExploreMasterRes, error) {
+		var passedExploreArgs []game.ActionId
+		mockExploreMaster := func(_ context.Context, exploreIds []game.ActionId) ([]*game.GetExploreMasterRes, error) {
 			passedExploreArgs = exploreIds
 			return v.mockGetExploreRes, nil
 		}
-		var passedStaminaArgs []game.ExploreId
+		var passedStaminaArgs []game.ActionId
 		consumingStamina := func(
 			ctx context.Context,
 			userId core.UserId,
-			ids []game.ExploreId,
+			ids []game.ActionId,
 		) ([]*game.ExploreStaminaPair, error) {
 			passedStaminaArgs = ids
 			return v.mockExploreStaminaPair, nil
 		}
 		var passedItemRelationArg core.ItemId
-		mockItemExplore := func(ctx context.Context, itemId core.ItemId) ([]game.ExploreId, error) {
+		mockItemExplore := func(ctx context.Context, itemId core.ItemId) ([]game.ActionId, error) {
 			passedItemRelationArg = itemId
 			return v.mockItemExplore, nil
 		}
 		mockMakeUserExplore := func(
 			ctx context.Context,
 			id core.UserId,
-			exploreIds []game.ExploreId,
+			exploreIds []game.ActionId,
 			execNum int,
 		) ([]*game.UserExplore, error) {
 			return v.mockUserExplore, nil

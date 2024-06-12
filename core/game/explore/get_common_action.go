@@ -20,7 +20,7 @@ type (
 	getCommonActionFunc func(
 		context.Context,
 		core.UserId,
-		game.ExploreId,
+		game.ActionId,
 	) (getCommonActionRes, error)
 	CreateGetCommonActionRepositories struct {
 		FetchItemStorage        game.FetchStorageFunc
@@ -56,17 +56,17 @@ func CreateGetCommonActionDetail(
 	return func(
 		ctx context.Context,
 		userId core.UserId,
-		exploreId game.ExploreId,
+		exploreId game.ActionId,
 	) (getCommonActionRes, error) {
 		handleError := func(err error) (getCommonActionRes, error) {
 			return getCommonActionRes{}, fmt.Errorf("error on GetActionDetail: %w", err)
 		}
-		exploreMasterRes, err := fetchExploreMaster(ctx, []game.ExploreId{exploreId})
+		exploreMasterRes, err := fetchExploreMaster(ctx, []game.ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
 		exploreMaster := exploreMasterRes[0]
-		consumingItemsRes, err := fetchConsumingItem(ctx, []game.ExploreId{exploreId})
+		consumingItemsRes, err := fetchConsumingItem(ctx, []game.ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -115,7 +115,7 @@ func CreateGetCommonActionDetail(
 			return result
 		}(consumingItems)
 		requiredStamina, err := func(baseStamina core.StaminaCost) (core.StaminaCost, error) {
-			reducedStamina, err := calcConsumingStamina(ctx, userId, []game.ExploreId{exploreId})
+			reducedStamina, err := calcConsumingStamina(ctx, userId, []game.ActionId{exploreId})
 			if err != nil {
 				return 0, err
 			}
@@ -143,8 +143,8 @@ func CreateGetCommonActionDetail(
 			}
 			return result
 		}(items)
-		requiredSkills, err := func(exploreId game.ExploreId) ([]*RequiredSkillsRes, error) {
-			res, err := fetchRequiredSkillsFunc(ctx, []game.ExploreId{exploreId})
+		requiredSkills, err := func(exploreId game.ActionId) ([]*RequiredSkillsRes, error) {
+			res, err := fetchRequiredSkillsFunc(ctx, []game.ActionId{exploreId})
 			if err != nil {
 				return nil, fmt.Errorf("error on getting required skills: %w", err)
 			}

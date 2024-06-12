@@ -21,7 +21,7 @@ type CreateMakeUserExploreRepositories struct {
 type GenerateMakeUserExploreArgs func(
 	context.Context,
 	core.UserId,
-	[]ExploreId,
+	[]ActionId,
 ) (*makeUserExploreArgs, error)
 
 func CreateGenerateMakeUserExploreArgs(
@@ -38,7 +38,7 @@ func CreateGenerateMakeUserExploreArgs(
 	return func(
 		ctx context.Context,
 		userId core.UserId,
-		exploreIds []ExploreId,
+		exploreIds []ActionId,
 	) (*makeUserExploreArgs, error) {
 		handleError := func(err error) (*makeUserExploreArgs, error) {
 			return nil, fmt.Errorf("error on create make user explore args: %w", err)
@@ -117,8 +117,8 @@ func CreateGenerateMakeUserExploreArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		staminaMap := func(pair []*ExploreStaminaPair) map[ExploreId]core.StaminaCost {
-			result := map[ExploreId]core.StaminaCost{}
+		staminaMap := func(pair []*ExploreStaminaPair) map[ActionId]core.StaminaCost {
+			result := map[ActionId]core.StaminaCost{}
 			for _, v := range pair {
 				result[v.ExploreId] = v.ReducedStamina
 			}
@@ -128,8 +128,8 @@ func CreateGenerateMakeUserExploreArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		exploreMap := func(masters []*GetExploreMasterRes) map[ExploreId]*GetExploreMasterRes {
-			result := make(map[ExploreId]*GetExploreMasterRes)
+		exploreMap := func(masters []*GetExploreMasterRes) map[ActionId]*GetExploreMasterRes {
+			result := make(map[ActionId]*GetExploreMasterRes)
 			for _, v := range masters {
 				result[v.ExploreId] = v
 			}
@@ -162,15 +162,15 @@ type makeUserExploreArgs struct {
 	consumingItemRes   []*ConsumingItem
 	itemData           []*StorageData
 	batchGetSkillRes   BatchGetUserSkillRes
-	exploreIds         []ExploreId
-	calculatedStamina  map[ExploreId]core.StaminaCost
-	exploreMasterMap   map[ExploreId]*GetExploreMasterRes
+	exploreIds         []ActionId
+	calculatedStamina  map[ActionId]core.StaminaCost
+	exploreMasterMap   map[ActionId]*GetExploreMasterRes
 }
 
-type MakeUserExploreFunc func(context.Context, core.UserId, []ExploreId, int) ([]*UserExplore, error)
+type MakeUserExploreFunc func(context.Context, core.UserId, []ActionId, int) ([]*UserExplore, error)
 
 func CreateMakeUserExplore(generateArgs GenerateMakeUserExploreArgs) MakeUserExploreFunc {
-	return func(ctx context.Context, userId core.UserId, exploreIds []ExploreId, execNum int) ([]*UserExplore, error) {
+	return func(ctx context.Context, userId core.UserId, exploreIds []ActionId, execNum int) ([]*UserExplore, error) {
 		handleError := func(err error) ([]*UserExplore, error) {
 			return nil, fmt.Errorf("error on make user explore: %w", err)
 		}
@@ -180,8 +180,8 @@ func CreateMakeUserExplore(generateArgs GenerateMakeUserExploreArgs) MakeUserExp
 		}
 		currentStamina := args.staminaRecoverTime.CalcStamina(args.currentTimer(), args.maxStamina)
 		currentFund := args.fundRes
-		exploreMap := func(explores []*ExploreUserData, exploreIds []ExploreId) map[ExploreId]*ExploreUserData {
-			result := make(map[ExploreId]*ExploreUserData)
+		exploreMap := func(explores []*ExploreUserData, exploreIds []ActionId) map[ActionId]*ExploreUserData {
+			result := make(map[ActionId]*ExploreUserData)
 			for _, v := range explores {
 				result[v.ExploreId] = v
 			}
@@ -205,16 +205,16 @@ func CreateMakeUserExplore(generateArgs GenerateMakeUserExploreArgs) MakeUserExp
 			return result
 		}
 
-		requiredSkillMap := func(rows []*RequiredSkill) map[ExploreId][]*RequiredSkill {
-			result := make(map[ExploreId][]*RequiredSkill)
+		requiredSkillMap := func(rows []*RequiredSkill) map[ActionId][]*RequiredSkill {
+			result := make(map[ActionId][]*RequiredSkill)
 			for _, v := range rows {
 				result[v.ExploreId] = append(result[v.ExploreId], v)
 			}
 			return result
 		}(args.requiredSkillRes)
 
-		consumingItemMap := func(consuming []*ConsumingItem) map[ExploreId][]*ConsumingItem {
-			result := make(map[ExploreId][]*ConsumingItem)
+		consumingItemMap := func(consuming []*ConsumingItem) map[ActionId][]*ConsumingItem {
+			result := make(map[ActionId][]*ConsumingItem)
 			for _, v := range consuming {
 				result[v.ExploreId] = append(result[v.ExploreId], v)
 			}

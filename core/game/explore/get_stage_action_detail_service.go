@@ -31,7 +31,7 @@ type GetStageActionDetailFunc func(
 	context.Context,
 	core.UserId,
 	StageId,
-	game.ExploreId,
+	game.ActionId,
 ) (gateway.GetStageActionDetailResponse, error)
 
 type CreateGetStageActionDetailFunc func(getCommonActionFunc, FetchStageMasterFunc) GetStageActionDetailFunc
@@ -44,7 +44,7 @@ func CreateGetStageActionDetailService(
 		ctx context.Context,
 		userId core.UserId,
 		stageId StageId,
-		exploreId game.ExploreId,
+		exploreId game.ActionId,
 	) (gateway.GetStageActionDetailResponse, error) {
 		handleError := func(err error) (gateway.GetStageActionDetailResponse, error) {
 			return gateway.GetStageActionDetailResponse{}, fmt.Errorf("error on getting stage action detail: %w", err)

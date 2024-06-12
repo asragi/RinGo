@@ -408,12 +408,12 @@ func TestCreateGetAllStageMaster(t *testing.T) {
 
 func TestCreateGetExploreMasterMySQL(t *testing.T) {
 	type testCase struct {
-		exploreIds []game.ExploreId
+		exploreIds []game.ActionId
 	}
 
 	testCases := []testCase{
-		{exploreIds: []game.ExploreId{"1"}},
-		{exploreIds: []game.ExploreId{"1", "2"}},
+		{exploreIds: []game.ActionId{"1"}},
+		{exploreIds: []game.ActionId{"1", "2"}},
 	}
 
 	for _, v := range testCases {
@@ -454,7 +454,7 @@ func TestCreateGetSkillMaster(t *testing.T) {
 
 func TestCreateGetEarningItem(t *testing.T) {
 	type testCase struct {
-		exploreId   game.ExploreId
+		exploreId   game.ActionId
 		expectedRes []*game.EarningItem
 	}
 
@@ -503,13 +503,13 @@ func TestCreateGetEarningItem(t *testing.T) {
 
 func TestCreateGetConsumingItem(t *testing.T) {
 	type testCase struct {
-		exploreIds  []game.ExploreId
+		exploreIds  []game.ActionId
 		expectedRes []*game.ConsumingItem
 	}
 
 	testCases := []testCase{
 		{
-			exploreIds: []game.ExploreId{"2"},
+			exploreIds: []game.ActionId{"2"},
 			expectedRes: []*game.ConsumingItem{
 				{
 					ExploreId:       "2",
@@ -552,13 +552,13 @@ func TestCreateGetConsumingItem(t *testing.T) {
 
 func TestCreateGetRequiredSkills(t *testing.T) {
 	type testCase struct {
-		exploreIds  []game.ExploreId
+		exploreIds  []game.ActionId
 		expectedRes []*game.RequiredSkill
 	}
 
 	testCases := []testCase{
 		{
-			exploreIds: []game.ExploreId{"5"},
+			exploreIds: []game.ActionId{"5"},
 			expectedRes: []*game.RequiredSkill{
 				{
 					ExploreId:  "5",
@@ -594,7 +594,7 @@ func TestCreateGetRequiredSkills(t *testing.T) {
 
 func TestCreateGetSkillGrowth(t *testing.T) {
 	type testCase struct {
-		exploreId   game.ExploreId
+		exploreId   game.ActionId
 		expectedRes []*game.SkillGrowthData
 	}
 
@@ -649,13 +649,13 @@ func TestCreateGetSkillGrowth(t *testing.T) {
 
 func TestCreateGetReductionSkill(t *testing.T) {
 	type testCase struct {
-		exploreId   []game.ExploreId
+		exploreId   []game.ActionId
 		expectedRes []*game.StaminaReductionSkillPair
 	}
 
 	testCases := []testCase{
 		{
-			exploreId: []game.ExploreId{"1"},
+			exploreId: []game.ActionId{"1"},
 			expectedRes: []*game.StaminaReductionSkillPair{
 				{
 					ExploreId: "1",
@@ -744,13 +744,13 @@ func TestCreateStageExploreRelation(t *testing.T) {
 func TestCreateItemExploreRelation(t *testing.T) {
 	type testCase struct {
 		itemId   core.ItemId
-		expected []game.ExploreId
+		expected []game.ActionId
 	}
 
 	testCases := []testCase{
 		{
 			itemId:   "1",
-			expected: []game.ExploreId{"2", "3", "4"},
+			expected: []game.ActionId{"2", "3", "4"},
 		},
 	}
 
@@ -781,9 +781,9 @@ func TestCreateGetUserExplore(t *testing.T) {
 	}
 
 	type exploreData struct {
-		UserId    core.UserId    `db:"user_id"`
-		ExploreId game.ExploreId `db:"explore_id"`
-		IsKnown   core.IsKnown   `db:"is_known"`
+		UserId    core.UserId   `db:"user_id"`
+		ExploreId game.ActionId `db:"explore_id"`
+		IsKnown   core.IsKnown  `db:"is_known"`
 	}
 	testCases := []testCase{
 		{
@@ -846,8 +846,8 @@ func TestCreateGetUserExplore(t *testing.T) {
 			}
 			return res
 		}(v.expected)
-		exploreIds := func() []game.ExploreId {
-			var res []game.ExploreId
+		exploreIds := func() []game.ActionId {
+			var res []game.ActionId
 			for _, w := range v.expected {
 				res = append(res, w.ExploreId)
 			}

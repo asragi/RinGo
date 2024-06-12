@@ -4,14 +4,6 @@ import (
 	"github.com/asragi/RinGo/core"
 )
 
-func UserExploreToIdArray(userExplores []*UserExplore) []ExploreId {
-	result := make([]ExploreId, len(userExplores))
-	for i, explore := range userExplores {
-		result[i] = explore.ExploreId
-	}
-	return result
-}
-
 func RequiredSkillsToIdArray(requiredSkills []*RequiredSkill) []core.SkillId {
 	result := make([]core.SkillId, len(requiredSkills))
 	for i, skill := range requiredSkills {

@@ -8,7 +8,7 @@ import (
 )
 
 type GetItemActionDetailFunc func(
-	context.Context, core.UserId, core.ItemId, game.ExploreId,
+	context.Context, core.UserId, core.ItemId, game.ActionId,
 ) (GetItemActionDetailResponse, error)
 
 type GetItemActionDetailResponse struct {
@@ -36,7 +36,7 @@ func CreateGetItemActionDetailService(
 		ctx context.Context,
 		userId core.UserId,
 		itemId core.ItemId,
-		exploreId game.ExploreId,
+		exploreId game.ActionId,
 	) (GetItemActionDetailResponse, error) {
 		handleError := func(err error) (GetItemActionDetailResponse, error) {
 			return GetItemActionDetailResponse{}, fmt.Errorf("on get item action detail service: %w", err)

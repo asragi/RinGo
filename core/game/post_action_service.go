@@ -20,7 +20,7 @@ type getPostActionRepositories struct {
 	FetchStaminaReductionSkill FetchReductionStaminaSkillFunc
 }
 
-type GeneratePostActionArgsFunc func(context.Context, core.UserId, int, ExploreId) (*postActionArgs, error)
+type GeneratePostActionArgsFunc func(context.Context, core.UserId, int, ActionId) (*postActionArgs, error)
 
 func CreateGeneratePostActionArgs(
 	fetchResource GetResourceFunc,
@@ -39,7 +39,7 @@ func CreateGeneratePostActionArgs(
 		ctx context.Context,
 		userId core.UserId,
 		execCount int,
-		exploreId ExploreId,
+		exploreId ActionId,
 	) (*postActionArgs, error) {
 		handleError := func(err error) (*postActionArgs, error) {
 			return nil, fmt.Errorf("error on creating post action args: %w", err)
@@ -49,7 +49,7 @@ func CreateGeneratePostActionArgs(
 			return handleError(err)
 		}
 
-		exploreMasters, err := fetchExploreMaster(ctx, []ExploreId{exploreId})
+		exploreMasters, err := fetchExploreMaster(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -72,7 +72,7 @@ func CreateGeneratePostActionArgs(
 		if err != nil {
 			return handleError(err)
 		}
-		consumingItem, err := fetchConsumingItem(ctx, []ExploreId{exploreId})
+		consumingItem, err := fetchConsumingItem(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -114,7 +114,7 @@ func CreateGeneratePostActionArgs(
 			return handleError(err)
 		}
 
-		requiredSkills, err := fetchRequiredSkill(ctx, []ExploreId{exploreId})
+		requiredSkills, err := fetchRequiredSkill(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -124,7 +124,7 @@ func CreateGeneratePostActionArgs(
 			return handleError(err)
 		}
 
-		reductionSkills, err := fetchStaminaReductionSkill(ctx, []ExploreId{exploreId})
+		reductionSkills, err := fetchStaminaReductionSkill(ctx, []ActionId{exploreId})
 		if err != nil {
 			return handleError(err)
 		}
@@ -175,7 +175,7 @@ type PostActionResult struct {
 
 type postActionArgs struct {
 	userId                 core.UserId
-	exploreId              ExploreId
+	exploreId              ActionId
 	execCount              int
 	userFund               core.Fund
 	userStamina            core.StaminaRecoverTime
@@ -191,7 +191,7 @@ type postActionArgs struct {
 	staminaReductionSkills []*UserSkillRes
 }
 
-type PostActionFunc func(context.Context, core.UserId, int, ExploreId) (*PostActionResult, error)
+type PostActionFunc func(context.Context, core.UserId, int, ActionId) (*PostActionResult, error)
 
 func CreatePostAction(
 	generateArgs GeneratePostActionArgsFunc,
@@ -211,7 +211,7 @@ func CreatePostAction(
 		ctx context.Context,
 		userId core.UserId,
 		execCount int,
-		exploreId ExploreId,
+		exploreId ActionId,
 	) (*PostActionResult, error) {
 		handleError := func(err error) (*PostActionResult, error) {
 			return nil, fmt.Errorf("error on post action: %w", err)

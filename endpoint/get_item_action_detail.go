@@ -33,7 +33,7 @@ func CreateGetItemActionDetailEndpoint(
 		}
 		userId := tokenInformation.UserId
 		itemId := core.ItemId(req.ItemId)
-		exploreId := game.ExploreId(req.ExploreId)
+		exploreId := game.ActionId(req.ExploreId)
 		res, err := getItemActionFunc(ctx, userId, itemId, exploreId)
 		if err != nil {
 			return handleError(err)

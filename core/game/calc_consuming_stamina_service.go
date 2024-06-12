@@ -7,14 +7,14 @@ import (
 )
 
 type ExploreStaminaPair struct {
-	ExploreId      ExploreId
+	ExploreId      ActionId
 	ReducedStamina core.StaminaCost
 }
 
 type CalcConsumingStaminaFunc func(
 	context.Context,
 	core.UserId,
-	[]ExploreId,
+	[]ActionId,
 ) ([]*ExploreStaminaPair, error)
 
 func CreateCalcConsumingStaminaService(
@@ -22,7 +22,7 @@ func CreateCalcConsumingStaminaService(
 	fetchExploreMaster FetchExploreMasterFunc,
 	fetchReductionSkills FetchReductionStaminaSkillFunc,
 ) CalcConsumingStaminaFunc {
-	return func(ctx context.Context, userId core.UserId, exploreIds []ExploreId) (
+	return func(ctx context.Context, userId core.UserId, exploreIds []ActionId) (
 		[]*ExploreStaminaPair,
 		error,
 	) {
@@ -33,8 +33,8 @@ func CreateCalcConsumingStaminaService(
 		if err != nil {
 			return handleError(err)
 		}
-		exploreMap := func(explores []*GetExploreMasterRes) map[ExploreId]GetExploreMasterRes {
-			result := map[ExploreId]GetExploreMasterRes{}
+		exploreMap := func(explores []*GetExploreMasterRes) map[ActionId]GetExploreMasterRes {
+			result := map[ActionId]GetExploreMasterRes{}
 			for _, v := range explores {
 				result[v.ExploreId] = *v
 			}
@@ -44,8 +44,8 @@ func CreateCalcConsumingStaminaService(
 		if err != nil {
 			return handleError(err)
 		}
-		reductionSkillMap := func(reductionSkills []*StaminaReductionSkillPair) map[ExploreId][]core.SkillId {
-			result := map[ExploreId][]core.SkillId{}
+		reductionSkillMap := func(reductionSkills []*StaminaReductionSkillPair) map[ActionId][]core.SkillId {
+			result := map[ActionId][]core.SkillId{}
 			for _, v := range reductionSkills {
 				result[v.ExploreId] = append(result[v.ExploreId], v.SkillId)
 			}
@@ -94,9 +94,9 @@ func CreateCalcConsumingStaminaService(
 
 		reductionSkillResMap := func(
 			allSkillsMap map[core.SkillId]*UserSkillRes,
-			reductionSkills map[ExploreId][]core.SkillId,
-		) map[ExploreId][]*UserSkillRes {
-			result := map[ExploreId][]*UserSkillRes{}
+			reductionSkills map[ActionId][]core.SkillId,
+		) map[ActionId][]*UserSkillRes {
+			result := map[ActionId][]*UserSkillRes{}
 			for k, v := range reductionSkills {
 				for _, w := range v {
 					if _, ok := result[k]; !ok {
@@ -109,9 +109,9 @@ func CreateCalcConsumingStaminaService(
 		}(allSkillsMap, reductionSkillMap)
 
 		result := func(
-			idArr []ExploreId,
-			exploreMap map[ExploreId]GetExploreMasterRes,
-			reductionSkillMap map[ExploreId][]*UserSkillRes,
+			idArr []ActionId,
+			exploreMap map[ActionId]GetExploreMasterRes,
+			reductionSkillMap map[ActionId][]*UserSkillRes,
 		) []*ExploreStaminaPair {
 			result := make([]*ExploreStaminaPair, len(exploreMap))
 			index := 0

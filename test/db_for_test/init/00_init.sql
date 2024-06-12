@@ -277,3 +277,16 @@ CREATE TABLE IF NOT EXISTS ringo.scores
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8;
 
+CREATE TABLE IF NOT EXISTS ringo.winners
+(
+    `id`          int(11)      NOT NULL AUTO_INCREMENT,
+    `user_id`     varchar(40)  NOT NULL,
+    `rank`        tinyint(3)   NOT NULL,
+    `rank_period` mediumint(8) NOT NULL,
+    PRIMARY KEY (`id`),
+    INDEX `user_id_index` (`user_id`),
+    CONSTRAINT user_date_pair UNIQUE (`user_id`, `rank_period`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+    FOREIGN KEY (`rank_period`) REFERENCES `rank_period_table` (`rank_period`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8;

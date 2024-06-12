@@ -24,4 +24,18 @@ type FetchUserScore func(context.Context, []core.UserId, RankPeriod) ([]*UserSco
 type UpsertScoreFunc func(context.Context, []*UserScorePair, RankPeriod) error
 
 type FetchLatestRankPeriod func(context.Context) (RankPeriod, error)
-type InsertRankPeriod func(context.Context, RankPeriod) error
+type InsertRankPeriodRepo func(context.Context, RankPeriod) error
+
+type InsertWinReq struct {
+	UserId core.UserId `db:"user_id"`
+	Rank   Rank        `db:"rank"`
+	Period RankPeriod  `db:"period"`
+}
+
+type InsertWinRepo func(context.Context, []*InsertWinReq) error
+type FetchWinRes struct {
+	UserId   core.UserId `db:"user_id"`
+	WinCount int         `db:"win_count"`
+}
+
+type FetchWinRepo func(context.Context, []core.UserId) ([]*FetchWinRes, error)

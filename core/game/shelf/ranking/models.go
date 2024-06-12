@@ -23,3 +23,7 @@ type RankPeriod int
 func (r RankPeriod) ToInt() int {
 	return int(r)
 }
+
+func (r RankPeriod) Next() RankPeriod {
+	return r + 1
+}

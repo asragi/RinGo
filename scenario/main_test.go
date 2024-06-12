@@ -18,7 +18,7 @@ import (
 var port = 4445
 
 func TestMain(m *testing.M) {
-	secretKey := auth.SecretHashKey("secret")
+	secretKey := auth.SecretHashKey("secret-for-test")
 	constants := &initialize.Constants{
 		InitialFund:        core.Fund(100000),
 		InitialMaxStamina:  core.MaxStamina(6000),
@@ -52,7 +52,6 @@ func TestMain(m *testing.M) {
 	}()
 	time.Sleep(1 * time.Second)
 	m.Run()
-	// teardown
 }
 
 func TestE2E(t *testing.T) {
@@ -89,5 +88,37 @@ func TestE2E(t *testing.T) {
 	err = getStageList(ctx, c)
 	if err != nil {
 		t.Errorf("get stage list: %v", err)
+	}
+	err = getStageActionDetail(ctx, c)
+	if err != nil {
+		t.Errorf("get stage action detail: %v", err)
+	}
+	err = postAction(ctx, c)
+	if err != nil {
+		t.Errorf("post action: %v", err)
+	}
+	err = getItemList(ctx, c)
+	if err != nil {
+		t.Errorf("get item list: %v", err)
+	}
+	err = getItemDetail(ctx, c)
+	if err != nil {
+		t.Errorf("get item detail: %v", err)
+	}
+	err = getItemAction(ctx, c)
+	if err != nil {
+		t.Errorf("get item action: %v", err)
+	}
+	err = getDailyRanking(ctx, c)
+	if err != nil {
+		t.Errorf("get daily ranking: %v", err)
+	}
+	err = updateShelfContent(ctx, c)
+	if err != nil {
+		t.Errorf("update shelf content: %v", err)
+	}
+	err = updateShelfSize(ctx, c)
+	if err != nil {
+		t.Errorf("update shelf size: %v", err)
 	}
 }

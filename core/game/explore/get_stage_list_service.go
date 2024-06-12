@@ -94,8 +94,8 @@ func CreateFetchStageData(
 			return handleError(err)
 		}
 		stageExplorePair, err := fetchStageExploreRelation(ctx, stageId)
-		exploreIds := func(stageExplore []*StageExploreIdPairRow) []game.ExploreId {
-			result := make([]game.ExploreId, len(stageExplore))
+		exploreIds := func(stageExplore []*StageExploreIdPairRow) []game.ActionId {
+			result := make([]game.ActionId, len(stageExplore))
 			for i, v := range stageExplore {
 				result[i] = v.ExploreId
 			}
@@ -123,7 +123,7 @@ type getAllStageArgs struct {
 	allStageRes    []*StageMaster
 	userStageRes   []*UserStage
 	stageExploreId []*StageExploreIdPairRow
-	exploreId      []game.ExploreId
+	exploreId      []game.ActionId
 	userExplore    []*game.UserExplore
 }
 
@@ -161,19 +161,19 @@ func GetAllStage(
 		stageIds []StageId,
 		userExplore []*game.UserExplore,
 	) map[StageId][]*game.UserExplore {
-		stageIdExploreMap := func(stageExploreIds []*StageExploreIdPairRow) map[StageId][]game.ExploreId {
-			result := make(map[StageId][]game.ExploreId)
+		stageIdExploreMap := func(stageExploreIds []*StageExploreIdPairRow) map[StageId][]game.ActionId {
+			result := make(map[StageId][]game.ActionId)
 			for _, v := range stageExploreIds {
 				if _, ok := result[v.StageId]; !ok {
-					result[v.StageId] = []game.ExploreId{}
+					result[v.StageId] = []game.ActionId{}
 				}
 				result[v.StageId] = append(result[v.StageId], v.ExploreId)
 			}
 			return result
 		}(stageExplores)
 
-		userExploreFetchedMap := func(exploreArray []*game.UserExplore) map[game.ExploreId]*game.UserExplore {
-			result := make(map[game.ExploreId]*game.UserExplore)
+		userExploreFetchedMap := func(exploreArray []*game.UserExplore) map[game.ActionId]*game.UserExplore {
+			result := make(map[game.ActionId]*game.UserExplore)
 			for _, v := range exploreArray {
 				result[v.ExploreId] = v
 			}

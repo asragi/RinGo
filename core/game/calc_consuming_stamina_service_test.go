@@ -14,7 +14,7 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 		mockUserSkillRes   []*UserSkillRes
 		mockExploreMaster  []*GetExploreMasterRes
 		mockReductionSkill []*StaminaReductionSkillPair
-		request            []ExploreId
+		request            []ActionId
 		expect             []*ExploreStaminaPair
 	}
 	skillIds := []core.SkillId{
@@ -37,7 +37,7 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 			SkillExp: 60000,
 		},
 	}
-	exploreIds := []ExploreId{
+	exploreIds := []ActionId{
 		"expA", "expB", "expC",
 	}
 	master := []*GetExploreMasterRes{
@@ -121,10 +121,10 @@ func TestCreateBatchCalcConsumingStaminaService(t *testing.T) {
 				Skills: v.mockUserSkillRes,
 			}, nil
 		}
-		getExploreMaster := func(context.Context, []ExploreId) ([]*GetExploreMasterRes, error) {
+		getExploreMaster := func(context.Context, []ActionId) ([]*GetExploreMasterRes, error) {
 			return v.mockExploreMaster, nil
 		}
-		getReductionSkill := func(context.Context, []ExploreId) ([]*StaminaReductionSkillPair, error) {
+		getReductionSkill := func(context.Context, []ActionId) ([]*StaminaReductionSkillPair, error) {
 			return v.mockReductionSkill, nil
 		}
 		service := CreateCalcConsumingStaminaService(

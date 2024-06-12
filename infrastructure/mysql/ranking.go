@@ -6,6 +6,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf/ranking"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/infrastructure"
 )
 
 func CreateFetchDailyRanking(queryFunc database.QueryFunc) ranking.FetchUserDailyRankingRepo {
@@ -68,5 +69,45 @@ func CreateFetchLatestRankPeriod(queryFunc database.QueryFunc) ranking.FetchLate
 			}
 		}
 		return latestPeriod, nil
+	}
+}
+
+func CreateFetchWinRepo(queryFunc database.QueryFunc) ranking.FetchWinRepo {
+	return func(ctx context.Context, userIds []core.UserId) ([]*ranking.FetchWinRes, error) {
+		handleError := func(err error) ([]*ranking.FetchWinRes, error) {
+			return nil, fmt.Errorf("fetch win: %w", err)
+		}
+		userIdString := infrastructure.UserIdsToString(userIds)
+		userIdSpread := spreadString(userIdString)
+		query := fmt.Sprintf(`SELECT user_id, win_count FROM ringo.win_count WHERE user_id IN (%s)`, userIdSpread)
+		rows, err := queryFunc(ctx, query, nil)
+		if err != nil {
+			return handleError(err)
+		}
+		defer rows.Close()
+
+		var res []*ranking.FetchWinRes
+		for rows.Next() {
+			var r ranking.FetchWinRes
+			if err := rows.Scan(&r.UserId, &r.WinCount); err != nil {
+				return handleError(err)
+			}
+			res = append(res, &r)
+		}
+		return res, nil
+	}
+}
+
+func CreateInsertWin(exec database.ExecFunc) ranking.InsertWinRepo {
+	return func(ctx context.Context, reqs []*ranking.InsertWinReq) error {
+		handleError := func(err error) error {
+			return fmt.Errorf("insert win: %w", err)
+		}
+		query := `INSERT INTO ringo.win_count (user_id, win_count, rank) VALUES (:user_id, :win_count, :rank)`
+		_, err := exec(ctx, query, reqs)
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
 	}
 }

@@ -16,7 +16,7 @@ func CreatePostAction(
 	validateToken auth.ValidateTokenFunc,
 ) PostActionEndpointFunc {
 	post := func(ctx context.Context, req *gateway.PostActionRequest) (*gateway.PostActionResponse, error) {
-		exploreId := game.ExploreId(req.ExploreId)
+		exploreId := game.ActionId(req.ExploreId)
 		token := auth.AccessToken(req.Token)
 		tokenInfo, err := validateToken(&token)
 		if err != nil {

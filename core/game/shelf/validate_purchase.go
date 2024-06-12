@@ -30,7 +30,7 @@ type ValidateResult struct {
 func CreateValidatePurchase(
 	baseRequiredStamina core.StaminaCost,
 	reducibleRate game.StaminaReducibleRate,
-	purchaseExploreId game.ExploreId,
+	purchaseExploreId game.ActionId,
 	fetchShelf FetchShelf,
 	fetchUserResource game.GetResourceFunc,
 	fetchItemMaster game.FetchItemMasterFunc,
@@ -134,7 +134,7 @@ func CreateValidatePurchase(
 		}
 		profit := price.CalculateProfit(num)
 
-		reductionSkillsRes, err := fetchReductionStaminaSkill(ctx, []game.ExploreId{purchaseExploreId})
+		reductionSkillsRes, err := fetchReductionStaminaSkill(ctx, []game.ActionId{purchaseExploreId})
 		if err != nil {
 			return handleError(err)
 		}

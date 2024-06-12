@@ -50,6 +50,8 @@ var infrastructures = wire.NewSet(
 	mysql.CreateDeleteShelfBySize,
 	mysql.CreateFetchLatestRankPeriod,
 	mysql.CreateFetchDailyRanking,
+	mysql.CreateFetchWinRepo,
+	mysql.CreateInsertWin,
 	mysql.CreateFetchReservation,
 	mysql.CreateFetchCheckedTime,
 	mysql.CreateUpdateCheckedTime,

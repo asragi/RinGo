@@ -24,7 +24,7 @@ type (
 		UserId core.UserId `db:"user_id"`
 	}
 	exploreReq struct {
-		ExploreId game.ExploreId `db:"explore_id"`
+		ExploreId game.ActionId `db:"explore_id"`
 	}
 	stageReq struct {
 		StageId explore.StageId `db:"stage_id"`
@@ -37,7 +37,7 @@ type (
 	}
 )
 
-func (exploreReq) Create(v game.ExploreId) *exploreReq {
+func (exploreReq) Create(v game.ActionId) *exploreReq {
 	return &exploreReq{ExploreId: v}
 }
 
@@ -330,8 +330,8 @@ func CreateGetExploreMasterMySQL(q database.QueryFunc) game.FetchExploreMasterFu
 		"SELECT explore_id, display_name, description, consuming_stamina, required_payment, stamina_reducible_rate from ringo.explore_masters WHERE explore_id IN (:explore_id);",
 	)
 
-	return func(ctx context.Context, ids []game.ExploreId) ([]*game.GetExploreMasterRes, error) {
-		req := func(ids []game.ExploreId) []*exploreReq {
+	return func(ctx context.Context, ids []game.ActionId) ([]*game.GetExploreMasterRes, error) {
+		req := func(ids []game.ActionId) []*exploreReq {
 			result := make([]*exploreReq, len(ids))
 			for i, v := range ids {
 				result[i] = &exploreReq{ExploreId: v}
@@ -368,7 +368,7 @@ func CreateGetEarningItem(q database.QueryFunc) game.FetchEarningItemFunc {
 		"SELECT item_id, min_count, max_count, probability from ringo.earning_items WHERE explore_id IN (:explore_id);",
 	)
 
-	return func(ctx context.Context, id game.ExploreId) ([]*game.EarningItem, error) {
+	return func(ctx context.Context, id game.ActionId) ([]*game.EarningItem, error) {
 		req := &exploreReq{ExploreId: id}
 		return f(ctx, []*exploreReq{req})
 	}
@@ -381,8 +381,8 @@ func CreateGetConsumingItem(q database.QueryFunc) game.FetchConsumingItemFunc {
 		"SELECT explore_id, item_id, max_count, consumption_prob from ringo.consuming_items WHERE explore_id IN (:explore_id)",
 	)
 
-	return func(ctx context.Context, ids []game.ExploreId) ([]*game.ConsumingItem, error) {
-		req := func(ids []game.ExploreId) []*exploreReq {
+	return func(ctx context.Context, ids []game.ActionId) ([]*game.ConsumingItem, error) {
+		req := func(ids []game.ActionId) []*exploreReq {
 			result := make([]*exploreReq, len(ids))
 			for i, v := range ids {
 				result[i] = &exploreReq{ExploreId: v}
@@ -399,8 +399,8 @@ func CreateGetRequiredSkills(q database.QueryFunc) game.FetchRequiredSkillsFunc 
 		"get required skill from mysql :%w",
 		"SELECT explore_id, skill_id, skill_lv from ringo.required_skills WHERE explore_id IN (:explore_id)",
 	)
-	return func(ctx context.Context, ids []game.ExploreId) ([]*game.RequiredSkill, error) {
-		req := func(ids []game.ExploreId) []*exploreReq {
+	return func(ctx context.Context, ids []game.ActionId) ([]*game.RequiredSkill, error) {
+		req := func(ids []game.ActionId) []*exploreReq {
 			result := make([]*exploreReq, len(ids))
 			for i, v := range ids {
 				result[i] = &exploreReq{ExploreId: v}
@@ -418,7 +418,7 @@ func CreateGetSkillGrowth(q database.QueryFunc) game.FetchSkillGrowthData {
 		`SELECT explore_id, skill_id, gaining_point FROM ringo.skill_growth_data WHERE explore_id IN (:explore_id);`,
 	)
 
-	return func(ctx context.Context, id game.ExploreId) ([]*game.SkillGrowthData, error) {
+	return func(ctx context.Context, id game.ActionId) ([]*game.SkillGrowthData, error) {
 		req := &exploreReq{ExploreId: id}
 		return f(ctx, []*exploreReq{req})
 	}
@@ -431,8 +431,8 @@ func CreateGetReductionSkill(q database.QueryFunc) game.FetchReductionStaminaSki
 		`SELECT explore_id, skill_id FROM ringo.stamina_reduction_skills WHERE explore_id IN (:explore_id) ORDER BY id;`,
 	)
 
-	return func(ctx context.Context, ids []game.ExploreId) ([]*game.StaminaReductionSkillPair, error) {
-		req := func(ids []game.ExploreId) []*exploreReq {
+	return func(ctx context.Context, ids []game.ActionId) ([]*game.StaminaReductionSkillPair, error) {
+		req := func(ids []game.ActionId) []*exploreReq {
 			result := make([]*exploreReq, len(ids))
 			for i, v := range ids {
 				result[i] = &exploreReq{ExploreId: v}
@@ -464,7 +464,7 @@ func CreateStageExploreRelation(q database.QueryFunc) explore.FetchStageExploreR
 
 func CreateItemExploreRelation(q database.QueryFunc) explore.FetchItemExploreRelationFunc {
 	type fetchExploreIdRes struct {
-		ExploreId game.ExploreId `db:"explore_id"`
+		ExploreId game.ActionId `db:"explore_id"`
 	}
 	f := CreateGetQuery[itemReq, fetchExploreIdRes](
 		q,
@@ -472,13 +472,13 @@ func CreateItemExploreRelation(q database.QueryFunc) explore.FetchItemExploreRel
 		"SELECT explore_id FROM ringo.item_explore_relations WHERE item_id IN (:item_id);",
 	)
 
-	return func(ctx context.Context, id core.ItemId) ([]game.ExploreId, error) {
+	return func(ctx context.Context, id core.ItemId) ([]game.ActionId, error) {
 		req := &itemReq{ItemId: id}
 		res, err := f(ctx, []*itemReq{req})
 		if err != nil {
 			return nil, err
 		}
-		result := make([]game.ExploreId, len(res))
+		result := make([]game.ActionId, len(res))
 		for i, v := range res {
 			result[i] = v.ExploreId
 		}
@@ -488,8 +488,8 @@ func CreateItemExploreRelation(q database.QueryFunc) explore.FetchItemExploreRel
 
 func CreateGetUserExplore(q database.QueryFunc) game.GetUserExploreFunc {
 	type exploreRes struct {
-		ExploreId game.ExploreId `db:"explore_id"`
-		IsKnown   int            `db:"is_known"`
+		ExploreId game.ActionId `db:"explore_id"`
+		IsKnown   int           `db:"is_known"`
 	}
 	f := CreateUserQuery[exploreReq, exploreRes](
 		q,
@@ -497,8 +497,8 @@ func CreateGetUserExplore(q database.QueryFunc) game.GetUserExploreFunc {
 		createQueryFromUserId(`SELECT explore_id, is_known FROM ringo.user_explore_data WHERE user_id = "%s" AND explore_id IN (:explore_id);`),
 	)
 
-	return func(ctx context.Context, id core.UserId, ids []game.ExploreId) ([]*game.ExploreUserData, error) {
-		req := func(ids []game.ExploreId) []*exploreReq {
+	return func(ctx context.Context, id core.UserId, ids []game.ActionId) ([]*game.ExploreUserData, error) {
+		req := func(ids []game.ActionId) []*exploreReq {
 			result := make([]*exploreReq, len(ids))
 			for i, v := range ids {
 				result[i] = &exploreReq{ExploreId: v}
