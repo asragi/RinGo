@@ -22,7 +22,7 @@ func getDailyRanking(ctx context.Context, agent getDailyRankingAgent) error {
 	defer closeConn()
 	res, err := cli.GetDailyRanking(
 		ctx, &gateway.GetDailyRankingRequest{
-			Limit:  0,
+			Limit:  10,
 			Offset: 0,
 		},
 	)

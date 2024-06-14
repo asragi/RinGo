@@ -7,6 +7,7 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/database"
 	"github.com/asragi/RinGo/endpoint"
+	"github.com/asragi/RinGo/tool"
 	"github.com/google/wire"
 )
 
@@ -29,6 +30,17 @@ func CreateEndpoints(
 		services,
 		endpointsSet,
 		wire.Struct(new(endpoint.Endpoints), "*"),
+	)
+	return nil
+}
+
+func CreateTools(
+	exec database.ExecFunc,
+) *tool.Tools {
+	wire.Build(
+		infrastructures,
+		services,
+		wire.Struct(new(tool.Tools), "*"),
 	)
 	return nil
 }

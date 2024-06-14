@@ -153,7 +153,7 @@ func CreateBatchInsertReservation(
 	fetchCheckedTime FetchCheckedTimeFunc,
 	updateCheckedTime UpdateCheckedTime,
 	rand core.EmitRandomFunc,
-	generateId func() string,
+	generateId core.GenerateUUIDFunc,
 	getCurrentTime core.GetCurrentTimeFunc,
 ) BatchInsertReservationFunc {
 	return func(

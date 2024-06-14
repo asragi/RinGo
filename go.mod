@@ -3,7 +3,7 @@ module github.com/asragi/RinGo
 go 1.21
 
 require (
-	github.com/asragi/RingoSuPBGo v0.0.0-20240606031646-3e3f966cf282
+	github.com/asragi/RingoSuPBGo v0.0.0-20240612111738-2df964eeb5b4
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.6.0
@@ -44,11 +44,11 @@ require (
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
 	github.com/golang/protobuf v1.5.4 // indirect
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/protobuf v1.34.2
 )

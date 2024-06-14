@@ -8,10 +8,18 @@ import (
 	"github.com/asragi/RingoSuPBGo/gateway"
 )
 
+type loginDataProvider interface {
+	useLoginData() (core.UserId, auth.RowPassword)
+}
+
+type tokenHolder interface {
+	saveToken(auth.AccessToken)
+}
+
 type loginAgent interface {
 	connectAgent
-	useLoginData() (core.UserId, auth.RowPassword)
-	saveToken(auth.AccessToken)
+	loginDataProvider
+	tokenHolder
 }
 
 func login(ctx context.Context, agent loginAgent) error {

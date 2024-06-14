@@ -14,6 +14,9 @@ func parseArgs() *debug.RunMode {
 
 type gRPCServer struct {
 	gateway.UnimplementedRingoServer
+	gateway.UnimplementedChangePeriodServer
+	gateway.UnimplementedDebugTimeServer
+	gateway.UnimplementedInvokeAutoApplyReservationServer
 	endpoints *endpoint.Endpoints
 }
 
@@ -126,10 +129,41 @@ func (s *gRPCServer) GetDailyRanking(
 	return s.endpoints.GetRankingUserList(ctx, req)
 }
 
+func (s *gRPCServer) AdminLogin(
+	ctx context.Context,
+	req *gateway.AdminLoginRequest,
+) (*gateway.AdminLoginResponse, error) {
+	return s.endpoints.AdminLogin(ctx, req)
+}
+
+func (s *gRPCServer) ChangePeriod(
+	ctx context.Context,
+	req *gateway.ChangePeriodRequest,
+) (*gateway.ChangePeriodResponse, error) {
+	return s.endpoints.ChangePeriod(ctx, req)
+}
+
+func (s *gRPCServer) InvokeAutoApplyReservation(
+	ctx context.Context,
+	req *gateway.InvokeAutoApplyReservationRequest,
+) (*gateway.InvokeAutoApplyReservationResponse, error) {
+	return s.endpoints.AutoInsertReservation(ctx, req)
+}
+
+func (s *gRPCServer) ChangeTime(
+	ctx context.Context,
+	req *gateway.ChangeTimeRequest,
+) (*gateway.ChangeTimeResponse, error) {
+	return s.endpoints.ChangeTime(ctx, req)
+}
+
 func SetUpServer(port int, endpoints *endpoint.Endpoints) (Serve, StopDBFunc, error) {
 	grpcServer := newGrpcServer(endpoints)
 	registerServer := func(s grpc.ServiceRegistrar) {
 		gateway.RegisterRingoServer(s, grpcServer)
+		gateway.RegisterChangePeriodServer(s, grpcServer)
+		gateway.RegisterDebugTimeServer(s, grpcServer)
+		gateway.RegisterInvokeAutoApplyReservationServer(s, grpcServer)
 	}
 	return NewRPCServer(port, registerServer)
 }

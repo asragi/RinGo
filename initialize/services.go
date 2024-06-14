@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"github.com/asragi/RinGo/admin"
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game"
@@ -84,12 +85,21 @@ var reservationSet = wire.NewSet(
 	reservation.CreateApplyReservation,
 	reservation.CreateApplyAllReservations,
 	reservation.CreateInsertReservation,
+	reservation.CreateBatchInsertReservation,
+	reservation.CreateAutoInsertReservation,
 )
 
 var rankingSet = wire.NewSet(
 	ranking.CreateUpdateTotalScoreService,
 	ranking.CreateFetchUserDailyRanking,
 	ranking.CreateOnChangePeriod,
+)
+
+var adminSet = wire.NewSet(
+	wire.Value(admin.CreateCommonLoginFunc(auth.CreateLoginFunc)),
+	admin.CreateRegister,
+	admin.CreateCheckIsAdmin,
+	admin.CreateLogin,
 )
 
 var services = wire.NewSet(
@@ -101,4 +111,5 @@ var services = wire.NewSet(
 	shelfSet,
 	reservationSet,
 	rankingSet,
+	adminSet,
 )

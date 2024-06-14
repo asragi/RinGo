@@ -39,7 +39,7 @@ type RegisterUserFunc func(context.Context) (registerResult, error)
 func RegisterUser(
 	generateUserId createUserIdFunc,
 	generateRowPassword CreateRowPasswordFunc,
-	createHashedPassword createHashedPasswordFunc,
+	createHashedPassword CreateHashedPasswordFunc,
 	insertNewUser InsertNewUser,
 	decideName core.DecideInitialName,
 	decideShopName core.DecideInitialShopName,

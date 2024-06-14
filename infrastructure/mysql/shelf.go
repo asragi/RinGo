@@ -246,12 +246,15 @@ func CreateUpsertScore(exec database.ExecFunc) ranking.UpsertScoreFunc {
 				}
 			},
 		)
+		q := `INSERT INTO ringo.scores (user_id, total_score, rank_period) VALUES (:user_id, :total_score, :rank_period) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`
 		_, err := exec(
 			ctx,
-			`INSERT INTO ringo.scores (user_id, total_score, rank_period) VALUES (:user_id, :total_score, :rank_period) ON DUPLICATE KEY UPDATE total_score = VALUES(total_score)`,
+			q,
 			req.ToArray(),
 		)
 		if err != nil {
+			fmt.Printf("runned query: %s\n", q)
+			fmt.Printf("runned request: %+v\n", req.ToArray())
 			return fmt.Errorf("update score: %w", err)
 		}
 		return nil

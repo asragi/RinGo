@@ -11,7 +11,7 @@ import (
 type LoginEndpoint func(context.Context, *gateway.LoginRequest) (*gateway.LoginResponse, error)
 
 func CreateLoginEndpoint(loginFunc auth.LoginFunc) LoginEndpoint {
-	getParams := func(ctx context.Context, req *gateway.LoginRequest) (*gateway.LoginResponse, error) {
+	return func(ctx context.Context, req *gateway.LoginRequest) (*gateway.LoginResponse, error) {
 		userId := core.UserId(req.UserId)
 		rowPass := auth.RowPassword(req.RowPassword)
 		res, err := loginFunc(ctx, userId, rowPass)
@@ -22,5 +22,4 @@ func CreateLoginEndpoint(loginFunc auth.LoginFunc) LoginEndpoint {
 			AccessToken: string(res),
 		}, nil
 	}
-	return getParams
 }

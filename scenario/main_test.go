@@ -7,6 +7,7 @@ import (
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RinGo/core/game/shelf"
 	"github.com/asragi/RinGo/database"
+	"github.com/asragi/RinGo/debug"
 	"github.com/asragi/RinGo/initialize"
 	"github.com/asragi/RinGo/server"
 	"github.com/asragi/RinGo/test"
@@ -37,6 +38,7 @@ func TestMain(m *testing.M) {
 	}()
 	dba := database.NewDBAccessor(db, db)
 	endpoints := initialize.CreateEndpoints(secretKey, constants, dba.Exec, dba.Query)
+	tools := initialize.CreateTools(dba.Exec)
 	serve, stopDB, err := server.SetUpServer(port, endpoints)
 	if err != nil {
 		log.Fatalf("Could not set up server: %s", err)
@@ -51,74 +53,27 @@ func TestMain(m *testing.M) {
 		}
 	}()
 	time.Sleep(1 * time.Second)
+	ctx := context.Background()
+	err = tools.RegisterAdmin(ctx, "admin", "admin")
+	if err != nil {
+		log.Fatalf("Could not register admin: %s", err)
+		return
+	}
+	err = debug.CreateAddInitialPeriod(dba.Exec)(ctx)
+	if err != nil {
+		log.Fatalf("Could not add initial period: %s", err)
+		return
+	}
 	m.Run()
 }
 
 func TestE2E(t *testing.T) {
-	c := newClient(fmt.Sprintf("localhost:%d", port))
+	address := fmt.Sprintf("localhost:%d", port)
 	ctx := context.Background()
-	err := signUp(ctx, c)
-	if err != nil {
-		t.Errorf("sign up: %v", err)
-	}
-	err = login(ctx, c)
-	if err != nil {
-		t.Errorf("login: %v", err)
-	}
-	err = updateUserName(ctx, c)
-	if err != nil {
-		t.Errorf("update user name: %v", err)
-	}
-	err = updateShopName(ctx, c)
-	if err != nil {
-		t.Errorf("update shop name: %+v", err)
-	}
-	err = getResource(ctx, c)
-	if err != nil {
-		t.Errorf("get resource: %v", err)
-	}
-	err = getMyShelves(ctx, c)
-	if err != nil {
-		t.Errorf("get my shelves: %v", err)
-	}
-	err = getItemList(ctx, c)
-	if err != nil {
-		t.Errorf("get item list: %v", err)
-	}
-	err = getStageList(ctx, c)
-	if err != nil {
-		t.Errorf("get stage list: %v", err)
-	}
-	err = getStageActionDetail(ctx, c)
-	if err != nil {
-		t.Errorf("get stage action detail: %v", err)
-	}
-	err = postAction(ctx, c)
-	if err != nil {
-		t.Errorf("post action: %v", err)
-	}
-	err = getItemList(ctx, c)
-	if err != nil {
-		t.Errorf("get item list: %v", err)
-	}
-	err = getItemDetail(ctx, c)
-	if err != nil {
-		t.Errorf("get item detail: %v", err)
-	}
-	err = getItemAction(ctx, c)
-	if err != nil {
-		t.Errorf("get item action: %v", err)
-	}
-	err = getDailyRanking(ctx, c)
-	if err != nil {
-		t.Errorf("get daily ranking: %v", err)
-	}
-	err = updateShelfContent(ctx, c)
-	if err != nil {
-		t.Errorf("update shelf content: %v", err)
-	}
-	err = updateShelfSize(ctx, c)
-	if err != nil {
-		t.Errorf("update shelf size: %v", err)
+	result := parallelScenario(ctx, 1, address)
+	for _, r := range result {
+		if r.err != nil {
+			t.Errorf("error: %+v", r.err)
+		}
 	}
 }

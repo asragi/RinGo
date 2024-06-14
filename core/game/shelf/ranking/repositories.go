@@ -28,8 +28,8 @@ type InsertRankPeriodRepo func(context.Context, RankPeriod) error
 
 type InsertWinReq struct {
 	UserId core.UserId `db:"user_id"`
-	Rank   Rank        `db:"rank"`
-	Period RankPeriod  `db:"period"`
+	Rank   Rank        `db:"win_rank"`
+	Period RankPeriod  `db:"rank_period"`
 }
 
 type InsertWinRepo func(context.Context, []*InsertWinReq) error

@@ -12,7 +12,7 @@ type CompareHashedPassword func(hash, password string) error
 func CreateLoginFunc(
 	fetchHashedPassword FetchHashedPassword,
 	comparePassword CompareHashedPassword,
-	createToken createTokenFunc,
+	createToken CreateTokenFunc,
 ) LoginFunc {
 	return func(ctx context.Context, userId core.UserId, rowPass RowPassword) (AccessToken, error) {
 		handleError := func(err error) (AccessToken, error) {

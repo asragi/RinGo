@@ -2,14 +2,20 @@ package initialize
 
 import (
 	"github.com/asragi/RinGo/core"
+	"github.com/asragi/RinGo/debug"
 	"github.com/google/wire"
-	"time"
 )
 
-func getTime() time.Time {
-	return time.Now()
+func provideChangeTime(timer *debug.Timer) debug.ChangeTimeInterface {
+	return timer
+}
+
+func provideGetCurrentTime(timer *debug.Timer) core.GetCurrentTimeFunc {
+	return timer.EmitTime
 }
 
 var commonSet = wire.NewSet(
-	wire.Value(core.GetCurrentTimeFunc(getTime)),
+	debug.NewTimer,
+	provideChangeTime,
+	provideGetCurrentTime,
 )

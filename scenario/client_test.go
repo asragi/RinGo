@@ -20,6 +20,7 @@ type client struct {
 	itemList        *utils.Set[*gateway.GetItemListResponseRow]
 	itemDetailCache *gateway.GetItemDetailResponse
 	shelves         *utils.Set[*gateway.Shelf]
+	err             error
 }
 
 type closeConnectionType func()
@@ -174,4 +175,12 @@ func (c *client) storeShelves(shelves []*gateway.Shelf) {
 
 func (c *client) selectShelf() *gateway.Shelf {
 	return c.shelves.Get(0)
+}
+
+func (c *client) storeError(err error) {
+	c.err = err
+}
+
+func (c *client) hasError() bool {
+	return c.err != nil
 }

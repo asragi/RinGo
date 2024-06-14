@@ -5,6 +5,13 @@ import (
 	"github.com/google/wire"
 )
 
+var devEndpointsSet = wire.NewSet(
+	endpoint.CreateAdminLoginEndpoint,
+	endpoint.CreateAutoInsertReservationEndpoint,
+	endpoint.CreateChangePeriod,
+	endpoint.CreateChangeTimeEndpoint,
+)
+
 var endpointsSet = wire.NewSet(
 	endpoint.CreateRegisterEndpoint,
 	endpoint.CreateLoginEndpoint,
@@ -21,4 +28,5 @@ var endpointsSet = wire.NewSet(
 	endpoint.CreatePostAction,
 	endpoint.CreateUpdateShelfContentEndpoint,
 	endpoint.CreateUpdateShelfSizeEndpoint,
+	devEndpointsSet,
 )

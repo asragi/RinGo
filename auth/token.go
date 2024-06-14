@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type createTokenFunc func(core.UserId) (AccessToken, error)
+type CreateTokenFunc func(core.UserId) (AccessToken, error)
 
 // TODO: remove "*"
 type Sha256Func func(SecretHashKey, string) (string, error)
@@ -59,7 +59,7 @@ func CreateTokenFuncEmitter(
 	jsonFunc utils.StructToJsonFunc[AccessTokenInformation],
 	secret SecretHashKey,
 	sha256 Sha256Func,
-) createTokenFunc {
+) CreateTokenFunc {
 	return func(userId core.UserId) (AccessToken, error) {
 		handleError := func(err error) (AccessToken, error) {
 			return "", fmt.Errorf("create token: %w", err)

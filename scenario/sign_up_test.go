@@ -6,24 +6,26 @@ import (
 	"github.com/asragi/RinGo/auth"
 	"github.com/asragi/RinGo/core"
 	"github.com/asragi/RingoSuPBGo/gateway"
-	"google.golang.org/grpc"
 )
 
-type signUpAgent interface {
-	connect() (*grpc.ClientConn, error)
+type userDataHolder interface {
 	saveUserData(core.UserId, auth.RowPassword)
+}
+
+type signUpAgent interface {
+	connectAgent
+	userDataHolder
 }
 
 func signUp(ctx context.Context, agent signUpAgent) error {
 	handleError := func(err error) error {
 		return fmt.Errorf("sign up: %w", err)
 	}
-	conn, err := agent.connect()
+	registerClient, closeConn, err := agent.getClient()
 	if err != nil {
 		return handleError(err)
 	}
-	defer closeConnection(conn)
-	registerClient := gateway.NewRingoClient(conn)
+	defer closeConn()
 	res, err := registerClient.SignUp(ctx, &gateway.SignUpRequest{})
 	if err != nil {
 		return handleError(err)

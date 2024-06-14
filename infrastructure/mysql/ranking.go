@@ -72,6 +72,23 @@ func CreateFetchLatestRankPeriod(queryFunc database.QueryFunc) ranking.FetchLate
 	}
 }
 
+func CreateInsertRankPeriod(exec database.ExecFunc) ranking.InsertRankPeriodRepo {
+	return func(ctx context.Context, period ranking.RankPeriod) error {
+		type req struct {
+			RankPeriod ranking.RankPeriod `db:"rank_period"`
+		}
+		handleError := func(err error) error {
+			return fmt.Errorf("insert rank period: %w", err)
+		}
+		query := `INSERT INTO ringo.rank_period_table (rank_period) VALUES (:rank_period)`
+		_, err := exec(ctx, query, &req{RankPeriod: period})
+		if err != nil {
+			return handleError(err)
+		}
+		return nil
+	}
+}
+
 func CreateFetchWinRepo(queryFunc database.QueryFunc) ranking.FetchWinRepo {
 	return func(ctx context.Context, userIds []core.UserId) ([]*ranking.FetchWinRes, error) {
 		handleError := func(err error) ([]*ranking.FetchWinRes, error) {
@@ -103,7 +120,7 @@ func CreateInsertWin(exec database.ExecFunc) ranking.InsertWinRepo {
 		handleError := func(err error) error {
 			return fmt.Errorf("insert win: %w", err)
 		}
-		query := `INSERT INTO ringo.win_count (user_id, win_count, rank) VALUES (:user_id, :win_count, :rank)`
+		query := `INSERT INTO ringo.winners (user_id, win_rank, rank_period) VALUES (:user_id, :win_rank, :rank_period)`
 		_, err := exec(ctx, query, reqs)
 		if err != nil {
 			return handleError(err)
